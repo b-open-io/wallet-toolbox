@@ -413,10 +413,14 @@ export class Services implements WalletServices {
   async hashToHeader(hash: string): Promise<BlockHeader> {
     const method = async () => {
       const header = await this.options.chaintracks!.findHeaderForBlockHash(hash)
-      if (!header) throw new WERR_INVALID_PARAMETER('hash', `valid blockhash '${hash}' on mined chain ${this.chain}`)
       return header
     }
-    return this.invokeChaintracksWithRetry(method)
+    let header = await this.invokeChaintracksWithRetry(method)
+    if (!header) {
+      header = await this.whatsonchain.getBlockHeaderByHash(hash)
+    }
+    if (!header) throw new WERR_INVALID_PARAMETER('hash', `valid blockhash '${hash}' on mined chain ${this.chain}`)
+    return header
   }
 
   async getMerklePath(txid: string, useNext?: boolean): Promise<GetMerklePathResult> {

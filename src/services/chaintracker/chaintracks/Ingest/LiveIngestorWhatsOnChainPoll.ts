@@ -2,11 +2,10 @@ import { BlockHeader, Chain } from '../../../../sdk'
 import { wait } from '../../../../utility/utilityHelpers'
 import { LiveIngestorBase, LiveIngestorBaseOptions } from './LiveIngestorBase'
 import {
-  EnqueueHandler,
-  ErrorHandler,
   WhatsOnChainServices,
   WhatsOnChainServicesOptions,
-  WocGetHeadersHeader
+  WocGetHeadersHeader,
+  wocGetHeadersHeaderToBlockHeader
 } from './WhatsOnChainServices'
 
 export interface LiveIngestorWhatsOnChainOptions extends LiveIngestorBaseOptions, WhatsOnChainServicesOptions {
@@ -81,20 +80,7 @@ export class LiveIngestorWhatsOnChainPoll extends LiveIngestorBase {
       const newHeaders = headers.filter(h => !lastHeaders.some(lh => lh.hash === h.hash))
 
       for (const h of newHeaders) {
-        const bits: number = typeof h.bits === 'string' ? parseInt(h.bits, 16) : h.bits
-        if (!h.previousblockhash) {
-          h.previousblockhash = '0000000000000000000000000000000000000000000000000000000000000000' // genesis
-        }
-        const bh: BlockHeader = {
-          height: h.height,
-          hash: h.hash,
-          version: h.version,
-          previousHash: h.previousblockhash,
-          merkleRoot: h.merkleroot,
-          time: h.time,
-          bits,
-          nonce: h.nonce
-        }
+        const bh = wocGetHeadersHeaderToBlockHeader(h)
         liveHeaders.unshift(bh)
       }
 

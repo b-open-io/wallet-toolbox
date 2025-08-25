@@ -55,18 +55,12 @@ describe('getBeefForTransaction tests', () => {
   jest.setTimeout(99999999)
 
   test('0 ProtoStorage.getBeefForTxid', async () => {
-    try {
-      const ps = new ProtoStorage('main')
-      const beef = await ps.getBeefForTxid('794f836052ad73732a550c38bea3697a722c6a1e54bcbe63735ba79e0d23f623')
+    const ps = new ProtoStorage('main')
+    const beef = await ps.getBeefForTxid('794f836052ad73732a550c38bea3697a722c6a1e54bcbe63735ba79e0d23f623')
+    expect(beef.bumps.length > 0)
+    {
+      const beef = await ps.getBeefForTxid('53023657e79f446ca457040a0ab3b903000d7281a091397c7853f021726a560e')
       expect(beef.bumps.length > 0)
-      {
-        const beef = await ps.getBeefForTxid('53023657e79f446ca457040a0ab3b903000d7281a091397c7853f021726a560e')
-        expect(beef.bumps.length > 0)
-      }
-    } catch (eu: unknown) {
-      const e = WalletError.fromUnknown(eu)
-      // If txids are not new, a throw will happen on attempt to look up header hash in chaintracks live headers.
-      expect(e.message).toBe('Maximum BEEF depth exceeded. Limit is 2')
     }
   })
 })

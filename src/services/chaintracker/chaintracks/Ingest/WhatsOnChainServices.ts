@@ -192,6 +192,25 @@ export interface WocGetHeadersHeader {
   num_tx: number
 }
 
+export function wocGetHeadersHeaderToBlockHeader(h: WocGetHeadersHeader): BlockHeader {
+  const bits: number = typeof h.bits === 'string' ? parseInt(h.bits, 16) : h.bits
+  if (!h.previousblockhash) {
+    h.previousblockhash = '0000000000000000000000000000000000000000000000000000000000000000' // genesis
+  }
+  const bh: BlockHeader = {
+    height: h.height,
+    hash: h.hash,
+    version: h.version,
+    previousHash: h.previousblockhash,
+    merkleRoot: h.merkleroot,
+    time: h.time,
+    bits,
+    nonce: h.nonce
+  }
+
+  return bh
+}
+
 export interface GetHeaderByteFileLinksResult {
   sourceUrl: string
   fileName: string
