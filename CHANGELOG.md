@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.3
+
+- Resolve client dependencies for metanet-desktop
+
 ## wallet-toolbox 1.6.2
 
 - Change defaul chaintracksUrl from npm-registry.babbage.systems to ${chain}net-chaintracks.babbage.systems
