@@ -4648,10 +4648,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [convertUint32ToBuffer](#function-convertuint32tobuffer) | [isLiveBlockHeader](#function-isliveblockheader) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
 | [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [isMoreWork](#function-ismorework) | [validateHeaderFormat](#function-validateheaderformat) |
 | [createDefaultKnexChaintracksOptions](#function-createdefaultknexchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [validateScriptHash](#function-validatescripthash) |
-| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [readUInt32LE](#function-readuint32le) | [workBNtoBuffer](#function-workbntobuffer) |
-| [createNoDbChaintracksOptions](#function-createnodbchaintracksoptions) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [writeUInt32BE](#function-writeuint32be) |
-| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [writeUInt32LE](#function-writeuint32le) |
-| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) |  |
+| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [readUInt32LE](#function-readuint32le) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
+| [createNoDbChaintracksOptions](#function-createnodbchaintracksoptions) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [workBNtoBuffer](#function-workbntobuffer) |
+| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [writeUInt32BE](#function-writeuint32be) |
+| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [writeUInt32LE](#function-writeuint32le) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -5515,6 +5515,17 @@ export function validateScriptHash(output: string, outputFormat?: GetUtxoStatusO
 ```
 
 See also: [GetUtxoStatusOutputFormat](./client.md#type-getutxostatusoutputformat)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: wocGetHeadersHeaderToBlockHeader
+
+```ts
+export function wocGetHeadersHeaderToBlockHeader(h: WocGetHeadersHeader): BlockHeader 
+```
+
+See also: [BlockHeader](./client.md#interface-blockheader), [WocGetHeadersHeader](./services.md#interface-wocgetheadersheader)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 

@@ -6,7 +6,6 @@ import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
 import { BulkHeaderFilesInfo } from '../util/BulkHeaderFile'
 import { HeightRange, HeightRanges } from '../util/HeightRange'
 import { ChaintracksFetchApi } from '../Api/ChaintracksFetchApi'
-import { logger } from '../../../../../test/utils/TestUtilsWalletStorage'
 import { WalletError, WERR_INVALID_PARAMETER } from '../../../../sdk'
 import { validateBulkFileData } from '../util/blockHeaderUtilities'
 import { selectBulkHeaderFiles } from '../util/BulkFileDataManager'
@@ -168,7 +167,7 @@ export class BulkIngestorCDN extends BulkIngestorBase {
     for (const u of r.updated) {
       log += `  updated: ${u.fileName}, fileId=${u.fileId}\n`
     }
-    logger(log)
+    console.log(log)
 
     return priorLiveHeaders
   }

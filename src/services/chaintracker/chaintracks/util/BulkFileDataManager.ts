@@ -16,7 +16,6 @@ import {
 } from './blockHeaderUtilities'
 import { ChaintracksStorageBulkFileApi } from '../Api/ChaintracksStorageApi'
 import { ChaintracksFetch } from './ChaintracksFetch'
-import { logger } from '../../../../../test/utils/TestUtilsWalletStorage'
 import { ChaintracksFsApi } from '../Api/ChaintracksFsApi'
 import { SingleWriterMultiReaderLock } from './SingleWriterMultiReaderLock'
 
@@ -110,7 +109,7 @@ export class BulkFileDataManager {
     log += `  url: ${url}\n`
     log += `  bulk range before: ${rangeBefore}\n`
     log += `  bulk range after:  ${rangeAfter}\n`
-    logger(log)
+    console.log(log)
   }
 
   async setStorage(storage: ChaintracksStorageBulkFileApi): Promise<void> {
@@ -188,7 +187,7 @@ export class BulkFileDataManager {
         }
       }
     }
-    logger(`BulkFileDataManager.merge:\n${this.toLogString(r)}\n`)
+    console.log(`BulkFileDataManager.merge:\n${this.toLogString(r)}\n`)
     return r
   }
 

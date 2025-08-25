@@ -44,12 +44,9 @@ import {
   PurgeParams,
   PurgeResults,
   StorageGetBeefOptions,
-  TrxToken,
+  TrxToken
 } from '../../sdk/WalletStorage.interfaces'
-import {
-  ValidListActionsArgs,
-  ValidListOutputsArgs
-} from '../../sdk/validationHelpers'
+import { ValidListActionsArgs, ValidListOutputsArgs } from '../../sdk/validationHelpers'
 
 describe('getBeefForTransaction tests', () => {
   jest.setTimeout(99999999)
