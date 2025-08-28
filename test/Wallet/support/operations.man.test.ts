@@ -11,7 +11,7 @@ describe('operations.man tests', () => {
 
   test('0 review and release all production invalid change utxos', async () => {
     const { env, storage } = await _tu.createMainReviewSetup()
-    const users = await storage.findUsers({ partial: { userId: 696 } })
+    const users = await storage.findUsers({ partial: { } })
     const withInvalid: Record<number, { user: TableUser; outputs: WalletOutput[]; total: number }> = {}
     const vargs: ValidListOutputsArgs = {
       basket: specOpInvalidChange,
