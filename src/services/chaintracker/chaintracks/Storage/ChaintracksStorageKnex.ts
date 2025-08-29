@@ -23,24 +23,6 @@ export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOpt
    * Knex.js database interface initialized with valid connection configuration.
    */
   knex: Knex | undefined
-  /**
-   * Required.
-   *
-   * The table name for live block headers.
-   */
-  headerTableName: string
-  /**
-   * Required.
-   *
-   * The table name for the block header hash to height index.
-   */
-  bulkBlockHashTableName: string
-  /**
-   * Required.
-   *
-   * The table name for the block header merkleRoot to height index.
-   */
-  bulkMerkleRootTableName: string
 }
 
 /**
@@ -52,27 +34,19 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     const options: ChaintracksStorageKnexOptions = {
       ...ChaintracksStorageBase.createStorageBaseOptions(chain),
       knex,
-      headerTableName: `live_headers`,
-      bulkBlockHashTableName: `bulk_hash`,
-      bulkMerkleRootTableName: `bulk_merkle`
     }
     return options
   }
 
   knex: Knex
   _dbtype?: DBType
-  headerTableName: string
   bulkFilesTableName: string = 'bulk_files'
-  bulkBlockHashTableName: string
-  bulkMerkleRootTableName: string
+  headerTableName: string = `live_headers`
 
   constructor(options: ChaintracksStorageKnexOptions) {
     super(options)
     if (!options.knex) throw new Error('The knex options property is required.')
     this.knex = options.knex
-    this.headerTableName = options.headerTableName
-    this.bulkBlockHashTableName = options.bulkBlockHashTableName
-    this.bulkMerkleRootTableName = options.bulkMerkleRootTableName
   }
 
   get dbtype(): DBType {
@@ -401,45 +375,6 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       ((await this.knex(this.headerTableName).where({ isActive: true }).min('height as v')).pop()?.v as number) || 0,
       ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
     )
-  }
-
-  async appendToIndexTable(table: string, index: string, buffers: string[], minHeight: number): Promise<void> {
-    const newRows: { height: number }[] = []
-    for (let i = 0; i < buffers.length; i++) {
-      const row = { height: minHeight + i }
-      row[index] = buffers[i]
-      newRows.push(row)
-    }
-    try {
-      await this.knex.batchInsert(table, newRows, newRows.length)
-      return
-    } catch (err: unknown) {
-      if ((err as { code: string })?.code !== 'ER_DUP_ENTRY') throw err
-    }
-
-    // If the batchInsert failed, we may be recovering from an earlier failure. Try inserting one at a time and ignore duplicate hash values.
-    for (let i = 0; i < newRows.length; i++) {
-      await this.knex(this.bulkBlockHashTableName).insert(newRows[i]).onConflict(index).ignore()
-    }
-  }
-
-  async appendToIndexTableChunked(
-    table: string,
-    index: string,
-    buffers: string[],
-    minHeight: number,
-    chunkSize: number
-  ): Promise<void> {
-    let remaining = buffers.length
-    while (remaining > 0) {
-      const size = Math.min(remaining, chunkSize)
-      const chunk = buffers.slice(0, size)
-      buffers = buffers.slice(size)
-      await this.appendToIndexTable(table, index, chunk, minHeight)
-      console.log(`Appended ${size} index records to ${index} table`)
-      remaining -= size
-      minHeight += size
-    }
   }
 
   override async deleteLiveBlockHeaders(): Promise<void> {

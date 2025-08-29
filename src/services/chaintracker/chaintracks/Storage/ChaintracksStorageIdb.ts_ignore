@@ -1,0 +1,414 @@
+import { ChaintracksStorageBaseOptions, InsertHeaderResult } from '../Api/ChaintracksStorageApi'
+import { ChaintracksStorageBase } from './ChaintracksStorageBase'
+import { LiveBlockHeader } from '../Api/BlockHeaderApi'
+import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader } from '../util/blockHeaderUtilities'
+import { HeightRange } from '../util/HeightRange'
+import { BulkFilesReaderStorage } from '../util/BulkFilesReader'
+import { ChaintracksFetch } from '../util/ChaintracksFetch'
+import { Chain } from '../../../../sdk/types'
+import { WERR_INVALID_PARAMETER } from '../../../../sdk/WERR_errors'
+import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
+import { IDBPDatabase, IDBPTransaction, openDB } from 'idb'
+import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
+
+interface ChaintracksIdbData {
+  chain: Chain
+  liveHeaders: Map<number, LiveBlockHeader>
+  maxHeaderId: number
+  tipHeaderId: number
+  hashToHeaderId: Map<string, number>
+}
+
+export interface ChaintracksStorageIdbOptions extends ChaintracksStorageBaseOptions {}
+
+export class ChaintracksStorageIdb extends ChaintracksStorageBase {
+
+  dbName: string
+
+  db?: IDBPDatabase<ChaintracksStorageIdbSchema>
+
+  whenLastAccess?: Date
+
+  allStores: string[] = [
+    'live_headers',
+    'bulk_headers'
+  ]
+
+
+  constructor(options: ChaintracksStorageIdbOptions) {
+    super(options)
+    this.dbName = `chaintracks-${this.chain}net`
+  }
+
+  override async migrateLatest(): Promise<void> {
+    if (this.db) return
+    this.db = await this.initDB()
+  }
+
+  async initDB(): Promise<IDBPDatabase<ChaintracksStorageIdbSchema>> {
+    const db = await openDB<ChaintracksStorageIdbSchema>(this.dbName, 1, {
+      upgrade(db, oldVersion, newVersion, transaction) {
+        if (!db.objectStoreNames.contains('live_headers')) {
+          const liveHeadersStore = db.createObjectStore('live_headers', {
+            keyPath: 'headerId',
+            autoIncrement: true
+          })
+          liveHeadersStore.createIndex('hash', 'hash', { unique: true })
+          liveHeadersStore.createIndex('height', 'height', { unique: false })
+          liveHeadersStore.createIndex('previousHash', 'previousHash', { unique: false })
+          liveHeadersStore.createIndex('isActive', 'isActive', { unique: false })
+          liveHeadersStore.createIndex('isChainTip', 'isChainTip', { unique: false })
+          liveHeadersStore.createIndex('activeTip', ['isActive', 'isChainTip'], { unique: true })
+        }
+
+        if (!db.objectStoreNames.contains('bulk_headers')) {
+          const bulkHeadersStore = db.createObjectStore('proven_tx_reqs', {
+            keyPath: 'fileId',
+            autoIncrement: true
+          })
+          bulkHeadersStore.createIndex('firstHeight', 'firstHeight', { unique: true })
+        }
+      }
+    })
+    return db
+  }
+
+  toDbTrx(
+    stores: string[],
+    mode: 'readonly' | 'readwrite'
+  ): IDBPTransaction<ChaintracksStorageIdbSchema, string[], 'readwrite' | 'readonly'> {
+    if (!this.db) throw new Error('not initialized')
+    const db = this.db
+    const trx = db.transaction(stores || this.allStores, mode || 'readwrite')
+    this.whenLastAccess = new Date()
+    return trx
+  }
+
+  override async destroy(): Promise<void> {}
+
+  override async deleteLiveBlockHeaders(): Promise<void> {
+    if (!this.db) throw new Error('not initialized')
+    await this.db?.clear('live_headers')
+  }
+
+  /**
+   * Delete live headers with height less or equal to `maxHeight`
+   * 
+   * Set existing headers with previousHeaderId value set to the headerId value of
+   * a header which is to be deleted to null.
+   *
+   * @param maxHeight delete all records with less or equal `height`
+   * @returns number of deleted records
+   */
+  override async deleteOlderLiveBlockHeaders(maxHeight: number): Promise<number> {
+    let deletedCount = 0
+    // Grok: implement this method
+    return deletedCount
+  }
+
+  /**
+   * @returns the active chain tip header
+   * @throws an error if there is no tip.
+   */
+  override async findChainTipHeader(): Promise<LiveBlockHeader> {
+    const header = await this.findChainTipHeaderOrUndefined()
+    if (!header) throw new Error('Database contains no active chain tip header.')
+    return header
+  }
+
+  /**
+   * 
+   * @returns the active chain tip header
+   * @throws an error if there is no tip.
+   */
+  override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
+    // Uses the `activeTip` idb index to find the active chain tip header.
+
+    // Grok: implement this method
+
+    return undefined
+  }
+
+  override async findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null> {
+    const data = await this.getData()
+    const headerId = data.hashToHeaderId.get(hash)
+    return headerId ? data.liveHeaders.get(headerId) || null : null
+  }
+
+  override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
+    const data = await this.getData()
+    const header = data.liveHeaders.get(headerId)
+    if (!header) throw new Error(`HeaderId ${headerId} not found in live header database.`)
+    return header
+  }
+
+  override async findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> {
+    const data = await this.getData()
+    return Array.from(data.liveHeaders.values()).find(h => h.height === height && h.isActive) || null
+  }
+
+  override async findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> {
+    const data = await this.getData()
+    return Array.from(data.liveHeaders.values()).find(h => h.merkleRoot === merkleRoot) || null
+  }
+
+  override async findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }> {
+    const data = await this.getData()
+    const activeHeaders = Array.from(data.liveHeaders.values()).filter(h => h.isActive)
+    if (activeHeaders.length === 0) {
+      return { minHeight: 0, maxHeight: -1 }
+    }
+    const minHeight = Math.min(...activeHeaders.map(h => h.height))
+    const maxHeight = Math.max(...activeHeaders.map(h => h.height))
+    return { minHeight, maxHeight }
+  }
+
+  override async findMaxHeaderId(): Promise<number> {
+    const data = await this.getData()
+    return data.maxHeaderId
+  }
+
+  override async getLiveHeightRange(): Promise<HeightRange> {
+    const data = await this.getData()
+    const activeHeaders = Array.from(data.liveHeaders.values()).filter(h => h.isActive)
+    if (activeHeaders.length === 0) {
+      return new HeightRange(0, -1)
+    }
+    const minHeight = Math.min(...activeHeaders.map(h => h.height))
+    const maxHeight = Math.max(...activeHeaders.map(h => h.height))
+    return new HeightRange(minHeight, maxHeight)
+  }
+
+  override async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
+    const data = await this.getData()
+    return Array.from(data.liveHeaders.values())
+      .filter(h => h.isActive)
+      .sort((a, b) => a.height - b.height)
+      .slice(0, count)
+  }
+
+  override async getHeaders(height: number, count: number): Promise<number[]> {
+    if (count <= 0) return []
+
+    const data = await this.getData()
+    const headers = Array.from(data.liveHeaders.values())
+      .filter(h => h.isActive && h.height >= height && h.height < height + count)
+      .sort((a, b) => a.height - b.height)
+      .slice(0, count)
+
+    const bufs: Uint8Array[] = []
+
+    if (headers.length === 0 || headers[0].height > height) {
+      const bulkCount = headers.length === 0 ? count : headers[0].height - height
+      const range = new HeightRange(height, height + bulkCount - 1)
+      const reader = await BulkFilesReaderStorage.fromStorage(this, new ChaintracksFetch(), range, bulkCount * 80)
+      const bulkData = await reader.read()
+      if (bulkData) {
+        bufs.push(bulkData)
+      }
+    }
+
+    if (headers.length > 0) {
+      let buf = new Uint8Array(headers.length * 80)
+      for (let i = 0; i < headers.length; i++) {
+        const h = headers[i]
+        const ha = serializeBaseBlockHeader(h)
+        buf.set(ha, i * 80)
+      }
+      bufs.push(buf)
+    }
+
+    const r: number[] = []
+    for (const bh of bufs) {
+      for (const b of bh) {
+        r.push(b)
+      }
+    }
+    return r
+  }
+
+  override async insertHeader(header: BlockHeader, prev?: LiveBlockHeader): Promise<InsertHeaderResult> {
+    const data = await this.getData()
+
+    let ok = true
+    let dupe = false
+    let noPrev = false
+    let badPrev = false
+    let noActiveAncestor = false
+    let noTip = false
+    let setActiveChainTip = false
+    let reorgDepth = 0
+    let priorTip: LiveBlockHeader | undefined
+
+    // Check for duplicate
+    if (data.hashToHeaderId.has(header.hash)) {
+      dupe = true
+      return { added: false, dupe, isActiveTip: false, reorgDepth, priorTip, noPrev, badPrev, noActiveAncestor, noTip }
+    }
+
+    // Find previous header
+    let oneBack = Array.from(data.liveHeaders.values()).find(h => h.hash === header.previousHash)
+    if (!oneBack && prev && prev.hash === header.previousHash && prev.height + 1 === header.height) {
+      oneBack = prev
+    }
+
+    if (!oneBack) {
+      // Check if this is first live header
+      if (data.liveHeaders.size === 0) {
+        const lbf = await this.bulkManager.getLastFile()
+        if (lbf && header.previousHash === lbf.lastHash && header.height === lbf.firstHeight + lbf.count) {
+          const chainWork = addWork(lbf.lastChainWork, convertBitsToWork(header.bits))
+          const newHeader = {
+            ...header,
+            headerId: ++data.maxHeaderId,
+            previousHeaderId: null,
+            chainWork,
+            isChainTip: true,
+            isActive: true
+          }
+          data.liveHeaders.set(newHeader.headerId, newHeader)
+          data.hashToHeaderId.set(header.hash, newHeader.headerId)
+          data.tipHeaderId = newHeader.headerId
+          return {
+            added: true,
+            dupe,
+            isActiveTip: true,
+            reorgDepth,
+            priorTip,
+            noPrev,
+            badPrev,
+            noActiveAncestor,
+            noTip
+          }
+        }
+        noPrev = true
+        return {
+          added: false,
+          dupe,
+          isActiveTip: false,
+          reorgDepth,
+          priorTip,
+          noPrev,
+          badPrev,
+          noActiveAncestor,
+          noTip
+        }
+      }
+      noPrev = true
+      return { added: false, dupe, isActiveTip: false, reorgDepth, priorTip, noPrev, badPrev, noActiveAncestor, noTip }
+    }
+
+    if (oneBack.height + 1 !== header.height) {
+      badPrev = true
+      return { added: false, dupe, isActiveTip: false, reorgDepth, priorTip, noPrev, badPrev, noActiveAncestor, noTip }
+    }
+
+    const chainWork = addWork(oneBack.chainWork, convertBitsToWork(header.bits))
+    let tip =
+      oneBack.isActive && oneBack.isChainTip
+        ? oneBack
+        : Array.from(data.liveHeaders.values()).find(h => h.isActive && h.isChainTip)
+
+    if (!tip) {
+      noTip = true
+      return { added: false, dupe, isActiveTip: false, reorgDepth, priorTip, noPrev, badPrev, noActiveAncestor, noTip }
+    }
+
+    priorTip = tip
+    setActiveChainTip = isMoreWork(chainWork, tip.chainWork)
+
+    const newHeader = {
+      ...header,
+      headerId: ++data.maxHeaderId,
+      previousHeaderId: oneBack === prev ? null : oneBack.headerId,
+      chainWork,
+      isChainTip: setActiveChainTip,
+      isActive: setActiveChainTip
+    }
+
+    if (setActiveChainTip) {
+      let activeAncestor = oneBack
+      while (!activeAncestor.isActive) {
+        const previousHeader = data.liveHeaders.get(activeAncestor.previousHeaderId!)
+        if (!previousHeader) {
+          noActiveAncestor = true
+          return {
+            added: false,
+            dupe,
+            isActiveTip: false,
+            reorgDepth,
+            priorTip,
+            noPrev,
+            badPrev,
+            noActiveAncestor,
+            noTip
+          }
+        }
+        activeAncestor = previousHeader
+      }
+
+      if (!(oneBack.isActive && oneBack.isChainTip)) {
+        reorgDepth = Math.min(priorTip.height, header.height) - activeAncestor.height
+      }
+
+      if (activeAncestor.headerId !== oneBack.headerId) {
+        let headerToDeactivate = Array.from(data.liveHeaders.values()).find(h => h.isChainTip && h.isActive)
+        while (headerToDeactivate && headerToDeactivate.headerId !== activeAncestor.headerId) {
+          data.liveHeaders.set(headerToDeactivate.headerId, { ...headerToDeactivate, isActive: false })
+          headerToDeactivate = data.liveHeaders.get(headerToDeactivate.previousHeaderId!)
+        }
+
+        let headerToActivate = oneBack
+        while (headerToActivate.headerId !== activeAncestor.headerId) {
+          data.liveHeaders.set(headerToActivate.headerId, { ...headerToActivate, isActive: true })
+          headerToActivate = data.liveHeaders.get(headerToActivate.previousHeaderId!)!
+        }
+      }
+    }
+
+    if (oneBack.isChainTip && oneBack !== prev) {
+      data.liveHeaders.set(oneBack.headerId, { ...oneBack, isChainTip: false })
+    }
+
+    data.liveHeaders.set(newHeader.headerId, newHeader)
+    data.hashToHeaderId.set(newHeader.hash, newHeader.headerId)
+    if (setActiveChainTip) {
+      data.tipHeaderId = newHeader.headerId
+      this.pruneLiveBlockHeaders(newHeader.height)
+    }
+
+    return {
+      added: ok,
+      dupe,
+      isActiveTip: setActiveChainTip,
+      reorgDepth,
+      priorTip,
+      noPrev,
+      badPrev,
+      noActiveAncestor,
+      noTip
+    }
+  }
+}
+
+export interface ChaintracksStorageIdbSchema {
+  liveHeaders: {
+    key: number
+    value: LiveBlockHeader
+    indexes: {
+      hash: string
+      previousHash: string
+      previousHeaderId: number | null
+      isActive: boolean
+      activeTip: [boolean, boolean]
+      height: number
+    }
+  }
+  bulkHeaders: {
+    key: number
+    value: BulkHeaderFileInfo
+    indexes: {
+      firstHeight: number
+    }
+  }
+}
