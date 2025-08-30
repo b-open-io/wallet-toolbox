@@ -5,12 +5,13 @@ import {
   ChaintracksStorageIngestApi,
   ChaintracksStorageQueryApi
 } from '../Api/ChaintracksStorageApi'
-import { BlockHeader, LiveBlockHeader } from '../Api/BlockHeaderApi'
+import { BaseBlockHeader, BlockHeader, LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { HeightRange } from '../util/HeightRange'
-import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeaders, subWork } from '../util/blockHeaderUtilities'
+import { addWork, convertBitsToWork, deserializeBaseBlockHeaders, isMoreWork, serializeBaseBlockHeaders, subWork } from '../util/blockHeaderUtilities'
 import { BulkFileDataManager } from '../util/BulkFileDataManager'
 import { BulkFilesReaderStorage } from '../util/BulkFilesReader'
 import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
+import { deserialize } from 'v8'
 
 /**
  * Required interface methods of a Chaintracks Storage Engine implementation.
@@ -123,10 +124,10 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     return data
   }
 
-  async getHeaders(height: number, count: number): Promise<number[]> {
+  async getHeaders(height: number, count: number): Promise<BaseBlockHeader[]> {
     const data = await this.getHeadersUint8Array(height, count)
-    const r = asArray(data)
-    return r
+    const headers = deserializeBaseBlockHeaders(data)
+    return headers
   }
 
   async deleteBulkBlockHeaders(): Promise<void> {
@@ -141,8 +142,8 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
       if (!live.isEmpty && live.minHeight !== 0)
         throw new Error('With empty bulk storage, live storage must start with genesis header.')
     } else {
-      if (bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
-      if (!live.isEmpty && bulk.maxHeight + 1 !== live.minHeight)
+      if (!bulk.isEmpty &&bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
+      if (!live.isEmpty && !bulk.isEmpty && bulk.maxHeight + 1 !== live.minHeight)
         throw new Error('There is a gap or overlap between bulk and live header storage.')
     }
     return { bulk, live }

@@ -20,13 +20,15 @@ describe('ChaintracksStorageIdb tests', () => {
     const tip = await storage.findChainTipHeaderOrUndefined()
     expect(tip).toBeUndefined()
 
+    const ranges = await storage.getAvailableHeightRanges()
+
     const lh: LiveBlockHeader = {
       headerId: 0,
       chainWork: '00'.repeat(32),
       isChainTip: false,
       isActive: true,
       previousHeaderId: null,
-      height: 900001,
+      height: ranges.bulk.maxHeight + 1,
       hash: '1111',
       version: 0,
       previousHash: '01'.repeat(32),
@@ -65,14 +67,14 @@ describe('ChaintracksStorageIdb tests', () => {
     const h3 = await storage.findLiveHeaderForHeaderId(3)
     expect(h3!.headerId).toBe(3)
 
-    const h4 = await storage.findLiveHeaderForHeight(900004)
+    const h4 = await storage.findLiveHeaderForHeight(4 + ranges.bulk.maxHeight)
     expect(h4!.headerId).toBe(4)
 
     const h5 = await storage.findChainTipHeader()
     expect(h5.headerId).toBe(5)
 
     const range = await storage.findLiveHeightRange()
-    expect(range).toEqual({ minHeight: 900001, maxHeight: 900005 })
+    expect(range).toEqual({ minHeight: 1 + ranges.bulk.maxHeight, maxHeight: 5 + ranges.bulk.maxHeight })
 
     const maxId = await storage.findMaxHeaderId()
     expect(maxId).toBe(5)
@@ -80,7 +82,19 @@ describe('ChaintracksStorageIdb tests', () => {
     const hfbs = await storage.liveHeadersForBulk(3)
     expect(hfbs.length).toBe(3)
 
-    const deleteCount = await storage.deleteOlderLiveBlockHeaders(900003)
+    const lhs = await storage.getHeaders(0, 10)
+    expect(lhs.length).toBe(10)
+
+    const lhs2 = await storage.getHeaders(0 + ranges.bulk.maxHeight + 1, 10)
+    expect(lhs2.length).toBe(5)
+
+    const lhs3 = await storage.getHeaders(0 + ranges.bulk.maxHeight - 2, 10)
+    expect(lhs3.length).toBe(8)
+
+    const data = await storage.getHeadersUint8Array(0, 10)
+    expect(data.length).toBe(10 * 80)
+
+    const deleteCount = await storage.deleteOlderLiveBlockHeaders(3 + ranges.bulk.maxHeight)
     expect(deleteCount).toBe(3)
 
     await storage.deleteLiveBlockHeaders()

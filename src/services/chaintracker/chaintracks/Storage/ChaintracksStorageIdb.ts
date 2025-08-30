@@ -213,6 +213,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
+    if (range.isEmpty) return []
     await this.makeAvailable( )
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
@@ -224,7 +225,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
 
     while (cursor) {
       const header = this.repairStoredLiveHeader(cursor.value)
-      if (header && range.contains(header.headerId)) {
+      if (header && range.contains(header.height)) {
         headers.push(header)
       }
       cursor = await cursor.continue()

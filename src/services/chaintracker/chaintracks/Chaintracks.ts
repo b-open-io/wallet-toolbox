@@ -253,7 +253,7 @@ export class Chaintracks implements ChaintracksManagementApi {
 
   async getHeaders(height: number, count: number): Promise<string> {
     await this.makeAvailable()
-    return this.lock.withReadLock(async () => asString(await this.storage.getHeaders(height, count)))
+    return this.lock.withReadLock(async () => asString(await this.storage.getHeadersUint8Array(height, count)))
   }
 
   async findChainTipHeader(): Promise<BlockHeader> {

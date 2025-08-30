@@ -1,5 +1,5 @@
 import { HeightRange } from '../util/HeightRange'
-import { BlockHeader, LiveBlockHeader } from './BlockHeaderApi'
+import { BaseBlockHeader, BlockHeader, LiveBlockHeader } from './BlockHeaderApi'
 import { Chain } from '../../../../sdk/types'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
 import { BulkFileDataManager } from '../util/BulkFileDataManager'
@@ -109,7 +109,7 @@ export interface ChaintracksStorageQueryApi {
 
   /**
    * Returns serialized headers as a Uint8Array.
-   * Only adds active headers.
+   * Only adds bulk and active live headers.
    *
    * @param height is the minimum header height to return, must be >= zero.
    * @param count height + count - 1 is the maximum header height to return.
@@ -118,14 +118,14 @@ export interface ChaintracksStorageQueryApi {
   getHeadersUint8Array(height: number, count: number): Promise<Uint8Array>
 
   /**
-   * Returns serialized headers as an array of bytes.
-   * Only adds active headers.
+   * Returns an array of deserialized headers.
+   * Only adds bulk and active live headers.
    *
    * @param height is the minimum header height to return, must be >= zero.
    * @param count height + count - 1 is the maximum header height to return.
-   * @returns serialized headers as an array of bytes.
+   * @returns array of deserialized headers
    */
-  getHeaders(height: number, count: number): Promise<number[]>
+  getHeaders(height: number, count: number): Promise<BaseBlockHeader[]>
 
   /**
    * Returns active `LiveBlockHeaders` with height in the given range.
