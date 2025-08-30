@@ -156,44 +156,16 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
       .slice(0, count)
   }
 
-  override async getHeaders(height: number, count: number): Promise<number[]> {
-    if (count <= 0) return []
-
+  override async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
+    if (range.isEmpty) return []
     const data = await this.getData()
     const headers = Array.from(data.liveHeaders.values())
-      .filter(h => h.isActive && h.height >= height && h.height < height + count)
-      .sort((a, b) => a.height - b.height)
-      .slice(0, count)
-
-    const bufs: Uint8Array[] = []
-
-    if (headers.length === 0 || headers[0].height > height) {
-      const bulkCount = headers.length === 0 ? count : headers[0].height - height
-      const range = new HeightRange(height, height + bulkCount - 1)
-      const reader = await BulkFilesReaderStorage.fromStorage(this, new ChaintracksFetch(), range, bulkCount * 80)
-      const bulkData = await reader.read()
-      if (bulkData) {
-        bufs.push(bulkData)
-      }
-    }
-
-    if (headers.length > 0) {
-      let buf = new Uint8Array(headers.length * 80)
-      for (let i = 0; i < headers.length; i++) {
-        const h = headers[i]
-        const ha = serializeBaseBlockHeader(h)
-        buf.set(ha, i * 80)
-      }
-      bufs.push(buf)
-    }
-
-    const r: number[] = []
-    for (const bh of bufs) {
-      for (const b of bh) {
-        r.push(b)
-      }
-    }
-    return r
+      .filter(h =>
+        h.isActive
+        && h.height >= range.minHeight
+        && h.height <= range.maxHeight)
+      .sort((a, b) => a.height - b.height);
+    return headers
   }
 
   override async insertHeader(header: BlockHeader, prev?: LiveBlockHeader): Promise<InsertHeaderResult> {

@@ -1,4 +1,4 @@
-import { ChaintracksStorageBaseOptions, InsertHeaderResult } from '../Api/ChaintracksStorageApi'
+import { ChaintracksStorageBaseOptions, ChaintracksStorageBulkFileApi, InsertHeaderResult } from '../Api/ChaintracksStorageApi'
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader } from '../util/blockHeaderUtilities'
@@ -21,8 +21,7 @@ interface ChaintracksIdbData {
 
 export interface ChaintracksStorageIdbOptions extends ChaintracksStorageBaseOptions {}
 
-export class ChaintracksStorageIdb extends ChaintracksStorageBase {
-
+export class ChaintracksStorageIdb extends ChaintracksStorageBase implements ChaintracksStorageBulkFileApi {
   dbName: string
 
   db?: IDBPDatabase<ChaintracksStorageIdbSchema>
@@ -190,13 +189,70 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase {
     return maxValue
   }
 
-  override liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
-    throw new Error('Method not implemented.')
+  override async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const heightIndex = store.index('height')
+
+    let cursor = await heightIndex.openCursor(null, 'next');
+    const headers: LiveBlockHeader[] = []
+
+    while (cursor && count > 0) {
+      const header = this.repairStoredLiveHeader(cursor.value)
+      if (header && header.isActive) {
+        count--
+        headers.push(header)
+      }
+      cursor = await cursor.continue()
+    }
+
+    await trx.done
+    return headers
   }
-  override getHeaders(height: number, count: number): Promise<number[]> {
-    throw new Error('Method not implemented.')
+
+  override async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const heightIndex = store.index('height')
+
+    let cursor = await heightIndex.openCursor(null, 'next');
+    const headers: LiveBlockHeader[] = []
+
+    while (cursor) {
+      const header = this.repairStoredLiveHeader(cursor.value)
+      if (header && range.contains(header.headerId)) {
+        headers.push(header)
+      }
+      cursor = await cursor.continue()
+    }
+
+    await trx.done
+    return headers
   }
+
   override insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
+    throw new Error('Method not implemented.')
+  }
+
+  async deleteBulkFile(fileId: number): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+
+  async insertBulkFile(file: BulkHeaderFileInfo): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+  async updateBulkFile(fileId: number, file: BulkHeaderFileInfo): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+  async getBulkFiles(): Promise<BulkHeaderFileInfo[]> {
+    throw new Error('Method not implemented.')
+  }
+
+  async getBulkFileData(fileId: number, offset?: number, length?: number): Promise<Uint8Array | undefined> {
     throw new Error('Method not implemented.')
   }
 
@@ -206,15 +262,17 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase {
    * 
    * This function restores these property values to true and false.
    * 
-   * @param header updated in place and returned
-   * @returns updated in place and returned
+   * @param header
+   * @returns copy of header with updated properties
    */
   private repairStoredLiveHeader(header?: LiveBlockHeader): LiveBlockHeader | undefined {
-    if (header) {
-      header['isActive'] = !!header['isActive']
-      header['isChainTip'] = !!header['isChainTip']
+    if (!header) return undefined
+    const h: LiveBlockHeader = {
+      ...header,
+      isActive: !!header['isActive'],
+      isChainTip: !!header['isChainTip']
     }
-    return header
+    return h
   }
 
   private prepareStoredLiveHeader(header: LiveBlockHeader, forInsert?: boolean) : object {

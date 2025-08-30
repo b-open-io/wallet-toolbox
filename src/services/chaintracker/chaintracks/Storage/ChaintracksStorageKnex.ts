@@ -4,7 +4,7 @@ import { InsertHeaderResult, ChaintracksStorageBaseOptions } from '../Api/Chaint
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
-import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader } from '../util/blockHeaderUtilities'
+import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader, serializeBaseBlockHeaders } from '../util/blockHeaderUtilities'
 import { verifyOneOrNone } from '../../../../utility/utilityHelpers'
 import { DBType } from '../../../../storage/StorageReader'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
@@ -15,6 +15,8 @@ import { ChaintracksStorageBulkFileApi } from '../Api/ChaintracksStorageApi'
 import { Chain } from '../../../../sdk/types'
 import { WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER } from '../../../../sdk/WERR_errors'
 import { determineDBType } from '../../../../storage/schema/KnexMigrations'
+import { BulkFileDataReader } from '../index.client'
+import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
 
 export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOptions {
   /**
@@ -409,49 +411,13 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     })
   }
 
-  async getHeaders(height: number, count: number): Promise<number[]> {
-    if (count <= 0) return []
-
+  async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
     const headers = await this.knex<LiveBlockHeader>(this.headerTableName)
       .where({ isActive: true })
-      .andWhere('height', '>=', height)
-      .andWhere('height', '<', height + count)
-      .limit(count)
+      .andWhere('height', '>=', range.minHeight)
+      .andWhere('height', '<=', range.maxHeight)
       .orderBy('height')
-
-    const bufs: Uint8Array[] = []
-
-    if (headers.length === 0 || headers[0].height > height) {
-      // Some or all headers requested are in bulk storage...
-      // There may be some overlap between bulk and live, headers are only
-      // deleted from live after they have been added to bulk.
-      // Only get what is needed.
-      const bulkCount = headers.length === 0 ? count : headers[0].height - height
-      const range = new HeightRange(height, height + bulkCount - 1)
-      const reader = await BulkFilesReaderStorage.fromStorage(this, new ChaintracksFetch(), range, bulkCount * 80)
-      const bulkData = await reader.read()
-      if (bulkData) bufs.push(bulkData)
-    }
-
-    if (headers.length > 0) {
-      // Some or all headers requested were in live storage...
-      let buf = new Uint8Array(headers.length * 80)
-      for (let i = 0; i < headers.length; i++) {
-        const h = headers[i]
-        const ha = serializeBaseBlockHeader(h)
-        buf.set(ha, i * 80)
-      }
-      bufs.push(buf)
-    }
-
-    const r = [bufs.length * 80]
-    let i = 0
-    for (const bh of bufs) {
-      for (const b of bh) {
-        r[i++] = b
-      }
-    }
-    return r
+    return headers
   }
 
   concatSerializedHeaders(bufs: number[][]): number[] {

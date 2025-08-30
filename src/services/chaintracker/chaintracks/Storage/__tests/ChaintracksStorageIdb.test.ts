@@ -77,6 +77,9 @@ describe('ChaintracksStorageIdb tests', () => {
     const maxId = await storage.findMaxHeaderId()
     expect(maxId).toBe(5)
 
+    const hfbs = await storage.liveHeadersForBulk(3)
+    expect(hfbs.length).toBe(3)
+
     const deleteCount = await storage.deleteOlderLiveBlockHeaders(900003)
     expect(deleteCount).toBe(3)
 

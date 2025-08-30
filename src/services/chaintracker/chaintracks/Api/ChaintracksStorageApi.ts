@@ -108,16 +108,40 @@ export interface ChaintracksStorageQueryApi {
   isMerkleRootActive(merkleRoot: string): Promise<boolean>
 
   /**
-   * Adds headers in 80 byte serialized format to a buffer.
+   * Returns serialized headers as a Uint8Array.
    * Only adds active headers.
-   * Buffer length divided by 80 is the actual number returned.
    *
-   * This function supports the ChaintracksClientApi
+   * @param height is the minimum header height to return, must be >= zero.
+   * @param count height + count - 1 is the maximum header height to return.
+   * @returns serialized headers as a Uint8Array.
+   */
+  getHeadersUint8Array(height: number, count: number): Promise<Uint8Array>
+
+  /**
+   * Returns serialized headers as an array of bytes.
+   * Only adds active headers.
    *
-   * @param height of first header, must be >= zero.
-   * @param count of headers, maximum
+   * @param height is the minimum header height to return, must be >= zero.
+   * @param count height + count - 1 is the maximum header height to return.
+   * @returns serialized headers as an array of bytes.
    */
   getHeaders(height: number, count: number): Promise<number[]>
+
+  /**
+   * Returns active `LiveBlockHeaders` with height in the given range.
+   *
+   * @param range
+   * @returns array of active `LiveBlockHeaders`
+   */
+  getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>
+
+  /**
+   * Returns serialized bulk headers in the given range.
+   *
+   * @param range
+   * @returns serialized headers as a Uint8Array.
+   */
+  getBulkHeaders(range: HeightRange): Promise<Uint8Array>
 
   /**
    * Returns block header for a given block height on active chain.
