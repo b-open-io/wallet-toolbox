@@ -132,31 +132,20 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
     return Array.from(data.liveHeaders.values()).find(h => h.merkleRoot === merkleRoot) || null
   }
 
-  override async findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }> {
+  override async findLiveHeightRange(): Promise<HeightRange> {
     const data = await this.getData()
     const activeHeaders = Array.from(data.liveHeaders.values()).filter(h => h.isActive)
     if (activeHeaders.length === 0) {
-      return { minHeight: 0, maxHeight: -1 }
+      return HeightRange.empty;
     }
     const minHeight = Math.min(...activeHeaders.map(h => h.height))
     const maxHeight = Math.max(...activeHeaders.map(h => h.height))
-    return { minHeight, maxHeight }
+    return new HeightRange(minHeight, maxHeight)
   }
 
   override async findMaxHeaderId(): Promise<number> {
     const data = await this.getData()
     return data.maxHeaderId
-  }
-
-  override async getLiveHeightRange(): Promise<HeightRange> {
-    const data = await this.getData()
-    const activeHeaders = Array.from(data.liveHeaders.values()).filter(h => h.isActive)
-    if (activeHeaders.length === 0) {
-      return new HeightRange(0, -1)
-    }
-    const minHeight = Math.min(...activeHeaders.map(h => h.height))
-    const maxHeight = Math.max(...activeHeaders.map(h => h.height))
-    return new HeightRange(minHeight, maxHeight)
   }
 
   override async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {

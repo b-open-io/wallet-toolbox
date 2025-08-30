@@ -107,26 +107,27 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     await this.knex.destroy()
   }
 
-  async findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }> {
-    const maxHeight = (await this.findChainTipHeader()).height
-
-    const [resultrow] = await this.knex(this.headerTableName).min('height as minHeight')
-    return { minHeight: resultrow.minHeight, maxHeight }
+  override async findLiveHeightRange(): Promise<HeightRange> {
+    return new HeightRange(
+      ((await this.knex(this.headerTableName).where({ isActive: true }).min('height as v')).pop()?.v as number) || 0,
+      ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
+    )
   }
 
-  async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
+
+  override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
     const [header] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ headerId: headerId })
     if (!header) throw new Error(`HeaderId ${headerId} not found in live header database.`)
     return header
   }
 
-  async findChainTipHeader(): Promise<LiveBlockHeader> {
+  override async findChainTipHeader(): Promise<LiveBlockHeader> {
     const [tip] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ isActive: true, isChainTip: true })
     if (!tip) throw new Error('Database contains no active chain tip header.')
     return tip
   }
 
-  async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
+  override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
     const [tip] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ isActive: true, isChainTip: true })
     return tip
   }
@@ -368,13 +369,6 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     return ((await this.knex(this.headerTableName).max('headerId as v')).pop()?.v as number) || -1
     //const [resultrow] = await this.knex(this.headerTableName).max('headerId as maxHeaderId')
     //return resultrow?.maxHeaderId || 0
-  }
-
-  async getLiveHeightRange(): Promise<HeightRange> {
-    return new HeightRange(
-      ((await this.knex(this.headerTableName).where({ isActive: true }).min('height as v')).pop()?.v as number) || 0,
-      ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
-    )
   }
 
   override async deleteLiveBlockHeaders(): Promise<void> {

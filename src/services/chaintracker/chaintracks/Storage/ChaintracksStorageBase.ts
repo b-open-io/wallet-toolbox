@@ -74,9 +74,8 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
   abstract findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader>
   abstract findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null>
   abstract findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null>
-  abstract findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }>
+  abstract findLiveHeightRange(): Promise<HeightRange>
   abstract findMaxHeaderId(): Promise<number>
-  abstract getLiveHeightRange(): Promise<HeightRange>
   abstract liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]>
   abstract getHeaders(height: number, count: number): Promise<number[]>
   /**
@@ -95,7 +94,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
   async getAvailableHeightRanges(): Promise<{ bulk: HeightRange; live: HeightRange }> {
     await this.makeAvailable()
     const bulk = await this.bulkManager.getHeightRange()
-    const live = await this.getLiveHeightRange()
+    const live = await this.findLiveHeightRange()
     if (bulk.isEmpty) {
       if (!live.isEmpty && live.minHeight !== 0)
         throw new Error('With empty bulk storage, live storage must start with genesis header.')

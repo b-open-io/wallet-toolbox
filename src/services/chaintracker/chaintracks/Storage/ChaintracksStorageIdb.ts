@@ -45,6 +45,203 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase {
     this.db = await this.initDB()
   }
 
+  override async destroy(): Promise<void> {}
+
+  override async deleteLiveBlockHeaders(): Promise<void> {
+    await this.makeAvailable( )
+    await this.db?.clear('live_headers')
+  }
+
+  /**
+   * Delete live headers with height less or equal to `maxHeight`
+   * 
+   * Set existing headers with previousHeaderId value set to the headerId value of
+   * a header which is to be deleted to null.
+   *
+   * @param maxHeight delete all records with less or equal `height`
+   * @returns number of deleted records
+   */
+  override async deleteOlderLiveBlockHeaders(maxHeight: number): Promise<number> {
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const heightIndex = store.index('height')
+    const previousHeaderIdIndex = store.index('previousHeaderId')
+
+
+    // Get all headers with height <= maxHeight
+    const range = IDBKeyRange.upperBound(maxHeight)
+    const headersToDelete: LiveBlockHeader[] = await heightIndex.getAll(range)
+    const headerIdsToDelete = new Set(headersToDelete.map(header => header.headerId))
+    const deletedCount = headersToDelete.length
+
+    for (const id of headerIdsToDelete) {
+      const headerToUpdate = await previousHeaderIdIndex.get(id)
+      await store.put({ ...headerToUpdate, previousHeaderId: null })
+    }
+
+    // Delete the headers
+    for (const id of headerIdsToDelete) {
+      await store.delete(id)
+    }
+
+    await trx.done
+    return deletedCount
+  }
+
+  /**
+   * @returns the active chain tip header
+   * @throws an error if there is no tip.
+   */
+  override async findChainTipHeader(): Promise<LiveBlockHeader> {
+    const header = await this.findChainTipHeaderOrUndefined()
+    if (!header) throw new Error('Database contains no active chain tip header.')
+    return header
+  }
+
+  /**
+   * 
+   * @returns the active chain tip header
+   * @throws an error if there is no tip.
+   */
+  override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const activeTipIndex = store.index('activeTip')
+    const header = await activeTipIndex.get([1, 1])
+    this.repairStoredLiveHeader(header)
+    await trx.done
+    return header
+  }
+
+  override async findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const hashIndex = store.index('hash')
+    const header = await hashIndex.get(hash)
+    this.repairStoredLiveHeader(header)
+    await trx.done
+    return header
+  }
+
+  override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const header = await store.get(headerId)
+    this.repairStoredLiveHeader(header)
+    await trx.done
+    return header
+  }
+
+  override async findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const heightIndex = store.index('height')
+    const header = await heightIndex.get(height)
+    this.repairStoredLiveHeader(header)
+    await trx.done
+    return header || null
+  }
+
+  override async findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const merkleRootIndex = store.index('merkleRoot')
+    const header = await merkleRootIndex.get(merkleRoot)
+    this.repairStoredLiveHeader(header)
+    await trx.done
+    return header || null
+  }
+
+  override async findLiveHeightRange(): Promise<HeightRange> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    const heightIndex = store.index('height')
+
+    const minCursor = await heightIndex.openCursor(null, 'next');
+    const minValue = minCursor ? minCursor.value.height : null;
+
+    const maxCursor = await heightIndex.openCursor(null, 'prev');
+    const maxValue = maxCursor ? maxCursor.value.height : null;
+
+    const range = (minValue === null || maxValue === null)
+      ? HeightRange.empty
+      : new HeightRange(minValue, maxValue);
+
+    await trx.done
+    return range
+  }
+
+  override async findMaxHeaderId(): Promise<number> {
+    await this.makeAvailable( )
+    const trx = this.toDbTrxReadOnly(['live_headers'])
+    const store = trx.objectStore('live_headers')
+
+    const maxCursor = await store.openKeyCursor(null, 'prev');
+    const maxValue: number = maxCursor ? Number(maxCursor.key) : 0;
+    await trx.done
+    return maxValue
+  }
+
+  override liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
+    throw new Error('Method not implemented.')
+  }
+  override getHeaders(height: number, count: number): Promise<number[]> {
+    throw new Error('Method not implemented.')
+  }
+  override insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
+    throw new Error('Method not implemented.')
+  }
+
+  /**
+   * IndexedDB does not do indices of boolean properties.
+   * So true is stored as a 1, and false is stored as no property value (delete v['property'])
+   * 
+   * This function restores these property values to true and false.
+   * 
+   * @param header updated in place and returned
+   * @returns updated in place and returned
+   */
+  private repairStoredLiveHeader(header?: LiveBlockHeader): LiveBlockHeader | undefined {
+    if (header) {
+      header['isActive'] = !!header['isActive']
+      header['isChainTip'] = !!header['isChainTip']
+    }
+    return header
+  }
+
+  private prepareStoredLiveHeader(header: LiveBlockHeader, forInsert?: boolean) : object {
+    const h: object = {...header}
+    if (forInsert)
+      delete h['headerId'];
+
+    if (header.isActive) h['isActive'] = 1; else delete h['isActive'];
+    if (header.isChainTip) h['isChainTip'] = 1; else delete h['isChainTip'];
+
+    return h
+  }
+
+  async insertLiveHeader(header: LiveBlockHeader): Promise<LiveBlockHeader> {
+    
+    const trx = this.toDbTrxReadWrite(['live_headers'])
+    const store = trx.objectStore('live_headers')
+    
+    const h = this.prepareStoredLiveHeader(header, true)
+
+    header.headerId = Number(await store.add(h))
+    
+    await trx.done
+
+    return header
+  }
+
   async initDB(): Promise<IDBPDatabase<ChaintracksStorageIdbSchema>> {
     const db = await openDB<ChaintracksStorageIdbSchema>(this.dbName, 1, {
       upgrade(db, oldVersion, newVersion, transaction) {
@@ -54,7 +251,9 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase {
             autoIncrement: true
           })
           liveHeadersStore.createIndex('hash', 'hash', { unique: true })
+          liveHeadersStore.createIndex('previousHeaderId', 'previousHeaderId', { unique: false })
           liveHeadersStore.createIndex('height', 'height', { unique: false })
+          liveHeadersStore.createIndex('merkleRoot', 'merkleRoot', { unique: false })
           liveHeadersStore.createIndex('previousHash', 'previousHash', { unique: false })
           liveHeadersStore.createIndex('isActive', 'isActive', { unique: false })
           liveHeadersStore.createIndex('isChainTip', 'isChainTip', { unique: false })
@@ -93,120 +292,6 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase {
     return trx
   }
 
-
-  override async destroy(): Promise<void> {}
-
-  override async deleteLiveBlockHeaders(): Promise<void> {
-    if (!this.db) throw new Error('not initialized')
-    await this.db?.clear('live_headers')
-  }
-
-  /**
-   * Delete live headers with height less or equal to `maxHeight`
-   * 
-   * Set existing headers with previousHeaderId value set to the headerId value of
-   * a header which is to be deleted to null.
-   *
-   * @param maxHeight delete all records with less or equal `height`
-   * @returns number of deleted records
-   */
-  override async deleteOlderLiveBlockHeaders(maxHeight: number): Promise<number> {
-    if (!this.db) throw new Error('not initialized')
-
-    const trx = this.toDbTrxReadWrite(['live_headers'])
-    const store = trx.objectStore('live_headers')
-    const heightIndex = store.index('height')
-    const previousHeaderIdIndex = store.index('previousHeaderId')
-
-
-    // Get all headers with height <= maxHeight
-    const range = IDBKeyRange.upperBound(maxHeight)
-    const headerIdsToDelete = await heightIndex.getAll(range)
-
-    const deletedCount = headerIdsToDelete.length
-
-    const headersToUpdate = await previousHeaderIdIndex.getAll(headerIdsToDelete)
-    for (const header of headersToUpdate) {
-      await store.put({ ...header, previousHeaderId: null })
-    }
-
-    // Delete the headers
-    for (const headerId of headerIdsToDelete) {
-      await store.delete(headerId)
-    }
-
-    await trx.done
-    return deletedCount
-  }
-
-  /**
-   * @returns the active chain tip header
-   * @throws an error if there is no tip.
-   */
-  override async findChainTipHeader(): Promise<LiveBlockHeader> {
-    const header = await this.findChainTipHeaderOrUndefined()
-    if (!header) throw new Error('Database contains no active chain tip header.')
-    return header
-  }
-
-  /**
-   * 
-   * @returns the active chain tip header
-   * @throws an error if there is no tip.
-   */
-  override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
-    if (!this.db) throw new Error('not initialized')
-
-    const trx = this.toDbTrxReadOnly(['live_headers'])
-    const store = trx.objectStore('live_headers')
-    const activeTipIndex = store.index('activeTip')
-    const isActiveIndex = store.index('isActive')
-    const heightIndex = store.index('height')
-
-    const all0 = await store.getAll()
-    const all = await activeTipIndex.getAll()
-    const allIsActive = await isActiveIndex.getAll()
-    const allHeights = await heightIndex.getAll(1)
-
-    const header = await activeTipIndex.get([1, 1])
-    // Repair stored live headers
-    if (header) {
-      header.isActive = header.isActive === 1
-      header.isChainTip = header.isChainTip === 1
-    }
-    return header
-  }
-
-  override findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null> {
-    throw new Error('Method not implemented.')
-  }
-  override findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
-    throw new Error('Method not implemented.')
-  }
-  override findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> {
-    throw new Error('Method not implemented.')
-  }
-  override findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> {
-    throw new Error('Method not implemented.')
-  }
-  override findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }> {
-    throw new Error('Method not implemented.')
-  }
-  override findMaxHeaderId(): Promise<number> {
-    throw new Error('Method not implemented.')
-  }
-  override getLiveHeightRange(): Promise<HeightRange> {
-    throw new Error('Method not implemented.')
-  }
-  override liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
-    throw new Error('Method not implemented.')
-  }
-  override getHeaders(height: number, count: number): Promise<number[]> {
-    throw new Error('Method not implemented.')
-  }
-  override insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
-    throw new Error('Method not implemented.')
-  }
 }
 
 export interface ChaintracksStorageIdbSchema {

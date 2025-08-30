@@ -238,7 +238,7 @@ export class Chaintracks implements ChaintracksManagementApi {
   }
 
   private async getInfoNoLock(): Promise<ChaintracksInfoApi> {
-    const liveRange = await this.storage.getLiveHeightRange()
+    const liveRange = await this.storage.findLiveHeightRange()
     const info: ChaintracksInfoApi = {
       chain: this.chain,
       heightBulk: liveRange.minHeight - 1,
@@ -554,7 +554,7 @@ export class Chaintracks implements ChaintracksManagementApi {
               count = 0
             }
             if (!this.subscriberCallbacksEnabled) {
-              const live = await this.storage.getLiveHeightRange()
+              const live = await this.storage.findLiveHeightRange()
               if (!live.isEmpty) {
                 this.subscriberCallbacksEnabled = true
                 this.log(`listening at height of ${live.maxHeight}`)

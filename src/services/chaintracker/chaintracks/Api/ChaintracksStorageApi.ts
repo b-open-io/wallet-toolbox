@@ -161,7 +161,7 @@ export interface ChaintracksStorageQueryApi {
   /**
    * @returns The current minimum and maximum height active LiveBlockHeaders in the "live" database.
    */
-  findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }>
+  findLiveHeightRange(): Promise<HeightRange>
 
   /**
    * @returns The maximum headerId value used by existing records or -1 if there are none.
@@ -340,11 +340,6 @@ export interface ChaintracksStorageIngestApi {
    * Release all resources. Makes the instance unusable.
    */
   destroy(): Promise<void>
-
-  /**
-   * @returns min, max height range in live database or empty (0, -1)
-   */
-  getLiveHeightRange(): Promise<HeightRange>
 }
 
 export interface ChaintracksStorageApi extends ChaintracksStorageQueryApi, ChaintracksStorageIngestApi {
