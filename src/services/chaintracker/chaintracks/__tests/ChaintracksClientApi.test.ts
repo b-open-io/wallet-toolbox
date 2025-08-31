@@ -21,7 +21,7 @@ clientClass = 'Chaintracks'
 //clientClass = "ChaintracksServiceClient"
 const includeLocalServiceClient = true
 const includeLocalServiceChaintracks = true
-const includeNpmRegistryClient = true
+const includeNpmRegistryClient = false
 const includeGcrTestClient = true
 
 describe(`ChaintracksClientApi tests`, () => {

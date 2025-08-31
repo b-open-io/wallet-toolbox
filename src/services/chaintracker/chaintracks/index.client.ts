@@ -24,8 +24,10 @@ export * from './Ingest/WhatsOnChainServices'
 export * from './Storage/BulkStorageBase'
 export * from './Storage/ChaintracksStorageBase'
 export * from './Storage/ChaintracksStorageNoDb'
+export * from './Storage/ChaintracksStorageIdb'
 
 export * from './createDefaultNoDbChaintracksOptions'
+export * from './createIdbChaintracks'
 
 export * from './util/BulkFilesReader'
 export * from './util/HeightRange'
