@@ -325,7 +325,7 @@ export class BulkFilesReaderStorage extends BulkFilesReader {
 
   static async fromStorage(
     storage: ChaintracksStorageBase,
-    fetch: ChaintracksFetchApi,
+    fetch?: ChaintracksFetchApi,
     range?: HeightRange,
     maxBufferSize?: number
   ): Promise<BulkFilesReaderStorage> {

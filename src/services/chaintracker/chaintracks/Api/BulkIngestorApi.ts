@@ -16,12 +16,6 @@ export interface BulkIngestorBaseOptions {
    * available bulk block header resources.
    */
   jsonResource: string | undefined
-
-  /**
-   * If true, and the bulk ingestor supports it, bypass the live database
-   * up to `liveHeightThreshold` of available headers remaining.
-   */
-  bypassLiveEnabled: boolean
 }
 
 export interface BulkIngestorApi {
@@ -76,7 +70,7 @@ export interface BulkIngestorApi {
    * Components requiring asynchronous setup can override base class implementation.
    * @param storage
    */
-  setStorage(storage: ChaintracksStorageApi): Promise<void>
+  setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>
 
   storage(): ChaintracksStorageApi
 }

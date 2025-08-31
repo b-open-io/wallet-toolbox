@@ -65,13 +65,14 @@ export class ChaintracksKnexMigrations implements MigrationSource<string> {
           table.integer('bits').unsigned().notNullable
           table.integer('nonce').unsigned().notNullable
 
-          table.index(['hash'])
-          table.index(['previousHash'])
-          table.index(['isChainTip'])
+          table.unique(['hash'])
           table.index(['previousHeaderId'])
+          table.index(['height'])
+          table.index(['previousHash'])
+          table.index(['merkleRoot'])
+          table.index(['isChainTip'])
           table.index(['isActive'])
           table.index(['isActive', 'isChainTip'])
-          table.index(['height'])
         })
 
         await knex.schema.createTable(bulkFilesTableName, table => {

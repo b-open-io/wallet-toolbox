@@ -4,7 +4,13 @@ import { InsertHeaderResult, ChaintracksStorageBaseOptions } from '../Api/Chaint
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
-import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader } from '../util/blockHeaderUtilities'
+import {
+  addWork,
+  convertBitsToWork,
+  isMoreWork,
+  serializeBaseBlockHeader,
+  serializeBaseBlockHeaders
+} from '../util/blockHeaderUtilities'
 import { verifyOneOrNone } from '../../../../utility/utilityHelpers'
 import { DBType } from '../../../../storage/StorageReader'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
@@ -15,6 +21,8 @@ import { ChaintracksStorageBulkFileApi } from '../Api/ChaintracksStorageApi'
 import { Chain } from '../../../../sdk/types'
 import { WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER } from '../../../../sdk/WERR_errors'
 import { determineDBType } from '../../../../storage/schema/KnexMigrations'
+import { BulkFileDataReader } from '../index.client'
+import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
 
 export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOptions {
   /**
@@ -23,24 +31,6 @@ export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOpt
    * Knex.js database interface initialized with valid connection configuration.
    */
   knex: Knex | undefined
-  /**
-   * Required.
-   *
-   * The table name for live block headers.
-   */
-  headerTableName: string
-  /**
-   * Required.
-   *
-   * The table name for the block header hash to height index.
-   */
-  bulkBlockHashTableName: string
-  /**
-   * Required.
-   *
-   * The table name for the block header merkleRoot to height index.
-   */
-  bulkMerkleRootTableName: string
 }
 
 /**
@@ -51,28 +41,20 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
   static createStorageKnexOptions(chain: Chain, knex?: Knex): ChaintracksStorageKnexOptions {
     const options: ChaintracksStorageKnexOptions = {
       ...ChaintracksStorageBase.createStorageBaseOptions(chain),
-      knex,
-      headerTableName: `live_headers`,
-      bulkBlockHashTableName: `bulk_hash`,
-      bulkMerkleRootTableName: `bulk_merkle`
+      knex
     }
     return options
   }
 
   knex: Knex
   _dbtype?: DBType
-  headerTableName: string
   bulkFilesTableName: string = 'bulk_files'
-  bulkBlockHashTableName: string
-  bulkMerkleRootTableName: string
+  headerTableName: string = `live_headers`
 
   constructor(options: ChaintracksStorageKnexOptions) {
     super(options)
     if (!options.knex) throw new Error('The knex options property is required.')
     this.knex = options.knex
-    this.headerTableName = options.headerTableName
-    this.bulkBlockHashTableName = options.bulkBlockHashTableName
-    this.bulkMerkleRootTableName = options.bulkMerkleRootTableName
   }
 
   get dbtype(): DBType {
@@ -98,7 +80,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       this._dbtype = await determineDBType(this.knex)
       await super.makeAvailable()
       // Connect the bulk data file manager to the table provided by this storage class.
-      await this.bulkManager.setStorage(this)
+      await this.bulkManager.setStorage(this, this.log)
     }
   }
 
@@ -133,26 +115,26 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     await this.knex.destroy()
   }
 
-  async findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }> {
-    const maxHeight = (await this.findChainTipHeader()).height
-
-    const [resultrow] = await this.knex(this.headerTableName).min('height as minHeight')
-    return { minHeight: resultrow.minHeight, maxHeight }
+  override async findLiveHeightRange(): Promise<HeightRange> {
+    return new HeightRange(
+      ((await this.knex(this.headerTableName).where({ isActive: true }).min('height as v')).pop()?.v as number) || 0,
+      ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
+    )
   }
 
-  async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
+  override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
     const [header] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ headerId: headerId })
     if (!header) throw new Error(`HeaderId ${headerId} not found in live header database.`)
     return header
   }
 
-  async findChainTipHeader(): Promise<LiveBlockHeader> {
+  override async findChainTipHeader(): Promise<LiveBlockHeader> {
     const [tip] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ isActive: true, isChainTip: true })
     if (!tip) throw new Error('Database contains no active chain tip header.')
     return tip
   }
 
-  async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
+  override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
     const [tip] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ isActive: true, isChainTip: true })
     return tip
   }
@@ -240,17 +222,19 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
   async insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
     const table = this.headerTableName
 
-    let ok = true
-    let dupe = false
-    let noPrev = false
-    let badPrev = false
-    let noActiveAncestor = false
-    let noTip = false
-    let setActiveChainTip = false
-    let reorgDepth = 0
-    let priorTip: LiveBlockHeader | undefined
+    const r: InsertHeaderResult = {
+      added: false,
+      dupe: false,
+      noPrev: false,
+      badPrev: false,
+      noActiveAncestor: false,
+      isActiveTip: false,
+      reorgDepth: 0,
+      priorTip: undefined,
+      noTip: false
+    }
 
-    ok = await this.knex.transaction(async trx => {
+    await this.knex.transaction(async trx => {
       /*
               We ensure the header does not already exist. This needs to be done
               inside the transaction to avoid inserting multiple headers. If an
@@ -258,8 +242,8 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
             */
       const [dupeCheck] = await trx(table).where({ hash: header.hash }).count()
       if (dupeCheck['count(*)']) {
-        dupe = true
-        return false
+        r.dupe = true
+        return
       }
 
       // This is the existing previous header to the one being inserted...
@@ -267,61 +251,69 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
 
       if (!oneBack) {
         // Check if this is first live header...
-        const r = await trx(table).count()
-        const count = Number(r[0]['count(*)'])
+        const cr = await trx(table).count()
+        const count = Number(cr[0]['count(*)'])
         if (count === 0) {
+          // If this is the first live header, the last bulk header (if there is one) is the previous header.
           const lbf = await this.bulkManager.getLastFile()
           if (!lbf) throw new WERR_INVALID_OPERATION('bulk headers must exist before first live header can be added')
           if (header.previousHash === lbf.lastHash && header.height === lbf.firstHeight + lbf.count) {
+            // Valid first live header. Add it.
             const chainWork = addWork(lbf.lastChainWork, convertBitsToWork(header.bits))
+            r.isActiveTip = true
             const newHeader = {
               ...header,
               previousHeaderId: null,
               chainWork,
-              isChainTip: true,
-              isActive: true
+              isChainTip: r.isActiveTip,
+              isActive: r.isActiveTip
             }
+            // Success
             await trx<LiveBlockHeader>(table).insert(newHeader)
-            return true
+            r.added = true
+            return
           }
         }
-        // Never add a header that doesn't extend existing headers.
-        // Or one that's confused about its height.
-        noPrev = true
-        return false
+        // Failure without a oneBack
+        // First live header that does not follow last bulk header or
+        // Not the first live header and live headers doesn't include a previousHash header.
+        r.noPrev = true
+        return
       }
+
+      // This header's previousHash matches an existing live header's hash, if height isn't +1, reject it.
       if (oneBack.height + 1 != header.height) {
-        badPrev = true
-        return false
+        r.badPrev = true
+        return
       }
+
+      if (oneBack.isActive && oneBack.isChainTip) {
+        r.priorTip = oneBack
+      } else {
+        ;[r.priorTip] = await trx<LiveBlockHeader>(table).where({ isActive: true, isChainTip: true })
+      }
+
+      if (!r.priorTip) {
+        // No active chain tip found. This is a logic error in state of live headers.
+        r.noTip = true
+        return
+      }
+
+      // We have an acceptable new live header...and live headers has an active chain tip.
 
       const chainWork = addWork(oneBack.chainWork, convertBitsToWork(header.bits))
 
-      let tip: LiveBlockHeader | undefined
-      if (oneBack.isActive && oneBack.isChainTip) {
-        tip = oneBack
-      } else {
-        ;[tip] = await trx<LiveBlockHeader>(table).where({ isActive: true, isChainTip: true })
-      }
-
-      if (!tip) {
-        noTip = true
-        return false
-      }
-
-      priorTip = tip
-
-      setActiveChainTip = isMoreWork(chainWork, tip.chainWork)
+      r.isActiveTip = isMoreWork(chainWork, r.priorTip.chainWork)
 
       const newHeader = {
         ...header,
         previousHeaderId: oneBack.headerId,
         chainWork,
-        isChainTip: setActiveChainTip,
-        isActive: setActiveChainTip
+        isChainTip: r.isActiveTip,
+        isActive: r.isActiveTip
       }
 
-      if (setActiveChainTip) {
+      if (r.isActiveTip) {
         // Find newHeader's first active ancestor
         let activeAncestor = oneBack
         while (!activeAncestor.isActive) {
@@ -329,15 +321,16 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
             headerId: activeAncestor.previousHeaderId || -1
           })
           if (!previousHeader) {
-            noActiveAncestor = true
-            return false
+            // live headers doesn't contain an active ancestor. This is a live header's logic error.
+            r.noActiveAncestor = true
+            return
           }
           activeAncestor = previousHeader
         }
 
         if (!(oneBack.isActive && oneBack.isChainTip))
           // If this is the new active chain tip, and oneBack was not, this is a reorg.
-          reorgDepth = Math.min(priorTip.height, header.height) - activeAncestor.height
+          r.reorgDepth = Math.min(r.priorTip.height, header.height) - activeAncestor.height
 
         if (activeAncestor.headerId !== oneBack.headerId) {
           // Deactivate headers from the current active chain tip up to but excluding our activeAncestor:
@@ -367,79 +360,23 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       }
 
       if (oneBack.isChainTip) {
+        // Deactivate the old chain tip
         await trx<LiveBlockHeader>(table).where({ headerId: oneBack.headerId }).update({ isChainTip: false })
       }
 
       await trx<LiveBlockHeader>(table).insert(newHeader)
-
-      return true
+      r.added = true
     })
 
-    if (ok && setActiveChainTip) this.pruneLiveBlockHeaders(header.height)
+    if (r.added && r.isActiveTip) this.pruneLiveBlockHeaders(header.height)
 
-    return {
-      added: ok,
-      dupe,
-      isActiveTip: setActiveChainTip,
-      reorgDepth,
-      priorTip,
-      noPrev,
-      badPrev,
-      noActiveAncestor,
-      noTip
-    }
+    return r
   }
 
   async findMaxHeaderId(): Promise<number> {
     return ((await this.knex(this.headerTableName).max('headerId as v')).pop()?.v as number) || -1
     //const [resultrow] = await this.knex(this.headerTableName).max('headerId as maxHeaderId')
     //return resultrow?.maxHeaderId || 0
-  }
-
-  async getLiveHeightRange(): Promise<HeightRange> {
-    return new HeightRange(
-      ((await this.knex(this.headerTableName).where({ isActive: true }).min('height as v')).pop()?.v as number) || 0,
-      ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
-    )
-  }
-
-  async appendToIndexTable(table: string, index: string, buffers: string[], minHeight: number): Promise<void> {
-    const newRows: { height: number }[] = []
-    for (let i = 0; i < buffers.length; i++) {
-      const row = { height: minHeight + i }
-      row[index] = buffers[i]
-      newRows.push(row)
-    }
-    try {
-      await this.knex.batchInsert(table, newRows, newRows.length)
-      return
-    } catch (err: unknown) {
-      if ((err as { code: string })?.code !== 'ER_DUP_ENTRY') throw err
-    }
-
-    // If the batchInsert failed, we may be recovering from an earlier failure. Try inserting one at a time and ignore duplicate hash values.
-    for (let i = 0; i < newRows.length; i++) {
-      await this.knex(this.bulkBlockHashTableName).insert(newRows[i]).onConflict(index).ignore()
-    }
-  }
-
-  async appendToIndexTableChunked(
-    table: string,
-    index: string,
-    buffers: string[],
-    minHeight: number,
-    chunkSize: number
-  ): Promise<void> {
-    let remaining = buffers.length
-    while (remaining > 0) {
-      const size = Math.min(remaining, chunkSize)
-      const chunk = buffers.slice(0, size)
-      buffers = buffers.slice(size)
-      await this.appendToIndexTable(table, index, chunk, minHeight)
-      console.log(`Appended ${size} index records to ${index} table`)
-      remaining -= size
-      minHeight += size
-    }
   }
 
   override async deleteLiveBlockHeaders(): Promise<void> {
@@ -480,49 +417,13 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     })
   }
 
-  async getHeaders(height: number, count: number): Promise<number[]> {
-    if (count <= 0) return []
-
+  async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
     const headers = await this.knex<LiveBlockHeader>(this.headerTableName)
       .where({ isActive: true })
-      .andWhere('height', '>=', height)
-      .andWhere('height', '<', height + count)
-      .limit(count)
+      .andWhere('height', '>=', range.minHeight)
+      .andWhere('height', '<=', range.maxHeight)
       .orderBy('height')
-
-    const bufs: Uint8Array[] = []
-
-    if (headers.length === 0 || headers[0].height > height) {
-      // Some or all headers requested are in bulk storage...
-      // There may be some overlap between bulk and live, headers are only
-      // deleted from live after they have been added to bulk.
-      // Only get what is needed.
-      const bulkCount = headers.length === 0 ? count : headers[0].height - height
-      const range = new HeightRange(height, height + bulkCount - 1)
-      const reader = await BulkFilesReaderStorage.fromStorage(this, new ChaintracksFetch(), range, bulkCount * 80)
-      const bulkData = await reader.read()
-      if (bulkData) bufs.push(bulkData)
-    }
-
-    if (headers.length > 0) {
-      // Some or all headers requested were in live storage...
-      let buf = new Uint8Array(headers.length * 80)
-      for (let i = 0; i < headers.length; i++) {
-        const h = headers[i]
-        const ha = serializeBaseBlockHeader(h)
-        buf.set(ha, i * 80)
-      }
-      bufs.push(buf)
-    }
-
-    const r = [bufs.length * 80]
-    let i = 0
-    for (const bh of bufs) {
-      for (const b of bh) {
-        r[i++] = b
-      }
-    }
-    return r
+    return headers
   }
 
   concatSerializedHeaders(bufs: number[][]): number[] {

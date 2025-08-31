@@ -5,10 +5,20 @@ import {
   ChaintracksStorageIngestApi,
   ChaintracksStorageQueryApi
 } from '../Api/ChaintracksStorageApi'
-import { BlockHeader, LiveBlockHeader } from '../Api/BlockHeaderApi'
+import { BaseBlockHeader, BlockHeader, LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { HeightRange } from '../util/HeightRange'
-import { addWork, convertBitsToWork, isMoreWork, subWork } from '../util/blockHeaderUtilities'
+import {
+  addWork,
+  convertBitsToWork,
+  deserializeBaseBlockHeaders,
+  isMoreWork,
+  serializeBaseBlockHeaders,
+  subWork
+} from '../util/blockHeaderUtilities'
 import { BulkFileDataManager } from '../util/BulkFileDataManager'
+import { BulkFilesReaderStorage } from '../util/BulkFilesReader'
+import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
+import { deserialize } from 'v8'
 
 /**
  * Required interface methods of a Chaintracks Storage Engine implementation.
@@ -25,6 +35,8 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     }
     return options
   }
+
+  log: (...args: any[]) => void = () => {}
 
   chain: Chain
   liveHeightThreshold: number
@@ -45,7 +57,6 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     this.bulkManager =
       options.bulkFileDataManager || new BulkFileDataManager(BulkFileDataManager.createDefaultOptions(this.chain))
   }
-
   async shutdown(): Promise<void> {
     /* base class does notning */
   }
@@ -74,11 +85,11 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
   abstract findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader>
   abstract findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null>
   abstract findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null>
-  abstract findLiveHeightRange(): Promise<{ minHeight: number; maxHeight: number }>
+  abstract findLiveHeightRange(): Promise<HeightRange>
   abstract findMaxHeaderId(): Promise<number>
-  abstract getLiveHeightRange(): Promise<HeightRange>
   abstract liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]>
-  abstract getHeaders(height: number, count: number): Promise<number[]>
+  abstract getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>
+
   /**
    * @param header Header to attempt to add to live storage.
    * @returns details of conditions found attempting to insert header
@@ -88,6 +99,44 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
 
   // BASE CLASS IMPLEMENTATIONS - MAY BE OVERRIDEN
 
+  async getBulkHeaders(range: HeightRange): Promise<Uint8Array> {
+    if (range.isEmpty) return new Uint8Array()
+
+    const fetch = this.bulkManager.fetch
+    const reader = await BulkFilesReaderStorage.fromStorage(this, fetch, range, range.length * 80)
+    const data = await reader.read()
+    if (!data) return new Uint8Array()
+    return data
+  }
+
+  async getHeadersUint8Array(height: number, count: number): Promise<Uint8Array> {
+    if (count <= 0) return new Uint8Array()
+    const ranges = await this.getAvailableHeightRanges()
+    const range = new HeightRange(height, height + count - 1)
+    const bulkRange = ranges.bulk.intersect(range)
+    const liveRange = ranges.live.intersect(range)
+
+    if (liveRange.isEmpty && bulkRange.isEmpty) return new Uint8Array()
+
+    const liveHeaders = await this.getLiveHeaders(liveRange)
+    const liveData = serializeBaseBlockHeaders(liveHeaders)
+    const bulkData = await this.getBulkHeaders(bulkRange)
+
+    const data = new Uint8Array(liveData.length + bulkData.length)
+
+    if (bulkData.length > 0) data.set(bulkData, 0)
+
+    if (liveData.length > 0) data.set(liveData, bulkData.length)
+
+    return data
+  }
+
+  async getHeaders(height: number, count: number): Promise<BaseBlockHeader[]> {
+    const data = await this.getHeadersUint8Array(height, count)
+    const headers = deserializeBaseBlockHeaders(data)
+    return headers
+  }
+
   async deleteBulkBlockHeaders(): Promise<void> {
     await this.bulkManager.deleteBulkFiles()
   }
@@ -95,13 +144,13 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
   async getAvailableHeightRanges(): Promise<{ bulk: HeightRange; live: HeightRange }> {
     await this.makeAvailable()
     const bulk = await this.bulkManager.getHeightRange()
-    const live = await this.getLiveHeightRange()
+    const live = await this.findLiveHeightRange()
     if (bulk.isEmpty) {
       if (!live.isEmpty && live.minHeight !== 0)
         throw new Error('With empty bulk storage, live storage must start with genesis header.')
     } else {
-      if (bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
-      if (!live.isEmpty && bulk.maxHeight + 1 !== live.minHeight)
+      if (!bulk.isEmpty && bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
+      if (!live.isEmpty && !bulk.isEmpty && bulk.maxHeight + 1 !== live.minHeight)
         throw new Error('There is a gap or overlap between bulk and live header storage.')
     }
     return { bulk, live }
@@ -122,7 +171,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
         this.lastActiveMinHeight = undefined
       }
     } catch (err: unknown) {
-      console.log(err)
+      this.log(err)
       throw err
     }
   }
@@ -201,7 +250,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     if (!ignoreLimits && count > this.bulkMigrationChunkSize) return
 
     if (this.nowMigratingLiveToBulk) {
-      console.log('Already migrating live to bulk.')
+      this.log('Already migrating live to bulk.')
       return
     }
 

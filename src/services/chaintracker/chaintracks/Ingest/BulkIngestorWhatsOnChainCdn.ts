@@ -1,5 +1,4 @@
 import { Chain } from '../../../../sdk'
-import { logger } from '../../../../utility/utilityHelpers'
 import { BlockHeader } from '../Api/BlockHeaderApi'
 import { BulkIngestorBaseOptions } from '../Api/BulkIngestorApi'
 import { ChaintracksFetchApi } from '../Api/ChaintracksFetchApi'
@@ -78,7 +77,7 @@ export class BulkIngestorWhatsOnChainCdn extends BulkIngestorBase {
 
   override async getPresentHeight(): Promise<number | undefined> {
     const presentHeight = await this.woc.getChainTipHeight()
-    logger(`presentHeight=${presentHeight}`)
+    this.log(`presentHeight=${presentHeight}`)
     return presentHeight
   }
 
@@ -104,7 +103,7 @@ export class BulkIngestorWhatsOnChainCdn extends BulkIngestorBase {
         }
       }
     } catch (e) {
-      logger(`Errors during WhatsOnChain ingestion:\n${e}`)
+      this.log(`Errors during WhatsOnChain ingestion:\n${e}`)
     }
 
     const liveHeaders = await this.storage().addBulkHeaders(oldHeaders, bulkRange, priorLiveHeaders)

@@ -73,7 +73,7 @@ describe('WhatsOnChainServices tests', () => {
       errorsNew.push({ code, message })
       return true
     }
-    const okNew = await WocHeadersLiveListener(eh, errh, stopNewListenersToken, chain)
+    const okNew = await WocHeadersLiveListener(eh, errh, stopNewListenersToken, chain, console.log.bind(console))
     if (errorsNew.length > 0) console.log(JSON.stringify(errorsNew))
     expect(errorsNew.length).toBe(0)
     expect(okNew).toBe(true)

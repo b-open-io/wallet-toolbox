@@ -3,6 +3,7 @@ import { Chaintracks } from '../Chaintracks'
 import { wait } from '../../../../utility/utilityHelpers'
 import { Chain } from '../../../../sdk'
 import { createNoDbChaintracksOptions } from '../createDefaultNoDbChaintracksOptions'
+import { ChaintracksFs } from '../util/ChaintracksFs'
 
 const rootFolder = './src/services/chaintracker/chaintracks/__tests/data'
 
@@ -30,7 +31,15 @@ describe('Chaintracks tests', () => {
     await NoDbBody('test')
   })
 
-  async function NoDbBody(chain: Chain) {
+  test.skip('3 NoDb export mainnet', async () => {
+    await NoDbBody('main', true)
+  })
+
+  test.skip('4 NoDb export testnet', async () => {
+    await NoDbBody('test', true)
+  })
+
+  async function NoDbBody(chain: Chain, exportHeaders?: boolean) {
     const o = createNoDbChaintracksOptions(chain)
     const c = new Chaintracks(o)
     await c.makeAvailable()
@@ -39,6 +48,10 @@ describe('Chaintracks tests', () => {
       console.log(`Header received: ${header.height} ${header.hash}`)
     })
 
+    if (exportHeaders) {
+      const rootFolder = './src/services/chaintracker/chaintracks/__tests/data/export'
+      await c.exportBulkHeaders(rootFolder, ChaintracksFs, `https://cdn.projectbabbage.com/blockheaders`, 100000)
+    }
     //let done = false
     //for (; !done; ) {
     await wait(1000)

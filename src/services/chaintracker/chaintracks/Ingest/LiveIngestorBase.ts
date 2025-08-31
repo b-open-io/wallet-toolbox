@@ -23,6 +23,7 @@ export abstract class LiveIngestorBase implements LiveIngestorApi {
   }
 
   chain: Chain
+  log: (...args: any[]) => void = () => {}
 
   constructor(options: LiveIngestorBaseOptions) {
     this.chain = options.chain
@@ -40,8 +41,9 @@ export abstract class LiveIngestorBase implements LiveIngestorApi {
    * Allocate resources.
    * @param storage coordinating storage engine.
    */
-  async setStorage(storage: ChaintracksStorageApi): Promise<void> {
+  async setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void> {
     this.storageEngine = storage
+    this.log = log
   }
 
   /**

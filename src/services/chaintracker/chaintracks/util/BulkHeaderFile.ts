@@ -189,7 +189,7 @@ export class BulkHeaderFileStorage extends BulkHeaderFile {
   constructor(
     info: BulkHeaderFileInfo,
     public storage: ChaintracksStorageBase,
-    public fetch: ChaintracksFetchApi
+    public fetch?: ChaintracksFetchApi
   ) {
     super(info)
   }
@@ -200,8 +200,8 @@ export class BulkHeaderFileStorage extends BulkHeaderFile {
 
   override async ensureData(): Promise<Uint8Array> {
     if (this.data) return this.data
-    if (!this.sourceUrl) {
-      throw new WERR_INVALID_PARAMETER('sourceUrl', 'defined. Or data must be defined.')
+    if (!this.sourceUrl || !this.fetch) {
+      throw new WERR_INVALID_PARAMETER('sourceUrl and fetch', 'defined. Or data must be defined.')
     }
     const url = this.fetch.pathJoin(this.sourceUrl!, this.fileName)
     this.data = await this.fetch.download(url)

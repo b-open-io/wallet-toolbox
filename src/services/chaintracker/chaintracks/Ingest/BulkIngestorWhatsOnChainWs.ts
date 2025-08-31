@@ -62,6 +62,7 @@ export class BulkIngestorWhatsOnChainWs extends BulkIngestorBase {
       error,
       this.stopOldListenersToken,
       this.chain,
+      this.log,
       this.idleWait
     )
 

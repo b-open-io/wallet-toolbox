@@ -17,27 +17,26 @@ export abstract class BulkIngestorBase implements BulkIngestorApi {
   static createBulkIngestorBaseOptions(chain: Chain) {
     const options: BulkIngestorBaseOptions = {
       chain,
-      jsonResource: `${chain}NetBlockHeaders.json`,
-      bypassLiveEnabled: true
+      jsonResource: `${chain}NetBlockHeaders.json`
     }
     return options
   }
 
   chain: Chain
   jsonFilename: string
-  bypassLiveEnabled: boolean
+  log: (...args: any[]) => void = () => {}
 
   constructor(options: BulkIngestorBaseOptions) {
     if (!options.jsonResource) throw new Error('The jsonFilename options property is required.')
     this.chain = options.chain
     this.jsonFilename = options.jsonResource
-    this.bypassLiveEnabled = options.bypassLiveEnabled
   }
 
   private storageEngine: ChaintracksStorageBase | undefined
 
-  async setStorage(storage: ChaintracksStorageBase): Promise<void> {
+  async setStorage(storage: ChaintracksStorageBase, log: (...args: any[]) => void): Promise<void> {
     this.storageEngine = storage
+    this.log = log
   }
 
   async shutdown(): Promise<void> {}

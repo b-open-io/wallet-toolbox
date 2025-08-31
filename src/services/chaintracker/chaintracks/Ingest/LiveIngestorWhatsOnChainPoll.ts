@@ -91,7 +91,7 @@ export class LiveIngestorWhatsOnChainPoll extends LiveIngestorBase {
         await wait(1000)
       }
     }
-    console.log(`LiveIngestorWhatsOnChainPoll stopped`)
+    this.log(`LiveIngestorWhatsOnChainPoll stopped`)
   }
 
   stopListening(): void {

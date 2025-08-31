@@ -44,7 +44,7 @@ async function testUpdateLocalCache(chain: Chain, test: string) {
   const knexOptions = ChaintracksStorageKnex.createStorageKnexOptions(chain, makeKnex(localSqlite))
   const storage = new ChaintracksStorageKnex(knexOptions)
   const before = await storage.getAvailableHeightRanges()
-  await cdn.setStorage(storage)
+  await cdn.setStorage(storage, console.log)
 
   const range = new HeightRange(0, 9900000)
   const liveHeaders = await cdn.fetchHeaders(before, range, range, [])

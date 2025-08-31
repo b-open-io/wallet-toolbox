@@ -40,11 +40,18 @@ export class LiveIngestorWhatsOnChainWs extends LiveIngestorBase {
     }
 
     for (;;) {
-      const ok = await WocHeadersLiveListener(enqueue, error, this.stopNewListenersToken, this.chain, this.idleWait)
+      const ok = await WocHeadersLiveListener(
+        enqueue,
+        error,
+        this.stopNewListenersToken,
+        this.chain,
+        this.log,
+        this.idleWait
+      )
 
       if (!ok || errors.length > 0) {
-        console.log(`WhatsOnChain live ingestor ok=${ok} error count=${errors.length}`)
-        for (const e of errors) console.log(`WhatsOnChain error code=${e.code} count=${e.count} message=${e.message}`)
+        this.log(`WhatsOnChain live ingestor ok=${ok} error count=${errors.length}`)
+        for (const e of errors) this.log(`WhatsOnChain error code=${e.code} count=${e.count} message=${e.message}`)
       }
 
       if (ok) break

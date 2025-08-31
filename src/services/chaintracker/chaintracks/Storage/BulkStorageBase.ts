@@ -27,6 +27,7 @@ export abstract class BulkStorageBase implements BulkStorageApi {
 
   chain: Chain
   fs: ChaintracksFsApi
+  log: (...args: any[]) => void = () => {}
 
   constructor(options: BulkStorageBaseOptions) {
     this.chain = options.chain
@@ -50,7 +51,7 @@ export abstract class BulkStorageBase implements BulkStorageApi {
     return new HeightRange(0, await this.getMaxHeight())
   }
 
-  async setStorage(storage: ChaintracksStorageBase): Promise<void> {}
+  async setStorage(storage: ChaintracksStorageBase, log: (...args: any[]) => void): Promise<void> {}
 
   async exportBulkHeaders(rootFolder: string, jsonFilename: string, maxPerFile: number): Promise<void> {
     const info: BulkHeaderFilesInfo = {

@@ -3,6 +3,7 @@ import { Chain, ReqHistoryNote } from './types'
 import { WalletError } from './WalletError'
 import { TableOutput } from '../storage/schema/tables/TableOutput'
 import { ChaintracksServiceClient } from '../services/chaintracker/chaintracks/ChaintracksServiceClient'
+import { ChaintracksClientApi } from '../services/chaintracker/chaintracks/Api/ChaintracksClientApi'
 /**
  * Defines standard interfaces to access functionality implemented by external transaction processing services.
  */
@@ -192,21 +193,107 @@ export interface FiatExchangeRates {
 }
 
 export interface WalletServicesOptions {
+  /**
+   * 'main' or 'test': which BSV chain to use
+   */
   chain: Chain
+  /**
+   * As of 2025-08-31 the `taalApiKey` is unused for default configured services.
+   * See `arcConfig` instead.
+   */
   taalApiKey?: string
+  /**
+   * Api key for use accessing Bitails API at
+   * mainnet: `https://api.bitails.io/`
+   * testnet: `https://test-api.bitails.io/`
+   */
   bitailsApiKey?: string
+  /**
+   * Api key for use accessing WhatsOnChain API at
+   * mainnet: `https://api.whatsonchain.com/v1/bsv/main`
+   * testnet: `https://api.whatsonchain.com/v1/bsv/test`
+   */
   whatsOnChainApiKey?: string
+  /**
+   * The initial approximate BSV/USD exchange rate.
+   */
   bsvExchangeRate: BsvExchangeRate
+  /**
+   * Update interval for BSV/USD exchange rate.
+   * Default is 15 minutes.
+   */
   bsvUpdateMsecs: number
+  /**
+   * The initial approximate fiat exchange rates with USD as base.
+   */
   fiatExchangeRates: FiatExchangeRates
+  /**
+   * Update interval for Fiat exchange rates.
+   * Default is 24 hours.
+   */
   fiatUpdateMsecs: number
+  /**
+   * MAPI callbacks are deprecated at this time.
+   */
   disableMapiCallback?: boolean
+  /**
+   * API key for use accessing fiat exchange rates API at
+   * `http://api.exchangeratesapi.io/v1/latest?access_key=${key}`
+   *
+   * Obtain your own api key here:
+   * https://manage.exchangeratesapi.io/signup/free
+   */
   exchangeratesapiKey?: string
+  /**
+   * Due to the default use of a free exchangeratesapiKey with low usage limits,
+   * the `ChaintracksService` can act as a request rate multiplier.
+   *
+   * By default the following endpoint is used:
+   * `https://mainnet-chaintracks.babbage.systems/getFiatExchangeRates`
+   */
   chaintracksFiatExchangeRatesUrl?: string
-  chaintracks?: ChaintracksServiceClient
+  /**
+   * Optional Chaintracks client API instance.
+   * Default is a new instance of ChaintracksServiceClient configured to use:
+   * mainnet: `https://mainnet-chaintracks.babbage.systems`
+   * testnet: `https://testnet-chaintracks.babbage.systems`
+   */
+  chaintracks?: ChaintracksClientApi
+  /**
+   * TAAL ARC service provider endpoit to use
+   * Default is:
+   * mainnet: `https://arc.taal.com`
+   * testnet: `https://arc-test.taal.com`
+   */
   arcUrl: string
+  /**
+   * TAAL ARC service configuration options.
+   *
+   * apiKey Default value is undefined.
+   *
+   * deploymentId Default value: `wallet-toolbox-${randomBytesHex(16)}`.
+   *
+   * callbackUrl Default is undefined.
+   * callbackToken Default is undefined.
+   */
   arcConfig: ArcConfig
+  /**
+   * GorillaPool ARC service provider endpoit to use
+   * Default is:
+   * mainnet: `https://arc.gorillapool.io`
+   * testnet: undefined
+   */
   arcGorillaPoolUrl?: string
+  /**
+   * GorillaPool ARC service configuration options.
+   *
+   * apiKey Default is undefined.
+   *
+   * deploymentId Default value: `wallet-toolbox-${randomBytesHex(16)}`.
+   *
+   * callbackUrl Default is undefined.
+   * callbackToken Default is undefined.
+   */
   arcGorillaPoolConfig?: ArcConfig
 }
 

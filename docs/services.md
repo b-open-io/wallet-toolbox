@@ -392,7 +392,7 @@ export interface BulkIngestorApi {
     getPresentHeight(): Promise<number | undefined>;
     fetchHeaders(before: HeightRanges, fetchRange: HeightRange, bulkRange: HeightRange, priorLiveHeaders: BlockHeader[]): Promise<BlockHeader[]>;
     synchronize(presentHeight: number, before: HeightRanges, priorLiveHeaders: BlockHeader[]): Promise<BulkSyncResult>;
-    setStorage(storage: ChaintracksStorageApi): Promise<void>;
+    setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>;
     storage(): ChaintracksStorageApi;
 }
 ```
@@ -445,7 +445,7 @@ Called before first Synchronize with reference to storage.
 Components requiring asynchronous setup can override base class implementation.
 
 ```ts
-setStorage(storage: ChaintracksStorageApi): Promise<void>
+setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>
 ```
 See also: [ChaintracksStorageApi](./services.md#interface-chaintracksstorageapi)
 
@@ -490,20 +490,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export interface BulkIngestorBaseOptions {
     chain: Chain;
     jsonResource: string | undefined;
-    bypassLiveEnabled: boolean;
 }
 ```
 
 See also: [Chain](./client.md#type-chain)
-
-###### Property bypassLiveEnabled
-
-If true, and the bulk ingestor supports it, bypass the live database
-up to `liveHeightThreshold` of available headers remaining.
-
-```ts
-bypassLiveEnabled: boolean
-```
 
 ###### Property chain
 
@@ -661,7 +651,7 @@ export interface BulkStorageApi {
     findHeaderForHeight(height: number): Promise<BlockHeader>;
     headersToBuffer(height: number, count: number): Promise<Uint8Array>;
     exportBulkHeaders(rootFolder: string, jsonFilename: string, maxPerFile: number): Promise<void>;
-    setStorage(storage: ChaintracksStorageApi): Promise<void>;
+    setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>;
 }
 ```
 
@@ -782,7 +772,7 @@ Called before first Synchronize with reference to storage.
 Components requiring asynchronous setup can override base class implementation.
 
 ```ts
-setStorage(storage: ChaintracksStorageApi): Promise<void>
+setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>
 ```
 See also: [ChaintracksStorageApi](./services.md#interface-chaintracksstorageapi)
 
@@ -1273,7 +1263,7 @@ export interface ChaintracksOptions {
     bulkIngestors: BulkIngestorApi[];
     liveIngestors: LiveIngestorApi[];
     addLiveRecursionLimit: number;
-    logging: undefined | "all";
+    logging?: (...args: any[]) => void;
     readonly: boolean;
 }
 ```
@@ -1291,10 +1281,10 @@ addLiveRecursionLimit: number
 
 ###### Property logging
 
-Event logging level
+Optional logging method
 
 ```ts
-logging: undefined | "all"
+logging?: (...args: any[]) => void
 ```
 
 ###### Property readonly
@@ -1406,6 +1396,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export interface ChaintracksStorageApi extends ChaintracksStorageQueryApi, ChaintracksStorageIngestApi {
+    log: (...args: any[]) => void;
     bulkManager: BulkFileDataManager;
     destroy(): Promise<void>;
 }
@@ -1526,6 +1517,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export interface ChaintracksStorageIngestApi {
+    log: (...args: any[]) => void;
     insertHeader(header: BlockHeader, prev?: LiveBlockHeader): Promise<InsertHeaderResult>;
     pruneLiveBlockHeaders(activeTipHeight: number): Promise<void>;
     migrateLiveToBulk(count: number): Promise<void>;
@@ -1534,11 +1526,10 @@ export interface ChaintracksStorageIngestApi {
     migrateLatest(): Promise<void>;
     dropAllData(): Promise<void>;
     destroy(): Promise<void>;
-    getLiveHeightRange(): Promise<HeightRange>;
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [HeightRange](./services.md#class-heightrange), [InsertHeaderResult](./services.md#type-insertheaderresult), [LiveBlockHeader](./services.md#interface-liveblockheader)
+See also: [BlockHeader](./client.md#interface-blockheader), [InsertHeaderResult](./services.md#type-insertheaderresult), [LiveBlockHeader](./services.md#interface-liveblockheader)
 
 ###### Method deleteOlderLiveBlockHeaders
 
@@ -1561,17 +1552,6 @@ Release all resources. Makes the instance unusable.
 ```ts
 destroy(): Promise<void>
 ```
-
-###### Method getLiveHeightRange
-
-```ts
-getLiveHeightRange(): Promise<HeightRange>
-```
-See also: [HeightRange](./services.md#class-heightrange)
-
-Returns
-
-min, max height range in live database or empty (0, -1)
 
 ###### Method insertHeader
 
@@ -1675,43 +1655,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOptions {
     knex: Knex | undefined;
-    headerTableName: string;
-    bulkBlockHashTableName: string;
-    bulkMerkleRootTableName: string;
 }
 ```
 
 See also: [ChaintracksStorageBaseOptions](./services.md#interface-chaintracksstoragebaseoptions)
-
-###### Property bulkBlockHashTableName
-
-Required.
-
-The table name for the block header hash to height index.
-
-```ts
-bulkBlockHashTableName: string
-```
-
-###### Property bulkMerkleRootTableName
-
-Required.
-
-The table name for the block header merkleRoot to height index.
-
-```ts
-bulkMerkleRootTableName: string
-```
-
-###### Property headerTableName
-
-Required.
-
-The table name for live block headers.
-
-```ts
-headerTableName: string
-```
 
 ###### Property knex
 
@@ -1755,6 +1702,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export interface ChaintracksStorageQueryApi {
+    log: (...args: any[]) => void;
     findChainTipHeader(): Promise<LiveBlockHeader>;
     findChainTipHash(): Promise<string>;
     findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined>;
@@ -1764,7 +1712,10 @@ export interface ChaintracksStorageQueryApi {
     findCommonAncestor(header1: LiveBlockHeader, header2: LiveBlockHeader): Promise<LiveBlockHeader>;
     findReorgDepth(header1: LiveBlockHeader, header2: LiveBlockHeader): Promise<number>;
     isMerkleRootActive(merkleRoot: string): Promise<boolean>;
-    getHeaders(height: number, count: number): Promise<number[]>;
+    getHeadersUint8Array(height: number, count: number): Promise<Uint8Array>;
+    getHeaders(height: number, count: number): Promise<BaseBlockHeader[]>;
+    getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>;
+    getBulkHeaders(range: HeightRange): Promise<Uint8Array>;
     findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null>;
     findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader>;
     findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null>;
@@ -1773,10 +1724,7 @@ export interface ChaintracksStorageQueryApi {
         bulk: HeightRange;
         live: HeightRange;
     }>;
-    findLiveHeightRange(): Promise<{
-        minHeight: number;
-        maxHeight: number;
-    }>;
+    findLiveHeightRange(): Promise<HeightRange>;
     findMaxHeaderId(): Promise<number>;
     chain: Chain;
     liveHeightThreshold: number;
@@ -1786,7 +1734,7 @@ export interface ChaintracksStorageQueryApi {
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [HeightRange](./services.md#class-heightrange), [LiveBlockHeader](./services.md#interface-liveblockheader)
+See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [HeightRange](./services.md#class-heightrange), [LiveBlockHeader](./services.md#interface-liveblockheader)
 
 ###### Property batchInsertLimit
 
@@ -1972,11 +1920,9 @@ See also: [LiveBlockHeader](./services.md#interface-liveblockheader)
 ###### Method findLiveHeightRange
 
 ```ts
-findLiveHeightRange(): Promise<{
-    minHeight: number;
-    maxHeight: number;
-}>
+findLiveHeightRange(): Promise<HeightRange>
 ```
+See also: [HeightRange](./services.md#class-heightrange)
 
 Returns
 
@@ -2021,24 +1967,72 @@ getAvailableHeightRanges(): Promise<{
 ```
 See also: [HeightRange](./services.md#class-heightrange)
 
-###### Method getHeaders
+###### Method getBulkHeaders
 
-Adds headers in 80 byte serialized format to a buffer.
-Only adds active headers.
-Buffer length divided by 80 is the actual number returned.
-
-This function supports the ChaintracksClientApi
+Returns serialized bulk headers in the given range.
 
 ```ts
-getHeaders(height: number, count: number): Promise<number[]>
+getBulkHeaders(range: HeightRange): Promise<Uint8Array>
 ```
+See also: [HeightRange](./services.md#class-heightrange)
+
+Returns
+
+serialized headers as a Uint8Array.
+
+###### Method getHeaders
+
+Returns an array of deserialized headers.
+Only adds bulk and active live headers.
+
+```ts
+getHeaders(height: number, count: number): Promise<BaseBlockHeader[]>
+```
+See also: [BaseBlockHeader](./client.md#interface-baseblockheader)
+
+Returns
+
+array of deserialized headers
 
 Argument Details
 
 + **height**
-  + of first header, must be >= zero.
+  + is the minimum header height to return, must be >= zero.
 + **count**
-  + of headers, maximum
+  + height + count - 1 is the maximum header height to return.
+
+###### Method getHeadersUint8Array
+
+Returns serialized headers as a Uint8Array.
+Only adds bulk and active live headers.
+
+```ts
+getHeadersUint8Array(height: number, count: number): Promise<Uint8Array>
+```
+
+Returns
+
+serialized headers as a Uint8Array.
+
+Argument Details
+
++ **height**
+  + is the minimum header height to return, must be >= zero.
++ **count**
+  + height + count - 1 is the maximum header height to return.
+
+###### Method getLiveHeaders
+
+Returns active `LiveBlockHeaders` with height in the given range.
+
+```ts
+getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>
+```
+See also: [HeightRange](./services.md#class-heightrange), [LiveBlockHeader](./services.md#interface-liveblockheader)
+
+Returns
+
+array of active `LiveBlockHeaders`
 
 ###### Method isMerkleRootActive
 
@@ -2213,7 +2207,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export interface LiveIngestorApi {
     shutdown(): Promise<void>;
     getHeaderByHash(hash: string): Promise<BlockHeader | undefined>;
-    setStorage(storage: ChaintracksStorageApi): Promise<void>;
+    setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>;
     storage(): ChaintracksStorageApi;
     startListening(liveHeaders: BlockHeader[]): Promise<void>;
     stopListening(): void;
@@ -2228,7 +2222,7 @@ Called before first Synchronize with reference to storage.
 Components requiring asynchronous setup can override base class implementation.
 
 ```ts
-setStorage(storage: ChaintracksStorageApi): Promise<void>
+setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>
 ```
 See also: [ChaintracksStorageApi](./services.md#interface-chaintracksstorageapi)
 
@@ -2794,7 +2788,7 @@ export class BulkFileDataManager {
     constructor(options: BulkFileDataManagerOptions | Chain) 
     async createReader(range?: HeightRange, maxBufferSize?: number): Promise<BulkFileDataReader> 
     async updateFromUrl(cdnUrl: string): Promise<void> 
-    async setStorage(storage: ChaintracksStorageBulkFileApi): Promise<void> 
+    async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> 
     async deleteBulkFiles(): Promise<void> 
     async merge(files: BulkHeaderFileInfo[]): Promise<BulkFileDataManagerMergeResult> 
     toLogString(what?: BulkFileDataManagerMergeResult | BulkFileData[] | BulkHeaderFileInfo[]): string 
@@ -2964,7 +2958,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export class BulkFilesReaderStorage extends BulkFilesReader {
     constructor(storage: ChaintracksStorageBase, files: BulkHeaderFileStorage[], range?: HeightRange, maxBufferSize?: number) 
-    static async fromStorage(storage: ChaintracksStorageBase, fetch: ChaintracksFetchApi, range?: HeightRange, maxBufferSize?: number): Promise<BulkFilesReaderStorage> 
+    static async fromStorage(storage: ChaintracksStorageBase, fetch?: ChaintracksFetchApi, range?: HeightRange, maxBufferSize?: number): Promise<BulkFilesReaderStorage> 
 }
 ```
 
@@ -3037,7 +3031,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export class BulkHeaderFileStorage extends BulkHeaderFile {
-    constructor(info: BulkHeaderFileInfo, public storage: ChaintracksStorageBase, public fetch: ChaintracksFetchApi) 
+    constructor(info: BulkHeaderFileInfo, public storage: ChaintracksStorageBase, public fetch?: ChaintracksFetchApi) 
     override async readDataFromFile(length: number, offset: number): Promise<Uint8Array | undefined> 
     override async ensureData(): Promise<Uint8Array> 
 }
@@ -3068,10 +3062,10 @@ export abstract class BulkIngestorBase implements BulkIngestorApi {
     static createBulkIngestorBaseOptions(chain: Chain) 
     chain: Chain;
     jsonFilename: string;
-    bypassLiveEnabled: boolean;
+    log: (...args: any[]) => void = () => ;
     constructor(options: BulkIngestorBaseOptions) 
-    async setStorage(storage: ChaintracksStorageBase): Promise<void> 
-    async shutdown(): Promise<void> 
+    async setStorage(storage: ChaintracksStorageBase, log: (...args: any[]) => void): Promise<void> 
+    async shutdown(): Promise<void> { }
     storageOrUndefined(): ChaintracksStorageApi | undefined 
     storage(): ChaintracksStorageBase 
     filesInfo: BulkHeaderFilesInfo | undefined;
@@ -3341,6 +3335,7 @@ export abstract class BulkStorageBase implements BulkStorageApi {
     static createBulkStorageBaseOptions(chain: Chain, fs: ChaintracksFsApi): BulkStorageBaseOptions 
     chain: Chain;
     fs: ChaintracksFsApi;
+    log: (...args: any[]) => void = () => ;
     constructor(options: BulkStorageBaseOptions) 
     async shutdown(): Promise<void> 
     abstract appendHeaders(minHeight: number, count: number, newBulkHeaders: Uint8Array): Promise<void>;
@@ -3349,7 +3344,7 @@ export abstract class BulkStorageBase implements BulkStorageApi {
     abstract findHeaderForHeightOrUndefined(height: number): Promise<BlockHeader | undefined>;
     async findHeaderForHeight(height: number): Promise<BlockHeader> 
     async getHeightRange(): Promise<HeightRange> 
-    async setStorage(storage: ChaintracksStorageBase): Promise<void> 
+    async setStorage(storage: ChaintracksStorageBase, log: (...args: any[]) => void): Promise<void> { }
     async exportBulkHeaders(rootFolder: string, jsonFilename: string, maxPerFile: number): Promise<void> 
 }
 ```
@@ -3383,7 +3378,6 @@ export class Chaintracks implements ChaintracksManagementApi {
     async isSynchronized(): Promise<boolean> 
     async findHeaderForHeight(height: number): Promise<BlockHeader | undefined> 
     async findHeaderForBlockHash(hash: string): Promise<BlockHeader | undefined> 
-    async findHeaderForBlockHashNoLock(hash: string): Promise<BlockHeader | undefined> 
     async isValidRootForHeight(root: string, height: number): Promise<boolean> 
     async getInfo(): Promise<ChaintracksInfoApi> 
     async getHeaders(height: number, count: number): Promise<string> 
@@ -3416,7 +3410,7 @@ export class Chaintracks implements ChaintracksManagementApi {
                     }
                 }
                 catch (uerr: unknown) {
-                    console.log(uerr);
+                    console.error(uerr);
                 }
             }
             if (bulkDone)
@@ -3535,11 +3529,13 @@ export class Chaintracks implements ChaintracksManagementApi {
                                 liveHeaderDupes = 0;
                             }
                             const updated = await this.storage.getAvailableHeightRanges();
-                            this.log(`${count} live headers added: bulk ${updated.bulk}, live ${updated.live}`);
+                            this.log(`After adding ${count} live headers
+   After live: bulk ${updated.bulk}, live ${updated.live}
+`);
                             count = 0;
                         }
                         if (!this.subscriberCallbacksEnabled) {
-                            const live = await this.storage.getLiveHeightRange();
+                            const live = await this.storage.findLiveHeightRange();
                             if (!live.isEmpty) {
                                 this.subscriberCallbacksEnabled = true;
                                 this.log(`listening at height of ${live.maxHeight}`);
@@ -3635,16 +3631,16 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ```ts
 export class ChaintracksChainTracker implements ChainTracker {
-    chaintracks: ChaintracksServiceClient;
+    chaintracks: ChaintracksClientApi;
     cache: Record<number, string>;
     options: ChaintracksChainTrackerOptions;
-    constructor(chain?: Chain, chaintracks?: ChaintracksServiceClient, options?: ChaintracksChainTrackerOptions) 
+    constructor(chain?: Chain, chaintracks?: ChaintracksClientApi, options?: ChaintracksChainTrackerOptions) 
     async currentHeight(): Promise<number> 
     async isValidRootForHeight(root: string, height: number): Promise<boolean> 
 }
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksChainTrackerOptions](./services.md#interface-chaintrackschaintrackeroptions), [ChaintracksServiceClient](./services.md#class-chaintracksserviceclient)
+See also: [Chain](./client.md#type-chain), [ChaintracksChainTrackerOptions](./services.md#interface-chaintrackschaintrackeroptions), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -3793,6 +3789,7 @@ Required interface methods of a Chaintracks Storage Engine implementation.
 ```ts
 export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryApi, ChaintracksStorageIngestApi {
     static createStorageBaseOptions(chain: Chain): ChaintracksStorageBaseOptions 
+    log: (...args: any[]) => void = () => { };
     chain: Chain;
     liveHeightThreshold: number;
     reorgHeightThreshold: number;
@@ -3814,16 +3811,15 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     abstract findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader>;
     abstract findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null>;
     abstract findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null>;
-    abstract findLiveHeightRange(): Promise<{
-        minHeight: number;
-        maxHeight: number;
-    }>;
+    abstract findLiveHeightRange(): Promise<HeightRange>;
     abstract findMaxHeaderId(): Promise<number>;
-    abstract getLiveHeightRange(): Promise<HeightRange>;
     abstract liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]>;
-    abstract getHeaders(height: number, count: number): Promise<number[]>;
+    abstract getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>;
     abstract insertHeader(header: BlockHeader): Promise<InsertHeaderResult>;
     abstract destroy(): Promise<void>;
+    async getBulkHeaders(range: HeightRange): Promise<Uint8Array> 
+    async getHeadersUint8Array(height: number, count: number): Promise<Uint8Array> 
+    async getHeaders(height: number, count: number): Promise<BaseBlockHeader[]> 
     async deleteBulkBlockHeaders(): Promise<void> 
     async getAvailableHeightRanges(): Promise<{
         bulk: HeightRange;
@@ -3844,7 +3840,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [BulkFileDataManager](./services.md#class-bulkfiledatamanager), [Chain](./client.md#type-chain), [ChaintracksStorageBaseOptions](./services.md#interface-chaintracksstoragebaseoptions), [ChaintracksStorageIngestApi](./services.md#interface-chaintracksstorageingestapi), [ChaintracksStorageQueryApi](./services.md#interface-chaintracksstoragequeryapi), [HeightRange](./services.md#class-heightrange), [InsertHeaderResult](./services.md#type-insertheaderresult), [LiveBlockHeader](./services.md#interface-liveblockheader)
+See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [BlockHeader](./client.md#interface-blockheader), [BulkFileDataManager](./services.md#class-bulkfiledatamanager), [Chain](./client.md#type-chain), [ChaintracksStorageBaseOptions](./services.md#interface-chaintracksstoragebaseoptions), [ChaintracksStorageIngestApi](./services.md#interface-chaintracksstorageingestapi), [ChaintracksStorageQueryApi](./services.md#interface-chaintracksstoragequeryapi), [HeightRange](./services.md#class-heightrange), [InsertHeaderResult](./services.md#type-insertheaderresult), [LiveBlockHeader](./services.md#interface-liveblockheader)
 
 ###### Method insertHeader
 
@@ -3875,10 +3871,8 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     static createStorageKnexOptions(chain: Chain, knex?: Knex): ChaintracksStorageKnexOptions 
     knex: Knex;
     _dbtype?: DBType;
-    headerTableName: string;
     bulkFilesTableName: string = "bulk_files";
-    bulkBlockHashTableName: string;
-    bulkMerkleRootTableName: string;
+    headerTableName: string = `live_headers`;
     constructor(options: ChaintracksStorageKnexOptions) 
     get dbtype(): DBType 
     override async shutdown(): Promise<void> 
@@ -3886,13 +3880,10 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     override async migrateLatest(): Promise<void> 
     override async dropAllData(): Promise<void> 
     override async destroy(): Promise<void> 
-    async findLiveHeightRange(): Promise<{
-        minHeight: number;
-        maxHeight: number;
-    }> 
-    async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> 
-    async findChainTipHeader(): Promise<LiveBlockHeader> 
-    async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> 
+    override async findLiveHeightRange(): Promise<HeightRange> 
+    override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> 
+    override async findChainTipHeader(): Promise<LiveBlockHeader> 
+    override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> 
     async findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> 
     async findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null> 
     async findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> 
@@ -3904,13 +3895,10 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
     async getBulkFileData(fileId: number, offset?: number, length?: number): Promise<Uint8Array | undefined> 
     async insertHeader(header: BlockHeader): Promise<InsertHeaderResult> 
     async findMaxHeaderId(): Promise<number> 
-    async getLiveHeightRange(): Promise<HeightRange> 
-    async appendToIndexTable(table: string, index: string, buffers: string[], minHeight: number): Promise<void> 
-    async appendToIndexTableChunked(table: string, index: string, buffers: string[], minHeight: number, chunkSize: number): Promise<void> 
     override async deleteLiveBlockHeaders(): Promise<void> 
     override async deleteBulkBlockHeaders(): Promise<void> 
     async deleteOlderLiveBlockHeaders(maxHeight: number): Promise<number> 
-    async getHeaders(height: number, count: number): Promise<number[]> 
+    async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> 
     concatSerializedHeaders(bufs: number[][]): number[] 
     async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> 
 }
@@ -3966,15 +3954,11 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
     override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> 
     override async findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> 
     override async findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> 
-    override async findLiveHeightRange(): Promise<{
-        minHeight: number;
-        maxHeight: number;
-    }> 
+    override async findLiveHeightRange(): Promise<HeightRange> 
     override async findMaxHeaderId(): Promise<number> 
-    override async getLiveHeightRange(): Promise<HeightRange> 
     override async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> 
-    override async getHeaders(height: number, count: number): Promise<number[]> 
-    override async insertHeader(header: BlockHeader, prev?: LiveBlockHeader): Promise<InsertHeaderResult> 
+    override async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> 
+    override async insertHeader(header: BlockHeader): Promise<InsertHeaderResult> 
 }
 ```
 
@@ -4128,9 +4112,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export abstract class LiveIngestorBase implements LiveIngestorApi {
     static createLiveIngestorBaseOptions(chain: Chain) 
     chain: Chain;
+    log: (...args: any[]) => void = () => ;
     constructor(options: LiveIngestorBaseOptions) 
-    async shutdown(): Promise<void> 
-    async setStorage(storage: ChaintracksStorageApi): Promise<void> 
+    async shutdown(): Promise<void> { }
+    async setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void> 
     storage(): ChaintracksStorageApi 
     abstract getHeaderByHash(hash: string): Promise<BlockHeader | undefined>;
     abstract startListening(liveHeaders: BlockHeader[]): Promise<void>;
@@ -4160,7 +4145,7 @@ Argument Details
 Allocate resources.
 
 ```ts
-async setStorage(storage: ChaintracksStorageApi): Promise<void> 
+async setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void> 
 ```
 See also: [ChaintracksStorageApi](./services.md#interface-chaintracksstorageapi)
 
@@ -4662,10 +4647,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 High speed WebSocket based based old block header listener
 
 ```ts
-export async function WocHeadersBulkListener(fromHeight: number, toHeight: number, enqueue: (header: BlockHeader) => void, error: (code: number, message: string) => boolean, stop: StopListenerToken, chain: Chain = "main", idleWait = 5000): Promise<boolean> 
+export async function WocHeadersBulkListener(fromHeight: number, toHeight: number, enqueue: (header: BlockHeader) => void, error: (code: number, message: string) => boolean, stop: StopListenerToken, chain: Chain, logger: (...args: any[]) => void = () => { }, idleWait = 5000): Promise<boolean> 
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [StopListenerToken](./services.md#type-stoplistenertoken)
+See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [StopListenerToken](./services.md#type-stoplistenertoken), [logger](./client.md#variable-logger)
 
 Returns
 
@@ -4717,10 +4702,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 High speed WebSocket based based new block header listener
 
 ```ts
-export async function WocHeadersLiveListener(enqueue: (header: BlockHeader) => void, error: (code: number, message: string) => boolean, stop: StopListenerToken, chain: Chain = "main", idleWait = 100000): Promise<boolean> 
+export async function WocHeadersLiveListener(enqueue: (header: BlockHeader) => void, error: (code: number, message: string) => boolean, stop: StopListenerToken, chain: Chain, logger: (...args: any[]) => void, idleWait = 100000): Promise<boolean> 
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [StopListenerToken](./services.md#type-stoplistenertoken)
+See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [StopListenerToken](./services.md#type-stoplistenertoken), [logger](./client.md#variable-logger)
 
 Returns
 
@@ -4936,10 +4921,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Function: createDefaultWalletServicesOptions
 
 ```ts
-export function createDefaultWalletServicesOptions(chain: Chain, arcCallbackUrl?: string, arcCallbackToken?: string, arcApiKey?: string): WalletServicesOptions 
+export function createDefaultWalletServicesOptions(chain: Chain, arcCallbackUrl?: string, arcCallbackToken?: string, taalArcApiKey?: string, gorillaPoolArcApiKey?: string, bitailsApiKey?: string, deploymentId?: string, chaintracks?: ChaintracksClientApi): WalletServicesOptions 
 ```
 
-See also: [Chain](./client.md#type-chain), [WalletServicesOptions](./client.md#interface-walletservicesoptions)
+See also: [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [WalletServicesOptions](./client.md#interface-walletservicesoptions)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 

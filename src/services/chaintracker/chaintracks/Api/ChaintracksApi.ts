@@ -17,9 +17,9 @@ export interface ChaintracksOptions {
    */
   addLiveRecursionLimit: number
   /**
-   * Event logging level
+   * Optional logging method
    */
-  logging: undefined | 'all'
+  logging?: (...args: any[]) => void
   /**
    * If true, this chaintracks instance will only service read requests for existing data.
    * Shared storage only requires one readonly false instance to manage and update storage.
