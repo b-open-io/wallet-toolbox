@@ -69,7 +69,7 @@ export class Services implements WalletServices {
       this.arcGorillaPool = new ARC(this.options.arcGorillaPoolUrl, this.options.arcGorillaPoolConfig, 'arcGorillaPool')
     }
 
-    this.bitails = new Bitails(this.chain)
+    this.bitails = new Bitails(this.chain, { apiKey: this.options.bitailsApiKey })
 
     //prettier-ignore
     this.getMerklePathServices = new ServiceCollection<GetMerklePathService>('getMerklePath')

@@ -223,7 +223,7 @@ export class Chaintracks implements ChaintracksManagementApi {
     return this.lock.withReadLock(async () => this.findHeaderForBlockHashNoLock(hash))
   }
 
-  async findHeaderForBlockHashNoLock(hash: string): Promise<BlockHeader | undefined> {
+  private async findHeaderForBlockHashNoLock(hash: string): Promise<BlockHeader | undefined> {
     return (await this.storage.findLiveHeaderForBlockHash(hash)) || undefined
   }
 

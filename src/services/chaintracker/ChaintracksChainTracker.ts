@@ -5,17 +5,18 @@ import { WalletError } from '../../sdk/WalletError'
 import { wait } from '../../utility/utilityHelpers'
 import { WERR_INTERNAL } from '../../sdk/WERR_errors'
 import { BlockHeader } from '../../sdk/WalletServices.interfaces'
+import { ChaintracksClientApi } from './chaintracks/Api/ChaintracksClientApi'
 
 export interface ChaintracksChainTrackerOptions {
   maxRetries?: number
 }
 
 export class ChaintracksChainTracker implements ChainTracker {
-  chaintracks: ChaintracksServiceClient
+  chaintracks: ChaintracksClientApi
   cache: Record<number, string>
   options: ChaintracksChainTrackerOptions
 
-  constructor(chain?: Chain, chaintracks?: ChaintracksServiceClient, options?: ChaintracksChainTrackerOptions) {
+  constructor(chain?: Chain, chaintracks?: ChaintracksClientApi, options?: ChaintracksChainTrackerOptions) {
     chain ||= 'main'
     this.chaintracks =
       chaintracks ??

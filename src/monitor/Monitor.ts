@@ -16,12 +16,12 @@ import { TaskSendWaiting } from './tasks/TaskSendWaiting'
 import { TaskCheckNoSends } from './tasks/TaskCheckNoSends'
 import { TaskUnFail } from './tasks/TaskUnFail'
 import { Chain, ProvenTransactionStatus } from '../sdk/types'
-import { ChaintracksServiceClient } from '../services/chaintracker/chaintracks/ChaintracksServiceClient'
 import { ReviewActionResult } from '../sdk/WalletStorage.interfaces'
 import { WERR_BAD_REQUEST, WERR_INVALID_PARAMETER } from '../sdk/WERR_errors'
 import { WalletError } from '../sdk/WalletError'
 import { BlockHeader } from '../sdk/WalletServices.interfaces'
 import { Services } from '../services/Services'
+import { ChaintracksClientApi } from '../services/chaintracker/chaintracks/Api/ChaintracksClientApi'
 
 export type MonitorStorage = WalletStorageManager
 
@@ -32,7 +32,7 @@ export interface MonitorOptions {
 
   storage: MonitorStorage
 
-  chaintracks: ChaintracksServiceClient
+  chaintracks: ChaintracksClientApi
 
   /**
    * How many msecs to wait after each getMerkleProof service request.
@@ -80,7 +80,7 @@ export class Monitor {
   services: Services
   chain: Chain
   storage: MonitorStorage
-  chaintracks: ChaintracksServiceClient
+  chaintracks: ChaintracksClientApi
   onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>
   onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>
 
