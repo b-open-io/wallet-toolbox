@@ -217,17 +217,19 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
   async insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
     const table = this.headerTableName
 
-    let ok = true
-    let dupe = false
-    let noPrev = false
-    let badPrev = false
-    let noActiveAncestor = false
-    let noTip = false
-    let setActiveChainTip = false
-    let reorgDepth = 0
-    let priorTip: LiveBlockHeader | undefined
+    const r: InsertHeaderResult = {
+      added: false,
+      dupe: false,
+      noPrev: false,
+      badPrev: false,
+      noActiveAncestor: false,
+      isActiveTip: false,
+      reorgDepth: 0,
+      priorTip: undefined,
+      noTip: false
+    }
 
-    ok = await this.knex.transaction(async trx => {
+    await this.knex.transaction(async trx => {
       /*
               We ensure the header does not already exist. This needs to be done
               inside the transaction to avoid inserting multiple headers. If an
@@ -235,8 +237,8 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
             */
       const [dupeCheck] = await trx(table).where({ hash: header.hash }).count()
       if (dupeCheck['count(*)']) {
-        dupe = true
-        return false
+        r.dupe = true
+        return
       }
 
       // This is the existing previous header to the one being inserted...
@@ -244,61 +246,69 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
 
       if (!oneBack) {
         // Check if this is first live header...
-        const r = await trx(table).count()
-        const count = Number(r[0]['count(*)'])
+        const cr = await trx(table).count()
+        const count = Number(cr[0]['count(*)'])
         if (count === 0) {
+          // If this is the first live header, the last bulk header (if there is one) is the previous header.
           const lbf = await this.bulkManager.getLastFile()
           if (!lbf) throw new WERR_INVALID_OPERATION('bulk headers must exist before first live header can be added')
           if (header.previousHash === lbf.lastHash && header.height === lbf.firstHeight + lbf.count) {
+            // Valid first live header. Add it.
             const chainWork = addWork(lbf.lastChainWork, convertBitsToWork(header.bits))
+            r.isActiveTip = true
             const newHeader = {
               ...header,
               previousHeaderId: null,
               chainWork,
-              isChainTip: true,
-              isActive: true
+              isChainTip: r.isActiveTip,
+              isActive: r.isActiveTip
             }
+            // Success
             await trx<LiveBlockHeader>(table).insert(newHeader)
-            return true
+            r.added = true
+            return
           }
         }
-        // Never add a header that doesn't extend existing headers.
-        // Or one that's confused about its height.
-        noPrev = true
-        return false
+        // Failure without a oneBack
+        // First live header that does not follow last bulk header or
+        // Not the first live header and live headers doesn't include a previousHash header.
+        r.noPrev = true
+        return
       }
+
+      // This header's previousHash matches an existing live header's hash, if height isn't +1, reject it.
       if (oneBack.height + 1 != header.height) {
-        badPrev = true
-        return false
+        r.badPrev = true
+        return
       }
+
+      if (oneBack.isActive && oneBack.isChainTip) {
+        r.priorTip = oneBack
+      } else {
+        ;[r.priorTip] = await trx<LiveBlockHeader>(table).where({ isActive: true, isChainTip: true })
+      }
+
+      if (!r.priorTip) {
+        // No active chain tip found. This is a logic error in state of live headers.
+        r.noTip = true
+        return
+      }
+
+      // We have an acceptable new live header...and live headers has an active chain tip.
 
       const chainWork = addWork(oneBack.chainWork, convertBitsToWork(header.bits))
 
-      let tip: LiveBlockHeader | undefined
-      if (oneBack.isActive && oneBack.isChainTip) {
-        tip = oneBack
-      } else {
-        ;[tip] = await trx<LiveBlockHeader>(table).where({ isActive: true, isChainTip: true })
-      }
-
-      if (!tip) {
-        noTip = true
-        return false
-      }
-
-      priorTip = tip
-
-      setActiveChainTip = isMoreWork(chainWork, tip.chainWork)
+      r.isActiveTip = isMoreWork(chainWork, r.priorTip.chainWork)
 
       const newHeader = {
         ...header,
         previousHeaderId: oneBack.headerId,
         chainWork,
-        isChainTip: setActiveChainTip,
-        isActive: setActiveChainTip
+        isChainTip: r.isActiveTip,
+        isActive: r.isActiveTip
       }
 
-      if (setActiveChainTip) {
+      if (r.isActiveTip) {
         // Find newHeader's first active ancestor
         let activeAncestor = oneBack
         while (!activeAncestor.isActive) {
@@ -306,15 +316,16 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
             headerId: activeAncestor.previousHeaderId || -1
           })
           if (!previousHeader) {
-            noActiveAncestor = true
-            return false
+            // live headers doesn't contain an active ancestor. This is a live header's logic error.
+            r.noActiveAncestor = true
+            return
           }
           activeAncestor = previousHeader
         }
 
         if (!(oneBack.isActive && oneBack.isChainTip))
           // If this is the new active chain tip, and oneBack was not, this is a reorg.
-          reorgDepth = Math.min(priorTip.height, header.height) - activeAncestor.height
+          r.reorgDepth = Math.min(r.priorTip.height, header.height) - activeAncestor.height;
 
         if (activeAncestor.headerId !== oneBack.headerId) {
           // Deactivate headers from the current active chain tip up to but excluding our activeAncestor:
@@ -344,27 +355,17 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       }
 
       if (oneBack.isChainTip) {
+        // Deactivate the old chain tip
         await trx<LiveBlockHeader>(table).where({ headerId: oneBack.headerId }).update({ isChainTip: false })
       }
 
       await trx<LiveBlockHeader>(table).insert(newHeader)
-
-      return true
+      r.added = true
     })
 
-    if (ok && setActiveChainTip) this.pruneLiveBlockHeaders(header.height)
+    if (r.added && r.isActiveTip) this.pruneLiveBlockHeaders(header.height)
 
-    return {
-      added: ok,
-      dupe,
-      isActiveTip: setActiveChainTip,
-      reorgDepth,
-      priorTip,
-      noPrev,
-      badPrev,
-      noActiveAncestor,
-      noTip
-    }
+    return r
   }
 
   async findMaxHeaderId(): Promise<number> {
