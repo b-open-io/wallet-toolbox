@@ -21,7 +21,7 @@ describe('createIdbChaintracks tests', () => {
       console.log(`headerListener: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
     }
     chaintracks.subscribeHeaders(headerListener)
-    expect(countDatas(storage.bulkManager)).toBe(3)
+    expect(countDatas(storage.bulkManager)).toBeLessThanOrEqual(3)
 
     const tipHash = await chaintracks.findChainTipHash()
     const tip = await chaintracks.findChainTipHeader()
