@@ -377,21 +377,73 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   async deleteBulkFile(fileId: number): Promise<number> {
-    throw new Error('Method not implemented.')
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['bulk_headers'])
+    const store = trx.objectStore('bulk_headers')
+    await store.delete(fileId)
+    await trx.done
+    // return number of records affected
+    return 1
   }
 
   async insertBulkFile(file: BulkHeaderFileInfo): Promise<number> {
-    throw new Error('Method not implemented.')
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['bulk_headers'])
+    const store = trx.objectStore('bulk_headers')
+    const fileObj: object = { ...file }
+    delete fileObj['fileId']
+    file.fileId = Number(await store.put(fileObj))
+    await trx.done
+    return file.fileId
   }
+
   async updateBulkFile(fileId: number, file: BulkHeaderFileInfo): Promise<number> {
-    throw new Error('Method not implemented.')
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['bulk_headers'])
+    const store = trx.objectStore('bulk_headers')
+    file.fileId = fileId
+    await store.put(file)
+    await trx.done
+    // return number of records affected
+    return 1
   }
+
   async getBulkFiles(): Promise<BulkHeaderFileInfo[]> {
-    throw new Error('Method not implemented.')
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['bulk_headers'])
+    const store = trx.objectStore('bulk_headers')
+
+    const files: BulkHeaderFileInfo[] = await store.getAll()
+    files.sort((a, b) => a.firstHeight - b.firstHeight)
+    for (const file of files) file.data = undefined
+    return files
   }
 
   async getBulkFileData(fileId: number, offset?: number, length?: number): Promise<Uint8Array | undefined> {
-    throw new Error('Method not implemented.')
+    if (!Number.isInteger(fileId)) throw new WERR_INVALID_PARAMETER('fileId', 'a valid, integer bulk_files fileId')
+    await this.makeAvailable( )
+
+    const trx = this.toDbTrxReadWrite(['bulk_headers'])
+    const store = trx.objectStore('bulk_headers')
+
+    const info: BulkHeaderFileInfo | undefined = await store.get(fileId)
+    if (!info) throw new WERR_INVALID_PARAMETER(`fileId`, `an existing record. ${fileId} not found`);
+
+    let data: Uint8Array | undefined = undefined
+
+    if (!info.data) return undefined
+
+    if (offset !== undefined && length !== undefined && Number.isInteger(offset) && Number.isInteger(length)) {
+      data = info.data.slice(offset, offset + length)
+    } else {
+      data = info.data
+    }
+    await trx.done
+    return data
   }
 
   /**
