@@ -61,6 +61,11 @@ export class StorageServer {
       }
     })
 
+    this.app.get(`/robots.txt`, (req: Request, res: Response) => {
+      res.type('text/plain')
+      res.send(`User-agent: *\nDisallow: /`)
+    })
+    
     const options: AuthMiddlewareOptions = {
       wallet: this.wallet as WalletInterface
     }
