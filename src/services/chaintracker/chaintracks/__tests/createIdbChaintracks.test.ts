@@ -1,11 +1,11 @@
-import { _tu } from "../../../../../test/utils/TestUtilsWalletStorage"
-import { wait } from "../../../../utility/utilityHelpers"
-import { createdIdbChaintracks } from "../createIdbChaintracks"
-import { BulkFileDataManager } from "../util/BulkFileDataManager"
-import { BulkHeaderFileInfo } from "../util/BulkHeaderFile"
-import { HeaderListener } from "../Api/ChaintracksClientApi"
-import { Chain } from "../../../../sdk/types"
-import { BlockHeader } from "../Api/BlockHeaderApi"
+import { _tu } from '../../../../../test/utils/TestUtilsWalletStorage'
+import { wait } from '../../../../utility/utilityHelpers'
+import { createdIdbChaintracks } from '../createIdbChaintracks'
+import { BulkFileDataManager } from '../util/BulkFileDataManager'
+import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
+import { HeaderListener } from '../Api/ChaintracksClientApi'
+import { Chain } from '../../../../sdk/types'
+import { BlockHeader } from '../Api/BlockHeaderApi'
 
 import 'fake-indexeddb/auto'
 
@@ -16,10 +16,7 @@ describe('createIdbChaintracks tests', () => {
     const target: Chain = 'main'
     if (_tu.noEnv(target)) return
     const env = _tu.getEnv(target)
-    const { chain, chaintracks, storage } = await createdIdbChaintracks(
-      env.chain,
-      env.whatsonchainApiKey,
-    )
+    const { chain, chaintracks, storage } = await createdIdbChaintracks(env.chain, env.whatsonchainApiKey)
     const headerListener: HeaderListener = (header: BlockHeader) => {
       console.log(`headerListener: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
     }
@@ -46,13 +43,12 @@ describe('createIdbChaintracks tests', () => {
     const listening = await chaintracks.isListening()
     expect(listening).toBe(true)
 
-//    console.log('validating...')
-//    const validated = await chaintracks.validate()
-//    expect(validated).toBe(true)
-//    console.log('validated')
+    //    console.log('validating...')
+    //    const validated = await chaintracks.validate()
+    //    expect(validated).toBe(true)
+    //    console.log('validated')
 
-    for (; ;)
-      await wait(120000)
+    for (;;) await wait(120000)
   })
 })
 

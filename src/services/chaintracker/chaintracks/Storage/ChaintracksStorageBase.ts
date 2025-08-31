@@ -7,7 +7,14 @@ import {
 } from '../Api/ChaintracksStorageApi'
 import { BaseBlockHeader, BlockHeader, LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { HeightRange } from '../util/HeightRange'
-import { addWork, convertBitsToWork, deserializeBaseBlockHeaders, isMoreWork, serializeBaseBlockHeaders, subWork } from '../util/blockHeaderUtilities'
+import {
+  addWork,
+  convertBitsToWork,
+  deserializeBaseBlockHeaders,
+  isMoreWork,
+  serializeBaseBlockHeaders,
+  subWork
+} from '../util/blockHeaderUtilities'
 import { BulkFileDataManager } from '../util/BulkFileDataManager'
 import { BulkFilesReaderStorage } from '../util/BulkFilesReader'
 import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
@@ -81,7 +88,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
   abstract findLiveHeightRange(): Promise<HeightRange>
   abstract findMaxHeaderId(): Promise<number>
   abstract liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]>
-  abstract getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> 
+  abstract getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]>
 
   /**
    * @param header Header to attempt to add to live storage.
@@ -117,11 +124,9 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
 
     const data = new Uint8Array(liveData.length + bulkData.length)
 
-    if (bulkData.length > 0)
-      data.set(bulkData, 0);
+    if (bulkData.length > 0) data.set(bulkData, 0)
 
-    if (liveData.length > 0)
-      data.set(liveData, bulkData.length);
+    if (liveData.length > 0) data.set(liveData, bulkData.length)
 
     return data
   }
@@ -144,7 +149,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
       if (!live.isEmpty && live.minHeight !== 0)
         throw new Error('With empty bulk storage, live storage must start with genesis header.')
     } else {
-      if (!bulk.isEmpty &&bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
+      if (!bulk.isEmpty && bulk.minHeight != 0) throw new Error("Bulk storage doesn't start with genesis header.")
       if (!live.isEmpty && !bulk.isEmpty && bulk.maxHeight + 1 !== live.minHeight)
         throw new Error('There is a gap or overlap between bulk and live header storage.')
     }

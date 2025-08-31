@@ -21,12 +21,12 @@ export async function createdIdbChaintracks(
   reorgHeightThreshold: number = 400,
   bulkMigrationChunkSize: number = 500,
   batchInsertLimit: number = 400,
-  addLiveRecursionLimit: number = 36,
+  addLiveRecursionLimit: number = 36
 ): Promise<{
-  chain: Chain,
-  maxPerFile: number,
-  fetch: ChaintracksFetchApi,
-  storage: ChaintracksStorageIdb,
+  chain: Chain
+  maxPerFile: number
+  fetch: ChaintracksFetchApi
+  storage: ChaintracksStorageIdb
   chaintracks: Chaintracks
 }> {
   try {
@@ -47,19 +47,19 @@ export async function createdIdbChaintracks(
       liveHeightThreshold,
       reorgHeightThreshold,
       bulkMigrationChunkSize,
-      batchInsertLimit,
+      batchInsertLimit
     }
     const storage = new ChaintracksStorageIdb(so)
 
     const co: ChaintracksOptions = {
-        chain,
-        storage,
-        bulkIngestors: [],
-        liveIngestors: [],
-        addLiveRecursionLimit,
-        logging: (...args) => console.log(new Date().toISOString(), ...args),
-        readonly: false
-      }
+      chain,
+      storage,
+      bulkIngestors: [],
+      liveIngestors: [],
+      addLiveRecursionLimit,
+      logging: (...args) => console.log(new Date().toISOString(), ...args),
+      readonly: false
+    }
 
     const jsonResource = `${chain}NetBlockHeaders.json`
 
@@ -102,7 +102,7 @@ export async function createdIdbChaintracks(
       fetch,
       maxPerFile,
       storage,
-      chaintracks,
+      chaintracks
     }
   } catch (error) {
     console.error('Error setting up Chaintracks with Idb Storage:', error)

@@ -1,4 +1,8 @@
-import { ChaintracksStorageBaseOptions, ChaintracksStorageBulkFileApi, InsertHeaderResult } from '../Api/ChaintracksStorageApi'
+import {
+  ChaintracksStorageBaseOptions,
+  ChaintracksStorageBulkFileApi,
+  InsertHeaderResult
+} from '../Api/ChaintracksStorageApi'
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader } from '../util/blockHeaderUtilities'
@@ -28,11 +32,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
 
   whenLastAccess?: Date
 
-  allStores: string[] = [
-    'live_headers',
-    'bulk_headers'
-  ]
-
+  allStores: string[] = ['live_headers', 'bulk_headers']
 
   constructor(options: ChaintracksStorageIdbOptions) {
     super(options)
@@ -47,13 +47,13 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   override async destroy(): Promise<void> {}
 
   override async deleteLiveBlockHeaders(): Promise<void> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     await this.db?.clear('live_headers')
   }
 
   /**
    * Delete live headers with height less or equal to `maxHeight`
-   * 
+   *
    * Set existing headers with previousHeaderId value set to the headerId value of
    * a header which is to be deleted to null.
    *
@@ -61,13 +61,12 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
    * @returns number of deleted records
    */
   override async deleteOlderLiveBlockHeaders(maxHeight: number): Promise<number> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
     const heightIndex = store.index('height')
     const previousHeaderIdIndex = store.index('previousHeaderId')
-
 
     // Get all headers with height <= maxHeight
     const range = IDBKeyRange.upperBound(maxHeight)
@@ -100,12 +99,12 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   /**
-   * 
+   *
    * @returns the active chain tip header
    * @throws an error if there is no tip.
    */
   override async findChainTipHeaderOrUndefined(): Promise<LiveBlockHeader | undefined> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     const activeTipIndex = store.index('activeTip')
@@ -116,7 +115,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async findLiveHeaderForBlockHash(hash: string): Promise<LiveBlockHeader | null> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     const hashIndex = store.index('hash')
@@ -127,7 +126,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     let header = await store.get(headerId)
@@ -137,7 +136,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async findLiveHeaderForHeight(height: number): Promise<LiveBlockHeader | null> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     const heightIndex = store.index('height')
@@ -148,7 +147,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async findLiveHeaderForMerkleRoot(merkleRoot: string): Promise<LiveBlockHeader | null> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     const merkleRootIndex = store.index('merkleRoot')
@@ -159,44 +158,42 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async findLiveHeightRange(): Promise<HeightRange> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
     const heightIndex = store.index('height')
 
-    const minCursor = await heightIndex.openCursor(null, 'next');
-    const minValue = minCursor ? minCursor.value.height : null;
+    const minCursor = await heightIndex.openCursor(null, 'next')
+    const minValue = minCursor ? minCursor.value.height : null
 
-    const maxCursor = await heightIndex.openCursor(null, 'prev');
-    const maxValue = maxCursor ? maxCursor.value.height : null;
+    const maxCursor = await heightIndex.openCursor(null, 'prev')
+    const maxValue = maxCursor ? maxCursor.value.height : null
 
-    const range = (minValue === null || maxValue === null)
-      ? HeightRange.empty
-      : new HeightRange(minValue, maxValue);
+    const range = minValue === null || maxValue === null ? HeightRange.empty : new HeightRange(minValue, maxValue)
 
     await trx.done
     return range
   }
 
   override async findMaxHeaderId(): Promise<number> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
     const trx = this.toDbTrxReadOnly(['live_headers'])
     const store = trx.objectStore('live_headers')
 
-    const maxCursor = await store.openKeyCursor(null, 'prev');
-    const maxValue: number = maxCursor ? Number(maxCursor.key) : 0;
+    const maxCursor = await store.openKeyCursor(null, 'prev')
+    const maxValue: number = maxCursor ? Number(maxCursor.key) : 0
     await trx.done
     return maxValue
   }
 
   override async liveHeadersForBulk(count: number): Promise<LiveBlockHeader[]> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
     const heightIndex = store.index('height')
 
-    let cursor = await heightIndex.openCursor(null, 'next');
+    let cursor = await heightIndex.openCursor(null, 'next')
     const headers: LiveBlockHeader[] = []
 
     while (cursor && count > 0) {
@@ -214,13 +211,13 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
 
   override async getLiveHeaders(range: HeightRange): Promise<LiveBlockHeader[]> {
     if (range.isEmpty) return []
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
     const heightIndex = store.index('height')
 
-    let cursor = await heightIndex.openCursor(null, 'next');
+    let cursor = await heightIndex.openCursor(null, 'next')
     const headers: LiveBlockHeader[] = []
 
     while (cursor) {
@@ -236,7 +233,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   override async insertHeader(header: BlockHeader): Promise<InsertHeaderResult> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
@@ -381,7 +378,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   async deleteBulkFile(fileId: number): Promise<number> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['bulk_headers'])
     const store = trx.objectStore('bulk_headers')
@@ -392,7 +389,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   async insertBulkFile(file: BulkHeaderFileInfo): Promise<number> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['bulk_headers'])
     const store = trx.objectStore('bulk_headers')
@@ -404,7 +401,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   async updateBulkFile(fileId: number, file: BulkHeaderFileInfo): Promise<number> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['bulk_headers'])
     const store = trx.objectStore('bulk_headers')
@@ -416,7 +413,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   }
 
   async getBulkFiles(): Promise<BulkHeaderFileInfo[]> {
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['bulk_headers'])
     const store = trx.objectStore('bulk_headers')
@@ -429,13 +426,13 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
 
   async getBulkFileData(fileId: number, offset?: number, length?: number): Promise<Uint8Array | undefined> {
     if (!Number.isInteger(fileId)) throw new WERR_INVALID_PARAMETER('fileId', 'a valid, integer bulk_files fileId')
-    await this.makeAvailable( )
+    await this.makeAvailable()
 
     const trx = this.toDbTrxReadWrite(['bulk_headers'])
     const store = trx.objectStore('bulk_headers')
 
     const info: BulkHeaderFileInfo | undefined = await store.get(fileId)
-    if (!info) throw new WERR_INVALID_PARAMETER(`fileId`, `an existing record. ${fileId} not found`);
+    if (!info) throw new WERR_INVALID_PARAMETER(`fileId`, `an existing record. ${fileId} not found`)
 
     let data: Uint8Array | undefined = undefined
 
@@ -453,9 +450,9 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
   /**
    * IndexedDB does not do indices of boolean properties.
    * So true is stored as a 1, and false is stored as no property value (delete v['property'])
-   * 
+   *
    * This function restores these property values to true and false.
-   * 
+   *
    * @param header
    * @returns copy of header with updated properties
    */
@@ -469,26 +466,26 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     return h
   }
 
-  private prepareStoredLiveHeader(header: LiveBlockHeader, forInsert?: boolean) : object {
-    const h: object = {...header}
-    if (forInsert)
-      delete h['headerId'];
+  private prepareStoredLiveHeader(header: LiveBlockHeader, forInsert?: boolean): object {
+    const h: object = { ...header }
+    if (forInsert) delete h['headerId']
 
-    if (header.isActive) h['isActive'] = 1; else delete h['isActive'];
-    if (header.isChainTip) h['isChainTip'] = 1; else delete h['isChainTip'];
+    if (header.isActive) h['isActive'] = 1
+    else delete h['isActive']
+    if (header.isChainTip) h['isChainTip'] = 1
+    else delete h['isChainTip']
 
     return h
   }
 
   async insertLiveHeader(header: LiveBlockHeader): Promise<LiveBlockHeader> {
-    
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
-    
+
     const h = this.prepareStoredLiveHeader(header, true)
 
     header.headerId = Number(await store.add(h))
-    
+
     await trx.done
 
     return header
@@ -520,9 +517,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     return db
   }
 
-  toDbTrxReadOnly(
-    stores: string[]
-  ): IDBPTransaction<ChaintracksStorageIdbSchema, string[], 'readonly'> {
+  toDbTrxReadOnly(stores: string[]): IDBPTransaction<ChaintracksStorageIdbSchema, string[], 'readonly'> {
     if (!this.db) throw new Error('not initialized')
     const db = this.db
     const trx = db.transaction(stores || this.allStores, 'readonly')
@@ -530,16 +525,13 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     return trx
   }
 
-  toDbTrxReadWrite(
-    stores: string[]
-  ): IDBPTransaction<ChaintracksStorageIdbSchema, string[], 'readwrite'> {
+  toDbTrxReadWrite(stores: string[]): IDBPTransaction<ChaintracksStorageIdbSchema, string[], 'readwrite'> {
     if (!this.db) throw new Error('not initialized')
     const db = this.db
     const trx = db.transaction(stores || this.allStores, 'readwrite')
     this.whenLastAccess = new Date()
     return trx
   }
-
 }
 
 export interface ChaintracksStorageIdbSchema {

@@ -136,7 +136,7 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
     const data = await this.getData()
     const activeHeaders = Array.from(data.liveHeaders.values()).filter(h => h.isActive)
     if (activeHeaders.length === 0) {
-      return HeightRange.empty;
+      return HeightRange.empty
     }
     const minHeight = Math.min(...activeHeaders.map(h => h.height))
     const maxHeight = Math.max(...activeHeaders.map(h => h.height))
@@ -160,11 +160,8 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
     if (range.isEmpty) return []
     const data = await this.getData()
     const headers = Array.from(data.liveHeaders.values())
-      .filter(h =>
-        h.isActive
-        && h.height >= range.minHeight
-        && h.height <= range.maxHeight)
-      .sort((a, b) => a.height - b.height);
+      .filter(h => h.isActive && h.height >= range.minHeight && h.height <= range.maxHeight)
+      .sort((a, b) => a.height - b.height)
     return headers
   }
 
@@ -225,7 +222,7 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
       return r
     }
 
-      // This header's previousHash matches an existing live header's hash, if height isn't +1, reject it.
+    // This header's previousHash matches an existing live header's hash, if height isn't +1, reject it.
     if (oneBack.height + 1 !== header.height) {
       r.badPrev = true
       return r

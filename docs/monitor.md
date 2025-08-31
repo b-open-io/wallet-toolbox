@@ -59,7 +59,7 @@ export interface MonitorOptions {
     chain: Chain;
     services: Services;
     storage: MonitorStorage;
-    chaintracks: ChaintracksServiceClient;
+    chaintracks: ChaintracksClientApi;
     msecsWaitPerMerkleProofServiceReq: number;
     taskRunWaitMsecs: number;
     abandonedMsecs: number;
@@ -70,7 +70,7 @@ export interface MonitorOptions {
 }
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksServiceClient](./services.md#class-chaintracksserviceclient), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
+See also: [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
 
 ###### Property msecsWaitPerMerkleProofServiceReq
 
@@ -156,7 +156,7 @@ export class Monitor {
     services: Services;
     chain: Chain;
     storage: MonitorStorage;
-    chaintracks: ChaintracksServiceClient;
+    chaintracks: ChaintracksClientApi;
     onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>;
     onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>;
     constructor(options: MonitorOptions) 
@@ -197,7 +197,7 @@ export class Monitor {
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksServiceClient](./services.md#class-chaintracksserviceclient), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
+See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
 
 ###### Property _otherTasks
 

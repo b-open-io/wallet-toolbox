@@ -4,7 +4,13 @@ import { InsertHeaderResult, ChaintracksStorageBaseOptions } from '../Api/Chaint
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
-import { addWork, convertBitsToWork, isMoreWork, serializeBaseBlockHeader, serializeBaseBlockHeaders } from '../util/blockHeaderUtilities'
+import {
+  addWork,
+  convertBitsToWork,
+  isMoreWork,
+  serializeBaseBlockHeader,
+  serializeBaseBlockHeaders
+} from '../util/blockHeaderUtilities'
 import { verifyOneOrNone } from '../../../../utility/utilityHelpers'
 import { DBType } from '../../../../storage/StorageReader'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
@@ -35,7 +41,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
   static createStorageKnexOptions(chain: Chain, knex?: Knex): ChaintracksStorageKnexOptions {
     const options: ChaintracksStorageKnexOptions = {
       ...ChaintracksStorageBase.createStorageBaseOptions(chain),
-      knex,
+      knex
     }
     return options
   }
@@ -115,7 +121,6 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       ((await this.knex(this.headerTableName).where({ isActive: true }).max('height as v')).pop()?.v as number) || -1
     )
   }
-
 
   override async findLiveHeaderForHeaderId(headerId: number): Promise<LiveBlockHeader> {
     const [header] = await this.knex<LiveBlockHeader>(this.headerTableName).where({ headerId: headerId })
@@ -325,7 +330,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
 
         if (!(oneBack.isActive && oneBack.isChainTip))
           // If this is the new active chain tip, and oneBack was not, this is a reorg.
-          r.reorgDepth = Math.min(r.priorTip.height, header.height) - activeAncestor.height;
+          r.reorgDepth = Math.min(r.priorTip.height, header.height) - activeAncestor.height
 
         if (activeAncestor.headerId !== oneBack.headerId) {
           // Deactivate headers from the current active chain tip up to but excluding our activeAncestor:

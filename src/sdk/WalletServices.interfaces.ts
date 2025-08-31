@@ -239,7 +239,7 @@ export interface WalletServicesOptions {
   /**
    * API key for use accessing fiat exchange rates API at
    * `http://api.exchangeratesapi.io/v1/latest?access_key=${key}`
-   * 
+   *
    * Obtain your own api key here:
    * https://manage.exchangeratesapi.io/signup/free
    */
@@ -247,7 +247,7 @@ export interface WalletServicesOptions {
   /**
    * Due to the default use of a free exchangeratesapiKey with low usage limits,
    * the `ChaintracksService` can act as a request rate multiplier.
-   * 
+   *
    * By default the following endpoint is used:
    * `https://mainnet-chaintracks.babbage.systems/getFiatExchangeRates`
    */
@@ -268,11 +268,11 @@ export interface WalletServicesOptions {
   arcUrl: string
   /**
    * TAAL ARC service configuration options.
-   * 
+   *
    * apiKey Default value is undefined.
-   * 
+   *
    * deploymentId Default value: `wallet-toolbox-${randomBytesHex(16)}`.
-   * 
+   *
    * callbackUrl Default is undefined.
    * callbackToken Default is undefined.
    */
@@ -286,11 +286,11 @@ export interface WalletServicesOptions {
   arcGorillaPoolUrl?: string
   /**
    * GorillaPool ARC service configuration options.
-   * 
+   *
    * apiKey Default is undefined.
-   * 
+   *
    * deploymentId Default value: `wallet-toolbox-${randomBytesHex(16)}`.
-   * 
+   *
    * callbackUrl Default is undefined.
    * callbackToken Default is undefined.
    */
