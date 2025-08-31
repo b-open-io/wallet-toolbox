@@ -74,7 +74,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       this._dbtype = await determineDBType(this.knex)
       await super.makeAvailable()
       // Connect the bulk data file manager to the table provided by this storage class.
-      await this.bulkManager.setStorage(this)
+      await this.bulkManager.setStorage(this, this.log)
     }
   }
 

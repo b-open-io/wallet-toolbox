@@ -24,6 +24,7 @@ export abstract class BulkIngestorBase implements BulkIngestorApi {
 
   chain: Chain
   jsonFilename: string
+  log: (...args: any[]) => void = () => {}
 
   constructor(options: BulkIngestorBaseOptions) {
     if (!options.jsonResource) throw new Error('The jsonFilename options property is required.')
@@ -33,8 +34,9 @@ export abstract class BulkIngestorBase implements BulkIngestorApi {
 
   private storageEngine: ChaintracksStorageBase | undefined
 
-  async setStorage(storage: ChaintracksStorageBase): Promise<void> {
+  async setStorage(storage: ChaintracksStorageBase, log: (...args: any[]) => void): Promise<void> {
     this.storageEngine = storage
+    this.log = log
   }
 
   async shutdown(): Promise<void> {}

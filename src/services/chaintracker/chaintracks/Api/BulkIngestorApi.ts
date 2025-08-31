@@ -70,7 +70,7 @@ export interface BulkIngestorApi {
    * Components requiring asynchronous setup can override base class implementation.
    * @param storage
    */
-  setStorage(storage: ChaintracksStorageApi): Promise<void>
+  setStorage(storage: ChaintracksStorageApi, log: (...args: any[]) => void): Promise<void>
 
   storage(): ChaintracksStorageApi
 }

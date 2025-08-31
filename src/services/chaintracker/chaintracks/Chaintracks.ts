@@ -23,7 +23,7 @@ export class Chaintracks implements ChaintracksManagementApi {
       bulkIngestors: [],
       liveIngestors: [],
       addLiveRecursionLimit: 36,
-      logging: 'all',
+      logging: (...args) => console.log(new Date().toISOString(), ...args),
       readonly: false
     }
   }
@@ -71,7 +71,9 @@ export class Chaintracks implements ChaintracksManagementApi {
 
     this.addLiveRecursionLimit = options.addLiveRecursionLimit
 
-    if (options.logging === 'all') this.log = (...args) => console.log(new Date().toISOString(), ...args)
+    if (options.logging) this.log = options.logging
+    this.storage.log = this.log
+
     this.log(`New ChaintracksBase Instance Constructed ${options.chain}Net`)
   }
 
@@ -94,7 +96,7 @@ export class Chaintracks implements ChaintracksManagementApi {
         const presentHeight = await bulk.getPresentHeight()
         if (presentHeight) presentHeights.push(presentHeight)
       } catch (uerr: unknown) {
-        console.log(uerr)
+        console.error(uerr)
       }
     }
     const presentHeight = presentHeights.length ? Math.max(...presentHeights) : undefined
@@ -157,8 +159,8 @@ export class Chaintracks implements ChaintracksManagementApi {
       if (this.available) return
       // Make sure database schema exists and is updated...
       await this.storage.migrateLatest()
-      for (const bulkIn of this.bulkIngestors) await bulkIn.setStorage(this.storage)
-      for (const liveIn of this.liveIngestors) await liveIn.setStorage(this.storage)
+      for (const bulkIn of this.bulkIngestors) await bulkIn.setStorage(this.storage, this.log)
+      for (const liveIn of this.liveIngestors) await liveIn.setStorage(this.storage, this.log)
 
       // Start all live ingestors to push new headers onto liveHeaders... each long running.
       for (const liveIngestor of this.liveIngestors) this.promises.push(liveIngestor.startListening(this.liveHeaders))
@@ -339,7 +341,7 @@ export class Chaintracks implements ChaintracksManagementApi {
             break
           }
         } catch (uerr: unknown) {
-          console.log(uerr)
+          console.error(uerr)
         }
       }
       if (bulkDone) break
@@ -551,7 +553,9 @@ export class Chaintracks implements ChaintracksManagementApi {
                 liveHeaderDupes = 0
               }
               const updated = await this.storage.getAvailableHeightRanges()
-              this.log(`${count} live headers added: bulk ${updated.bulk}, live ${updated.live}`)
+              this.log(`After adding ${count} live headers
+   After live: bulk ${updated.bulk}, live ${updated.live}
+`)
               count = 0
             }
             if (!this.subscriberCallbacksEnabled) {

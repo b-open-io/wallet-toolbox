@@ -47,6 +47,8 @@ export class BulkFileDataManager {
     }
   }
 
+  private log: (...args: any[]) => void = () => {}
+
   private bfds: BulkFileData[] = []
   private fileHashToIndex: Record<string, number> = {}
   private lock: SingleWriterMultiReaderLock = new SingleWriterMultiReaderLock()
@@ -109,15 +111,16 @@ export class BulkFileDataManager {
     log += `  url: ${url}\n`
     log += `  bulk range before: ${rangeBefore}\n`
     log += `  bulk range after:  ${rangeAfter}\n`
-    console.log(log)
+    this.log(log)
   }
 
-  async setStorage(storage: ChaintracksStorageBulkFileApi): Promise<void> {
-    return this.lock.withWriteLock(async () => this.setStorageNoLock(storage))
+  async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
+    return this.lock.withWriteLock(async () => this.setStorageNoLock(storage, log))
   }
 
-  private async setStorageNoLock(storage: ChaintracksStorageBulkFileApi): Promise<void> {
+  private async setStorageNoLock(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
     this.storage = storage
+    this.log = log
     // Sync bfds with storage. Two scenarios supported:
     const sfs = await this.storage.getBulkFiles()
     if (sfs.length === 0) {
@@ -187,7 +190,7 @@ export class BulkFileDataManager {
         }
       }
     }
-    console.log(`BulkFileDataManager.merge:\n${this.toLogString(r)}\n`)
+    this.log(`BulkFileDataManager.merge:\n${this.toLogString(r)}\n`)
     return r
   }
 

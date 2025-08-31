@@ -167,7 +167,7 @@ export class BulkIngestorCDN extends BulkIngestorBase {
     for (const u of r.updated) {
       log += `  updated: ${u.fileName}, fileId=${u.fileId}\n`
     }
-    console.log(log)
+    this.log(log)
 
     return priorLiveHeaders
   }

@@ -29,6 +29,8 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     return options
   }
 
+  log: (...args: any[]) => void = () => {}
+
   chain: Chain
   liveHeightThreshold: number
   reorgHeightThreshold: number
@@ -164,7 +166,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
         this.lastActiveMinHeight = undefined
       }
     } catch (err: unknown) {
-      console.log(err)
+      this.log(err)
       throw err
     }
   }
@@ -243,7 +245,7 @@ export abstract class ChaintracksStorageBase implements ChaintracksStorageQueryA
     if (!ignoreLimits && count > this.bulkMigrationChunkSize) return
 
     if (this.nowMigratingLiveToBulk) {
-      console.log('Already migrating live to bulk.')
+      this.log('Already migrating live to bulk.')
       return
     }
 

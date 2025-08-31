@@ -52,6 +52,8 @@ export interface ChaintracksStorageBaseOptions {
 }
 
 export interface ChaintracksStorageQueryApi {
+  log: (...args: any[]) => void
+
   /**
    * Returns the active chain tip header
    * Throws an error if there is no tip.
@@ -281,6 +283,8 @@ export interface ChaintracksStorageBulkFileApi {
 }
 
 export interface ChaintracksStorageIngestApi {
+  log: (...args: any[]) => void
+
   /**
    * Attempts to insert a block header into the chain.
    *
@@ -367,6 +371,8 @@ export interface ChaintracksStorageIngestApi {
 }
 
 export interface ChaintracksStorageApi extends ChaintracksStorageQueryApi, ChaintracksStorageIngestApi {
+  log: (...args: any[]) => void
+
   bulkManager: BulkFileDataManager
 
   /**

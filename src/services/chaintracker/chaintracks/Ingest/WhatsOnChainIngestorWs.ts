@@ -4,8 +4,6 @@ import { wait } from '../../../../utility/utilityHelpers'
 import { Chain } from '../../../../sdk/types'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
 
-const logger = console.log.bind(console)
-
 export type StopListenerToken = { stop: (() => void) | undefined }
 
 async function getWhatsOnChainTipHeight(chain: Chain = 'main', apiKey?: string): Promise<number> {
@@ -31,7 +29,8 @@ export async function WocHeadersBulkListener(
   enqueue: (header: BlockHeader) => void,
   error: (code: number, message: string) => boolean,
   stop: StopListenerToken,
-  chain: Chain = 'main',
+  chain: Chain,
+  logger: (...args: any[]) => void = () => {},
   idleWait = 5000
 ): Promise<boolean> {
   //logger(`WocHeadersBulkListener from ${fromHeight} to ${toHeight} on ${chain} chain`)
@@ -243,6 +242,7 @@ export async function WocHeadersBulkListener_test(): Promise<void> {
           },
           stop,
           chain,
+          console.log.bind(console),
           5000
         ))
       ) {
@@ -267,7 +267,8 @@ export async function WocHeadersLiveListener(
   enqueue: (header: BlockHeader) => void,
   error: (code: number, message: string) => boolean,
   stop: StopListenerToken,
-  chain: Chain = 'main',
+  chain: Chain,
+  logger: (...args: any[]) => void,
   idleWait = 100000
 ): Promise<boolean> {
   let count = 0
@@ -425,6 +426,7 @@ export async function WocHeadersLiveListener_test(): Promise<void> {
         },
         stop,
         chain,
+        console.log.bind(console),
         100000
       ))
     ) {

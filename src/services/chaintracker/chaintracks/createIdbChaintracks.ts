@@ -57,7 +57,7 @@ export async function createdIdbChaintracks(
         bulkIngestors: [],
         liveIngestors: [],
         addLiveRecursionLimit,
-        logging: 'all',
+        logging: (...args) => console.log(new Date().toISOString(), ...args),
         readonly: false
       }
 
