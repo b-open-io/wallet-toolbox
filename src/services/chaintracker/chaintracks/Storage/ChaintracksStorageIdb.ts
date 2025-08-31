@@ -240,10 +240,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
 
     const trx = this.toDbTrxReadWrite(['live_headers'])
     const store = trx.objectStore('live_headers')
-    const heightIndex = store.index('height')
     const hashIndex = store.index('hash')
-    const previousHashIndex = store.index('previousHash')
-    const previousHeaderIdIndex = store.index('previousHeaderId')
     const activeTipIndex = store.index('activeTip')
 
     const r: InsertHeaderResult = {
@@ -337,7 +334,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     if (r.isActiveTip) {
       let activeAncestor = oneBack
       while (!activeAncestor.isActive) {
-        const previousHeader = this.repairStoredLiveHeader(await previousHeaderIdIndex.get(activeAncestor.previousHeaderId!))
+        const previousHeader = this.repairStoredLiveHeader(await store.get(activeAncestor.previousHeaderId!))
         if (!previousHeader) {
           r.noActiveAncestor = true
           await trx.done
@@ -354,13 +351,13 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
         let headerToDeactivate = this.repairStoredLiveHeader(await activeTipIndex.get([1, 1]))!
         while (headerToDeactivate && headerToDeactivate.headerId !== activeAncestor.headerId) {
           await store.put(this.prepareStoredLiveHeader({ ...headerToDeactivate, isActive: false }))
-          headerToDeactivate = this.repairStoredLiveHeader(await previousHeaderIdIndex.get(headerToDeactivate.previousHeaderId!))!
+          headerToDeactivate = this.repairStoredLiveHeader(await store.get(headerToDeactivate.previousHeaderId!))!
         }
 
         let headerToActivate = oneBack
         while (headerToActivate.headerId !== activeAncestor.headerId) {
           await store.put(this.prepareStoredLiveHeader({ ...headerToActivate, isActive: true }))
-          headerToActivate = this.repairStoredLiveHeader(await previousHeaderIdIndex.get(headerToActivate.previousHeaderId!))!
+          headerToActivate = this.repairStoredLiveHeader(await store.get(headerToActivate.previousHeaderId!))!
         }
       }
     }
@@ -508,10 +505,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
           liveHeadersStore.createIndex('hash', 'hash', { unique: true })
           liveHeadersStore.createIndex('height', 'height', { unique: false })
           liveHeadersStore.createIndex('previousHeaderId', 'previousHeaderId', { unique: false })
-          liveHeadersStore.createIndex('previousHash', 'previousHash', { unique: false })
           liveHeadersStore.createIndex('merkleRoot', 'merkleRoot', { unique: false })
-          liveHeadersStore.createIndex('isActive', 'isActive', { unique: false })
-          liveHeadersStore.createIndex('isChainTip', 'isChainTip', { unique: false })
           liveHeadersStore.createIndex('activeTip', ['isActive', 'isChainTip'], { unique: false })
         }
 
@@ -520,7 +514,6 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
             keyPath: 'fileId',
             autoIncrement: true
           })
-          bulkHeadersStore.createIndex('firstHeight', 'firstHeight', { unique: true })
         }
       }
     })
