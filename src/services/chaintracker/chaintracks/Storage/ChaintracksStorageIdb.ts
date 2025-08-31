@@ -265,8 +265,12 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
       return r
     }
 
+    //let all = await store.getAll()
+    //console.log(`idb store length: ${all.length} last: ${all[all.length - 1]?.height}`)
+    //let allHash = await hashIndex.getAll()
+
     // Find previous header
-    let oneBack: LiveBlockHeader | undefined = this.repairStoredLiveHeader(await previousHashIndex.get(header.previousHash))
+    let oneBack: LiveBlockHeader | undefined = this.repairStoredLiveHeader(await hashIndex.get(header.previousHash))
 
     if (!oneBack) {
       // Check if this is first live header
@@ -365,11 +369,14 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
       await store.put(this.prepareStoredLiveHeader({ ...oneBack, isChainTip: false }))
     }
 
-    await store.put(this.prepareStoredLiveHeader(newHeader))
+    await store.put(this.prepareStoredLiveHeader(newHeader, true))
     r.added = true
 
+    //all = await store.getAll()
+    //console.log(`idb store length: ${all.length} last: ${all[all.length - 1]?.height}`)
+
     if (r.added && r.isActiveTip) {
-      this.pruneLiveBlockHeaders(newHeader.height)
+      //this.pruneLiveBlockHeaders(newHeader.height)
     }
 
     await trx.done

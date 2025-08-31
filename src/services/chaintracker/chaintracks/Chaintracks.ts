@@ -472,6 +472,7 @@ export class Chaintracks implements ChaintracksManagementApi {
           // Process a "live" block header...
           let recursions = this.addLiveRecursionLimit
           for (; !needSyncCheck && !this.stopMainThread; ) {
+            //console.log(`Processing liveHeader: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
             const ihr = await this.addLiveHeader(header)
             if (this.invalidInsertHeaderResult(ihr)) {
               this.log(`Ignoring liveHeader ${header.height} ${header.hash} due to invalid insert result.`)

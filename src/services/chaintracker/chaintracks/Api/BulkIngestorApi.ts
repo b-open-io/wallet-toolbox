@@ -16,12 +16,6 @@ export interface BulkIngestorBaseOptions {
    * available bulk block header resources.
    */
   jsonResource: string | undefined
-
-  /**
-   * If true, and the bulk ingestor supports it, bypass the live database
-   * up to `liveHeightThreshold` of available headers remaining.
-   */
-  bypassLiveEnabled: boolean
 }
 
 export interface BulkIngestorApi {
