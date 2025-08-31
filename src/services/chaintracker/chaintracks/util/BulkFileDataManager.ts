@@ -122,7 +122,15 @@ export class BulkFileDataManager {
     this.storage = storage
     this.log = log
     // Sync bfds with storage. Two scenarios supported:
-    const sfs = await this.storage.getBulkFiles()
+    let sfs = await this.storage.getBulkFiles()
+    const lastCdnBfd = this.bfds.filter(f => isBdfCdn(f)).slice(-1)[0]
+    const lastCdnSfs = sfs.filter(f => isBdfCdn(f)).slice(-1)[0]
+    if (lastCdnBfd && lastCdnSfs && lastCdnBfd.firstHeight + lastCdnBfd.count > lastCdnSfs.firstHeight + lastCdnSfs.count) {
+      // Storage has fewer cdn headers than bfds, clear them and try again.
+      for (const s of sfs.reverse())
+        await this.storage.deleteBulkFile(s.fileId!);
+      sfs = []
+    }
     if (sfs.length === 0) {
       // 1. Storage has no files: Update storage to reflect bfds.
       for (const bfd of this.bfds) {
@@ -144,11 +152,9 @@ export class BulkFileDataManager {
     this.fileHashToIndex = {}
 
     if (this.fromKnownSourceUrl) {
-      const files = selectBulkHeaderFiles(
-        validBulkHeaderFiles.filter(f => f.sourceUrl === this.fromKnownSourceUrl),
-        this.chain,
-        this.maxPerFile
-      )
+      const vbhfs = validBulkHeaderFiles
+      const filtered = vbhfs.filter(f => f.sourceUrl === this.fromKnownSourceUrl)
+      const files = selectBulkHeaderFiles(filtered, this.chain, this.maxPerFile)
       for (const file of files) {
         this.add({ ...file, fileHash: file.fileHash!, mru: Date.now() })
       }

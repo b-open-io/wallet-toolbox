@@ -242,16 +242,16 @@ export const validBulkHeaderFiles: BulkHeaderFileInfo[] = [
     validated: true
   },
   {
-    chain: "test",
-    count: 89594,
-    fileHash: "jw+ItRm5zjngLuuClRZONclYWCC66wPovV3XPF585KU=",
+    sourceUrl: "https://cdn.projectbabbage.com/blockheaders",
     fileName: "testNet_16.headers",
     firstHeight: 1600000,
-    lastChainWork: "00000000000000000000000000000000000000000000015814b79f747a43902a",
-    lastHash: "0000000035ba2558f604ff73909944235b8094f07c0efa9c91f59b62b4920516",
-    prevChainWork: "000000000000000000000000000000000000000000000156c3b84396da4e60b9",
     prevHash: "00000000000005504bfd1a3ce4688c30c86740390102b6cd464a2fb5e0e3fed1",
-    sourceUrl: "https://cdn.babbage.systems/blockheaders",
+    count: 89594,
+    lastHash: "0000000035ba2558f604ff73909944235b8094f07c0efa9c91f59b62b4920516",
+    fileHash: "jw+ItRm5zjngLuuClRZONclYWCC66wPovV3XPF585KU=",
+    lastChainWork: "00000000000000000000000000000000000000000000015814b79f747a43902a",
+    prevChainWork: "000000000000000000000000000000000000000000000156c3b84396da4e60b9",
+    chain: "test",
     validated: true
   },
   {
