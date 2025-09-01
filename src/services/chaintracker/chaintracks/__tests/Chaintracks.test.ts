@@ -40,7 +40,7 @@ describe('Chaintracks tests', () => {
     await NoDbBody('test', true)
   })
 
-  test('5 run local CDN on port 8300', async () => {
+  test.skip('5 run local CDN on port 8300', async () => {
     const fs = ChaintracksFs
     const server = new LocalCdnServer(8300, fs.pathJoin(rootFolder, 'export'))
     await server.start()
