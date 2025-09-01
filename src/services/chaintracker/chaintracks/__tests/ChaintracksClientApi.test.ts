@@ -22,8 +22,7 @@ clientClass = 'Chaintracks'
 const includeLocalServiceClient = true
 const includeLocalServiceChaintracks = true
 const includeNpmRegistryClient = false
-const includeGcrTestClient = true
-
+const includeGcrTestClient = false
 describe(`ChaintracksClientApi tests`, () => {
   jest.setTimeout(999999999)
 
