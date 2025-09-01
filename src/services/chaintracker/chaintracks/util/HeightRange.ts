@@ -47,7 +47,7 @@ export class HeightRange implements HeightRangeApi {
 
   /**
    * @returns the number of heights in the range, or 0 if the range is empty.
-  */
+   */
   get length() {
     return Math.max(0, this.maxHeight - this.minHeight + 1)
   }

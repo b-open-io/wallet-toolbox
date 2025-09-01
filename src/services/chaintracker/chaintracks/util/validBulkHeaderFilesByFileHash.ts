@@ -3,13 +3,13 @@ import { BulkHeaderFileInfo } from './BulkHeaderFile'
 /**
  * Compares meta data received for a bulk header file `vbf` to known
  * valid bulk header files based on their `fileHash`.
- * 
+ *
  * Short circuits both the retreival and validation of individual headers,
  * only a single SHA256 hash of the aggregate data needs to be compared.
- * 
+ *
  * The standard file size for historic block headers is 100,000 per file
  * which results in a many orders of magnitude initialization speedup.
- * 
+ *
  * The following properties must match:
  * - `firstHeight`
  * - `count`
@@ -18,10 +18,10 @@ import { BulkHeaderFileInfo } from './BulkHeaderFile'
  * - `lastChainWork`
  * - `lastHash`
  * - `chain`
- * 
+ *
  * @param vbf
  * @returns true iff bulk file meta data (excluding its source) matches a known file.
- * 
+ *
  * @publicbody
  */
 export function isKnownValidBulkHeaderFile(vbf: BulkHeaderFileInfo): boolean {

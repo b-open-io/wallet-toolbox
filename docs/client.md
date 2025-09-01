@@ -1379,6 +1379,8 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Interface: ChaintracksFetchApi
 
+Provides a simplified interface based on the
+
 ```ts
 export interface ChaintracksFetchApi {
     httpClient: HttpClient;
@@ -9601,6 +9603,9 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Class: ChaintracksFetch
 
+This class implements the ChaintracksFetchApi
+using the
+
 ```ts
 export class ChaintracksFetch implements ChaintracksFetchApi {
     httpClient: HttpClient = defaultHttpClient();
@@ -10851,13 +10856,17 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Class: HeightRange
 
+Represents a range of block heights.
+
+Operations support integrating contiguous batches of headers,
+
 ```ts
 export class HeightRange implements HeightRangeApi {
     constructor(public minHeight: number, public maxHeight: number) 
     static readonly empty = new HeightRange(0, -1);
+    get isEmpty() 
     static from(headers: BlockHeader[]): HeightRange 
     get length() 
-    get isEmpty() 
     toString(): string 
     contains(range: HeightRange | number) 
     intersect(range: HeightRange) 
@@ -10869,6 +10878,16 @@ export class HeightRange implements HeightRangeApi {
 ```
 
 See also: [BlockHeader](./client.md#interface-blockheader), [HeightRangeApi](./services.md#interface-heightrangeapi)
+
+###### Property empty
+
+All ranges where maxHeight is less than minHeight are considered empty.
+The canonical empty range is (0, -1).
+
+```ts
+static readonly empty = new HeightRange(0, -1)
+```
+See also: [HeightRange](./services.md#class-heightrange)
 
 ###### Method above
 
@@ -10920,6 +10939,11 @@ Returns
 
 range of height values from the given headers, or the empty range if there are no headers.
 
+Argument Details
+
++ **headers**
+  + an array of objects with a non-negative integer `height` property.
+
 ###### Method intersect
 
 Return the intersection with another height range.
@@ -10951,6 +10975,10 @@ function toString() { [native code] }
 ```ts
 toString(): string 
 ```
+
+Returns
+
+an easy to read string representation of the height range.
 
 ###### Method union
 
@@ -16745,11 +16773,48 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Function: isKnownValidBulkHeaderFile
 
+Compares meta data received for a bulk header file `vbf` to known
+valid bulk header files based on their `fileHash`.
+
+Short circuits both the retreival and validation of individual headers,
+only a single SHA256 hash of the aggregate data needs to be compared.
+
+The standard file size for historic block headers is 100,000 per file
+which results in a many orders of magnitude initialization speedup.
+
+The following properties must match:
+- `firstHeight`
+- `count`
+- `prevChainWork`
+- `prevHash`
+- `lastChainWork`
+- `lastHash`
+- `chain`
+
 ```ts
-export function isKnownValidBulkHeaderFile(vbf: BulkHeaderFileInfo): boolean 
+export function isKnownValidBulkHeaderFile(vbf: BulkHeaderFileInfo): boolean {
+    if (!vbf || !vbf.fileHash)
+        return false;
+    const bf = validBulkHeaderFilesByFileHash()[vbf.fileHash];
+    if (!bf ||
+        bf.firstHeight !== vbf.firstHeight ||
+        bf.count !== vbf.count ||
+        bf.prevChainWork !== vbf.prevChainWork ||
+        bf.prevHash !== vbf.prevHash ||
+        bf.lastChainWork !== vbf.lastChainWork ||
+        bf.lastHash !== vbf.lastHash ||
+        bf.chain !== vbf.chain) {
+        return false;
+    }
+    return true;
+}
 ```
 
-See also: [BulkHeaderFileInfo](./services.md#interface-bulkheaderfileinfo)
+See also: [BulkHeaderFileInfo](./services.md#interface-bulkheaderfileinfo), [validBulkHeaderFilesByFileHash](./services.md#function-validbulkheaderfilesbyfilehash)
+
+Returns
+
+true iff bulk file meta data (excluding its source) matches a known file.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -17426,11 +17491,17 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Function: validBulkHeaderFilesByFileHash
 
+Hash map of known valid bulk header files by their `fileHash`.
+
 ```ts
 export function validBulkHeaderFilesByFileHash(): Record<string, BulkHeaderFileInfo> 
 ```
 
 See also: [BulkHeaderFileInfo](./services.md#interface-bulkheaderfileinfo)
+
+Returns
+
+object where keys are file hashes of known bulk header files.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
