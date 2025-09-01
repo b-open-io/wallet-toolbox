@@ -28,6 +28,7 @@ export async function createIdbChaintracks(
   fetch: ChaintracksFetchApi
   storage: ChaintracksStorageIdb
   chaintracks: Chaintracks
+  available: Promise<void>
 }> {
   try {
     fetch ||= new ChaintracksFetch()
@@ -95,14 +96,15 @@ export async function createIdbChaintracks(
     co.liveIngestors.push(new LiveIngestorWhatsOnChainPoll(liveOptions))
 
     const chaintracks = new Chaintracks(co)
-    await chaintracks.makeAvailable()
+    const available = chaintracks.makeAvailable()
 
     return {
       chain,
       fetch,
       maxPerFile,
       storage,
-      chaintracks
+      chaintracks,
+      available
     }
   } catch (error) {
     console.error('Error setting up Chaintracks with Idb Storage:', error)
