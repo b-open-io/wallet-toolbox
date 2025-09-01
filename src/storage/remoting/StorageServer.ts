@@ -68,7 +68,7 @@ export class StorageServer {
 
     this.app.get(`/`, (req: Request, res: Response) => {
       res.type('text/plain')
-      res.send(`BRC-100 Storage Provider.`)
+      res.send(`BRC-100 ${this.wallet.chain}Net Storage Provider.`)
     })
 
     const options: AuthMiddlewareOptions = {

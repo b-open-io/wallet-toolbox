@@ -1,7 +1,7 @@
 import { Chaintracks } from './Chaintracks'
 
 import { IncomingMessage, Server, ServerResponse } from 'http'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import { Chain } from '../../../sdk/types'
 import { createNoDbChaintracksOptions } from './createDefaultNoDbChaintracksOptions'
@@ -83,6 +83,16 @@ export class ChaintracksService {
       } else {
         next()
       }
+    })
+
+    app.get(`/robots.txt`, (req: Request, res: Response) => {
+      res.type('text/plain')
+      res.send(`User-agent: *\nDisallow: /`)
+    })
+
+    .app.get(`/`, (req: Request, res: Response) => {
+      res.type('text/plain')
+      res.send(`Chaintracks ${this.chain}Net Block Header Service`)
     })
 
     const handleErr = (err: any, res: any) => {
