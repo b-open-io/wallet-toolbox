@@ -66,6 +66,11 @@ export class StorageServer {
       res.send(`User-agent: *\nDisallow: /`)
     })
 
+    this.app.get(`/`, (req: Request, res: Response) => {
+      res.type('text/plain')
+      res.send(`BRC-100 Storage Provider.`)
+    })
+
     const options: AuthMiddlewareOptions = {
       wallet: this.wallet as WalletInterface
     }
