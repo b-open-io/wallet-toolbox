@@ -65,7 +65,7 @@ export class StorageServer {
       res.type('text/plain')
       res.send(`User-agent: *\nDisallow: /`)
     })
-    
+
     const options: AuthMiddlewareOptions = {
       wallet: this.wallet as WalletInterface
     }

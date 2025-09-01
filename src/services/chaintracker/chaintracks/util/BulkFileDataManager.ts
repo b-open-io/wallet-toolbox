@@ -125,10 +125,13 @@ export class BulkFileDataManager {
     let sfs = await this.storage.getBulkFiles()
     const lastCdnBfd = this.bfds.filter(f => isBdfCdn(f)).slice(-1)[0]
     const lastCdnSfs = sfs.filter(f => isBdfCdn(f)).slice(-1)[0]
-    if (lastCdnBfd && lastCdnSfs && lastCdnBfd.firstHeight + lastCdnBfd.count > lastCdnSfs.firstHeight + lastCdnSfs.count) {
+    if (
+      lastCdnBfd &&
+      lastCdnSfs &&
+      lastCdnBfd.firstHeight + lastCdnBfd.count > lastCdnSfs.firstHeight + lastCdnSfs.count
+    ) {
       // Storage has fewer cdn headers than bfds, clear them and try again.
-      for (const s of sfs.reverse())
-        await this.storage.deleteBulkFile(s.fileId!);
+      for (const s of sfs.reverse()) await this.storage.deleteBulkFile(s.fileId!)
       sfs = []
     }
     if (sfs.length === 0) {
