@@ -4,6 +4,7 @@ import { wait } from '../../../../utility/utilityHelpers'
 import { Chain } from '../../../../sdk'
 import { createNoDbChaintracksOptions } from '../createDefaultNoDbChaintracksOptions'
 import { ChaintracksFs } from '../util/ChaintracksFs'
+import { LocalCdnServer } from './LocalCdnServer'
 
 const rootFolder = './src/services/chaintracker/chaintracks/__tests/data'
 
@@ -37,6 +38,17 @@ describe('Chaintracks tests', () => {
 
   test.skip('4 NoDb export testnet', async () => {
     await NoDbBody('test', true)
+  })
+
+  test('5 run local CDN on port 8300', async () => {
+    const fs = ChaintracksFs
+    const server = new LocalCdnServer(8300, fs.pathJoin(rootFolder, 'export'))
+    await server.start()
+    let done = false
+    for (; !done; ) {
+      await wait(10000)
+    }
+    await server.stop()
   })
 
   async function NoDbBody(chain: Chain, exportHeaders?: boolean) {

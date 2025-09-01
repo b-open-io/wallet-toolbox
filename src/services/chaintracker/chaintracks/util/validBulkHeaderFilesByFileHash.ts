@@ -1,5 +1,29 @@
 import { BulkHeaderFileInfo } from './BulkHeaderFile'
 
+/**
+ * Compares meta data received for a bulk header file `vbf` to known
+ * valid bulk header files based on their `fileHash`.
+ * 
+ * Short circuits both the retreival and validation of individual headers,
+ * only a single SHA256 hash of the aggregate data needs to be compared.
+ * 
+ * The standard file size for historic block headers is 100,000 per file
+ * which results in a many orders of magnitude initialization speedup.
+ * 
+ * The following properties must match:
+ * - `firstHeight`
+ * - `count`
+ * - `prevChainWork`
+ * - `prevHash`
+ * - `lastChainWork`
+ * - `lastHash`
+ * - `chain`
+ * 
+ * @param vbf
+ * @returns true iff bulk file meta data (excluding its source) matches a known file.
+ * 
+ * @publicbody
+ */
 export function isKnownValidBulkHeaderFile(vbf: BulkHeaderFileInfo): boolean {
   if (!vbf || !vbf.fileHash) return false
   const bf = validBulkHeaderFilesByFileHash()[vbf.fileHash]
@@ -20,6 +44,10 @@ export function isKnownValidBulkHeaderFile(vbf: BulkHeaderFileInfo): boolean {
 
 let _validBulkHeaderFilesByFileHash: Record<string, BulkHeaderFileInfo> | undefined
 
+/**
+ * Hash map of known valid bulk header files by their `fileHash`.
+ * @returns object where keys are file hashes of known bulk header files.
+ */
 export function validBulkHeaderFilesByFileHash(): Record<string, BulkHeaderFileInfo> {
   if (!_validBulkHeaderFilesByFileHash) {
     _validBulkHeaderFilesByFileHash = {}
@@ -32,6 +60,10 @@ export function validBulkHeaderFilesByFileHash(): Record<string, BulkHeaderFileI
   return _validBulkHeaderFilesByFileHash
 }
 
+/**
+ * Static array of known valid bulk header files.
+ * `sourceUrl` is included only as a reference to the original certifying authority.
+ */
 export const validBulkHeaderFiles: BulkHeaderFileInfo[] = [
   {
     sourceUrl: 'https://cdn.projectbabbage.com/blockheaders',

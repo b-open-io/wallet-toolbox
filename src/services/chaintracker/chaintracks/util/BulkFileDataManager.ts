@@ -192,11 +192,8 @@ export class BulkFileDataManager {
       } else if (isBdfIncremental(vbf) && lbf && isBdfIncremental(lbf)) {
         await this.mergeIncremental(lbf, vbf, r)
       } else {
-        const added = this.add(vbf)
+        const added = await this.add(vbf)
         r.inserted.push(added)
-        if (this.storage) {
-          vbf.fileId = await this.storage.insertBulkFile(added)
-        }
       }
     }
     this.log(`BulkFileDataManager.merge:\n${this.toLogString(r)}\n`)
@@ -515,13 +512,17 @@ export class BulkFileDataManager {
     }
   }
 
-  private add(bfd: BulkFileData): BulkHeaderFileInfo {
+  private async add(bfd: BulkFileData): Promise<BulkHeaderFileInfo> {
     this.validateBfdForAdd(bfd)
     const index = this.bfds.length
     this.bfds.push(bfd)
     this.fileHashToIndex[bfd.fileHash] = index
     this.ensureMaxRetained()
-    return bfdToInfo(bfd, true)
+    const info = bfdToInfo(bfd, true)
+    if (this.storage) {
+      info.fileId = bfd.fileId = await this.storage.insertBulkFile(info)
+    }
+    return info
   }
 
   private replaceBfdAtIndex(index: number, update: BulkFileData): void {

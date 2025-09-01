@@ -1,6 +1,10 @@
 import { defaultHttpClient, HttpClient } from '@bsv/sdk'
 import { ChaintracksFetchApi } from '../Api/ChaintracksFetchApi'
 
+/**
+ * This class implements the ChaintracksFetchApi
+ * using the @bsv/sdk `defaultHttpClient`.
+ */
 export class ChaintracksFetch implements ChaintracksFetchApi {
   httpClient: HttpClient = defaultHttpClient()
 

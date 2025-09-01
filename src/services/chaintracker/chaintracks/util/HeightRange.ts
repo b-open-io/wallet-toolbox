@@ -10,16 +10,32 @@ export interface HeightRanges {
   live: HeightRange
 }
 
+/**
+ * Represents a range of block heights.
+ *
+ * Operations support integrating contiguous batches of headers,
+ */
 export class HeightRange implements HeightRangeApi {
   constructor(
     public minHeight: number,
     public maxHeight: number
   ) {}
 
+  /**
+   * All ranges where maxHeight is less than minHeight are considered empty.
+   * The canonical empty range is (0, -1).
+   */
   static readonly empty = new HeightRange(0, -1)
 
   /**
-   * @param headers
+   * @returns true iff minHeight is greater than maxHeight.
+   */
+  get isEmpty() {
+    return this.minHeight > this.maxHeight
+  }
+
+  /**
+   * @param headers an array of objects with a non-negative integer `height` property.
    * @returns range of height values from the given headers, or the empty range if there are no headers.
    */
   static from(headers: BlockHeader[]): HeightRange {
@@ -29,14 +45,16 @@ export class HeightRange implements HeightRangeApi {
     return new HeightRange(minHeight, maxHeight)
   }
 
+  /**
+   * @returns the number of heights in the range, or 0 if the range is empty.
+  */
   get length() {
     return Math.max(0, this.maxHeight - this.minHeight + 1)
   }
 
-  get isEmpty() {
-    return this.minHeight > this.maxHeight
-  }
-
+  /**
+   * @returns an easy to read string representation of the height range.
+   */
   toString(): string {
     return this.isEmpty ? '<empty>' : `${this.minHeight}-${this.maxHeight}`
   }

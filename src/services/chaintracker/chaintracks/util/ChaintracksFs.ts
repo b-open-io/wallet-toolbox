@@ -38,6 +38,10 @@ export abstract class ChaintracksFsStatics {
   }
 }
 
+/**
+ * This object is an implementation of the `ChaintracksFsApi` interface
+ * using the `fs` package which may not be available in all environments.
+ */
 export const ChaintracksFs: ChaintracksFsApi = ChaintracksFsStatics
 
 export class ChaintracksReadableFile implements ChaintracksReadableFileApi {
