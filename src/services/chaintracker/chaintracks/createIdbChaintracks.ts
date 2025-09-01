@@ -10,7 +10,7 @@ import { ChaintracksStorageIdb, ChaintracksStorageIdbOptions } from './Storage/C
 import { BulkFileDataManager, BulkFileDataManagerOptions } from './util/BulkFileDataManager'
 import { BulkIngestorCDNOptions, WhatsOnChainServicesOptions } from './index.client'
 
-export async function createdIdbChaintracks(
+export async function createIdbChaintracks(
   chain: Chain,
   whatsonchainApiKey: string,
   maxPerFile: number = 100000,

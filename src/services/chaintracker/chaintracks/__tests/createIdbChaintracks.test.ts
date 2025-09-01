@@ -1,6 +1,6 @@
 import { _tu } from '../../../../../test/utils/TestUtilsWalletStorage'
 import { wait } from '../../../../utility/utilityHelpers'
-import { createdIdbChaintracks } from '../createIdbChaintracks'
+import { createIdbChaintracks } from '../createIdbChaintracks'
 import { BulkFileDataManager } from '../util/BulkFileDataManager'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
 import { HeaderListener } from '../Api/ChaintracksClientApi'
@@ -16,7 +16,7 @@ describe('createIdbChaintracks tests', () => {
     const target: Chain = 'main'
     if (_tu.noEnv(target)) return
     const env = _tu.getEnv(target)
-    const { chain, chaintracks, storage } = await createdIdbChaintracks(env.chain, env.whatsonchainApiKey)
+    const { chain, chaintracks, storage } = await createIdbChaintracks(env.chain, env.whatsonchainApiKey)
     const headerListener: HeaderListener = (header: BlockHeader) => {
       console.log(`headerListener: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
     }
