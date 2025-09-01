@@ -507,7 +507,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
         }
 
         if (!db.objectStoreNames.contains('bulk_headers')) {
-          const bulkHeadersStore = db.createObjectStore('proven_tx_reqs', {
+          const bulkHeadersStore = db.createObjectStore('bulk_headers', {
             keyPath: 'fileId',
             autoIncrement: true
           })
