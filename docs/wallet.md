@@ -16260,6 +16260,7 @@ export async function createIdbChaintracks(chain: Chain, whatsonchainApiKey: str
     fetch: ChaintracksFetchApi;
     storage: ChaintracksStorageIdb;
     chaintracks: Chaintracks;
+    available: Promise<void>;
 }> 
 ```
 
