@@ -39,9 +39,23 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     this.dbName = `chaintracks-${this.chain}net`
   }
 
+  override async makeAvailable(): Promise<void> {
+    if (this.isAvailable && this.hasMigrated) return
+    // Not a base class policy, but we want to ensure migrations are run before getting to business.
+    if (!this.hasMigrated) {
+      await this.migrateLatest()
+    }
+    if (!this.isAvailable) {
+      await super.makeAvailable()
+      // Connect the bulk data file manager to the table provided by this storage class.
+      await this.bulkManager.setStorage(this, this.log)
+    }
+  }
+
   override async migrateLatest(): Promise<void> {
     if (this.db) return
     this.db = await this.initDB()
+    await super.migrateLatest()
   }
 
   override async destroy(): Promise<void> {}

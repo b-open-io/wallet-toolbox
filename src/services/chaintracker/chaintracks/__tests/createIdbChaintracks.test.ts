@@ -16,7 +16,8 @@ describe('createIdbChaintracks tests', () => {
     const target: Chain = 'main'
     if (_tu.noEnv(target)) return
     const env = _tu.getEnv(target)
-    const { chain, chaintracks, storage } = await createIdbChaintracks(env.chain, env.whatsonchainApiKey)
+    const { chain, chaintracks, storage, available } = await createIdbChaintracks(env.chain, env.whatsonchainApiKey)
+    await available;
     const headerListener: HeaderListener = (header: BlockHeader) => {
       console.log(`headerListener: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
     }
