@@ -696,9 +696,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
     // Normalize attributes for a stable cache key.
     // If attributes is an object, sort its top-level keys; if it's an array, sort a shallow copy.
     let attributesKey: unknown = args.attributes
-    if (Array.isArray(args.attributes)) {
-      attributesKey = [...args.attributes].sort()
-    } else if (args.attributes && typeof args.attributes === 'object') {
+    if (args.attributes && typeof args.attributes === 'object') {
       const keys = Object.keys(args.attributes as Record<string, unknown>).sort()
       attributesKey = JSON.stringify(args.attributes, keys)
     }
