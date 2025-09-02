@@ -9421,122 +9421,134 @@ export class Chaintracks implements ChaintracksManagementApi {
         const cdnSyncRepeatMsecs = 24 * 60 * 60 * 1000;
         const syncCheckRepeatMsecs = 30 * 60 * 1000;
         while (!this.stopMainThread) {
-            const now = Date.now();
-            lastSyncCheck = now;
-            const presentHeight = await this.getPresentHeight();
-            const before = await this.storage.getAvailableHeightRanges();
-            let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2;
-            if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
-                skipBulkSync = false;
-            }
-            this.log(`Chaintracks Update Services: Bulk Header Sync Review
+            try {
+                const now = Date.now();
+                lastSyncCheck = now;
+                const presentHeight = await this.getPresentHeight();
+                const before = await this.storage.getAvailableHeightRanges();
+                let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2;
+                if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
+                    skipBulkSync = false;
+                }
+                this.log(`Chaintracks Update Services: Bulk Header Sync Review
   presentHeight=${presentHeight}   addLiveRecursionLimit=${this.addLiveRecursionLimit}
   Before synchronize: bulk ${before.bulk}, live ${before.live}
   ${skipBulkSync ? "Skipping" : "Starting"} syncBulkStorage.
 `);
-            if (!skipBulkSync) {
-                lastBulkSync = now;
-                if (this.available)
-                    await this.syncBulkStorage(presentHeight, before);
-                else
-                    await this.syncBulkStorageNoLock(presentHeight, before);
-            }
-            let count = 0;
-            let liveHeaderDupes = 0;
-            let needSyncCheck = false;
-            for (; !needSyncCheck && !this.stopMainThread;) {
-                let header = this.liveHeaders.shift();
-                if (header) {
-                    let recursions = this.addLiveRecursionLimit;
-                    for (; !needSyncCheck && !this.stopMainThread;) {
-                        const ihr = await this.addLiveHeader(header);
-                        if (this.invalidInsertHeaderResult(ihr)) {
-                            this.log(`Ignoring liveHeader ${header.height} ${header.hash} due to invalid insert result.`);
-                            needSyncCheck = true;
-                        }
-                        else if (ihr.noPrev) {
-                            if (recursions-- <= 0) {
-                                this.log(`Ignoring liveHeader ${header.height} ${header.hash} addLiveRecursionLimit=${this.addLiveRecursionLimit} exceeded.`);
+                if (!skipBulkSync) {
+                    lastBulkSync = now;
+                    if (this.available)
+                        await this.syncBulkStorage(presentHeight, before);
+                    else
+                        await this.syncBulkStorageNoLock(presentHeight, before);
+                }
+                let count = 0;
+                let liveHeaderDupes = 0;
+                let needSyncCheck = false;
+                for (; !needSyncCheck && !this.stopMainThread;) {
+                    let header = this.liveHeaders.shift();
+                    if (header) {
+                        let recursions = this.addLiveRecursionLimit;
+                        for (; !needSyncCheck && !this.stopMainThread;) {
+                            const ihr = await this.addLiveHeader(header);
+                            if (this.invalidInsertHeaderResult(ihr)) {
+                                this.log(`Ignoring liveHeader ${header.height} ${header.hash} due to invalid insert result.`);
                                 needSyncCheck = true;
                             }
-                            else {
-                                const hash = header.previousHash;
-                                const prevHeader = await this.getMissingBlockHeader(hash);
-                                if (!prevHeader) {
-                                    this.log(`Ignoring liveHeader ${header.height} ${header.hash} failed to find previous header by hash ${asString(hash)}`);
+                            else if (ihr.noPrev) {
+                                if (recursions-- <= 0) {
+                                    this.log(`Ignoring liveHeader ${header.height} ${header.hash} addLiveRecursionLimit=${this.addLiveRecursionLimit} exceeded.`);
                                     needSyncCheck = true;
                                 }
                                 else {
-                                    this.liveHeaders.unshift(header);
-                                    header = prevHeader;
+                                    const hash = header.previousHash;
+                                    const prevHeader = await this.getMissingBlockHeader(hash);
+                                    if (!prevHeader) {
+                                        this.log(`Ignoring liveHeader ${header.height} ${header.hash} failed to find previous header by hash ${asString(hash)}`);
+                                        needSyncCheck = true;
+                                    }
+                                    else {
+                                        this.liveHeaders.unshift(header);
+                                        header = prevHeader;
+                                    }
                                 }
-                            }
-                        }
-                        else {
-                            if (this.subscriberCallbacksEnabled)
-                                this.log(`addLiveHeader ${header.height}${ihr.added ? " added" : ""}${ihr.dupe ? " dupe" : ""}${ihr.isActiveTip ? " isActiveTip" : ""}${ihr.reorgDepth ? " reorg depth " + ihr.reorgDepth : ""}${ihr.noPrev ? " noPrev" : ""}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? " error" : ""}`);
-                            if (ihr.dupe) {
-                                liveHeaderDupes++;
-                            }
-                            if (ihr.added) {
-                                count++;
-                            }
-                            break;
-                        }
-                    }
-                }
-                else {
-                    const bheader = this.baseHeaders.shift();
-                    if (bheader) {
-                        const prev = await this.storage.findLiveHeaderForBlockHash(bheader.previousHash);
-                        if (!prev) {
-                            this.log(`Ignoring header with unknown previousHash ${bheader.previousHash} in live storage.`);
-                        }
-                        else {
-                            const header: BlockHeader = {
-                                ...bheader,
-                                height: prev.height + 1,
-                                hash: blockHash(bheader)
-                            };
-                            const ihr = await this.addLiveHeader(header);
-                            if (this.invalidInsertHeaderResult(ihr)) {
-                                this.log(`Ignoring invalid baseHeader ${header.height} ${header.hash}.`);
                             }
                             else {
                                 if (this.subscriberCallbacksEnabled)
-                                    this.log(`addBaseHeader ${header.height}${ihr.added ? " added" : ""}${ihr.dupe ? " dupe" : ""}${ihr.isActiveTip ? " isActiveTip" : ""}${ihr.reorgDepth ? " reorg depth " + ihr.reorgDepth : ""}${ihr.noPrev ? " noPrev" : ""}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? " error" : ""}`);
+                                    this.log(`addLiveHeader ${header.height}${ihr.added ? " added" : ""}${ihr.dupe ? " dupe" : ""}${ihr.isActiveTip ? " isActiveTip" : ""}${ihr.reorgDepth ? " reorg depth " + ihr.reorgDepth : ""}${ihr.noPrev ? " noPrev" : ""}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? " error" : ""}`);
+                                if (ihr.dupe) {
+                                    liveHeaderDupes++;
+                                }
                                 if (ihr.added) {
                                     count++;
                                 }
+                                break;
                             }
                         }
                     }
                     else {
-                        if (count > 0) {
-                            if (liveHeaderDupes > 0) {
-                                this.log(`${liveHeaderDupes} duplicate headers ignored.`);
-                                liveHeaderDupes = 0;
+                        const bheader = this.baseHeaders.shift();
+                        if (bheader) {
+                            const prev = await this.storage.findLiveHeaderForBlockHash(bheader.previousHash);
+                            if (!prev) {
+                                this.log(`Ignoring header with unknown previousHash ${bheader.previousHash} in live storage.`);
                             }
-                            const updated = await this.storage.getAvailableHeightRanges();
-                            this.log(`After adding ${count} live headers
+                            else {
+                                const header: BlockHeader = {
+                                    ...bheader,
+                                    height: prev.height + 1,
+                                    hash: blockHash(bheader)
+                                };
+                                const ihr = await this.addLiveHeader(header);
+                                if (this.invalidInsertHeaderResult(ihr)) {
+                                    this.log(`Ignoring invalid baseHeader ${header.height} ${header.hash}.`);
+                                }
+                                else {
+                                    if (this.subscriberCallbacksEnabled)
+                                        this.log(`addBaseHeader ${header.height}${ihr.added ? " added" : ""}${ihr.dupe ? " dupe" : ""}${ihr.isActiveTip ? " isActiveTip" : ""}${ihr.reorgDepth ? " reorg depth " + ihr.reorgDepth : ""}${ihr.noPrev ? " noPrev" : ""}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? " error" : ""}`);
+                                    if (ihr.added) {
+                                        count++;
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            if (count > 0) {
+                                if (liveHeaderDupes > 0) {
+                                    this.log(`${liveHeaderDupes} duplicate headers ignored.`);
+                                    liveHeaderDupes = 0;
+                                }
+                                const updated = await this.storage.getAvailableHeightRanges();
+                                this.log(`After adding ${count} live headers
    After live: bulk ${updated.bulk}, live ${updated.live}
 `);
-                            count = 0;
-                        }
-                        if (!this.subscriberCallbacksEnabled) {
-                            const live = await this.storage.findLiveHeightRange();
-                            if (!live.isEmpty) {
-                                this.subscriberCallbacksEnabled = true;
-                                this.log(`listening at height of ${live.maxHeight}`);
+                                count = 0;
                             }
+                            if (!this.subscriberCallbacksEnabled) {
+                                const live = await this.storage.findLiveHeightRange();
+                                if (!live.isEmpty) {
+                                    this.subscriberCallbacksEnabled = true;
+                                    this.log(`listening at height of ${live.maxHeight}`);
+                                }
+                            }
+                            if (!this.available) {
+                                this.available = true;
+                            }
+                            needSyncCheck = Date.now() - lastSyncCheck > syncCheckRepeatMsecs;
+                            if (!needSyncCheck)
+                                await wait(1000);
                         }
-                        if (!this.available) {
-                            this.available = true;
-                        }
-                        needSyncCheck = Date.now() - lastSyncCheck > syncCheckRepeatMsecs;
-                        if (!needSyncCheck)
-                            await wait(1000);
                     }
+                }
+            }
+            catch (eu: unknown) {
+                const e = WalletError.fromUnknown(eu);
+                if (!this.available) {
+                    this.startupError = e;
+                    this.stopMainThread = true;
+                }
+                else {
+                    this.log(`Error occurred during chaintracks main thread processing: ${e.stack || e.message}`);
                 }
             }
         }
@@ -9544,7 +9556,7 @@ export class Chaintracks implements ChaintracksManagementApi {
 }
 ```
 
-See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksFsApi](./services.md#interface-chaintracksfsapi), [ChaintracksInfoApi](./services.md#interface-chaintracksinfoapi), [ChaintracksManagementApi](./services.md#interface-chaintracksmanagementapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions), [HeaderListener](./services.md#type-headerlistener), [HeightRange](./services.md#class-heightrange), [HeightRanges](./services.md#interface-heightranges), [LiveBlockHeader](./services.md#interface-liveblockheader), [ReorgListener](./services.md#type-reorglistener), [Services](./services.md#class-services), [asString](./client.md#function-asstring), [blockHash](./services.md#function-blockhash), [wait](./client.md#function-wait)
+See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksFsApi](./services.md#interface-chaintracksfsapi), [ChaintracksInfoApi](./services.md#interface-chaintracksinfoapi), [ChaintracksManagementApi](./services.md#interface-chaintracksmanagementapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions), [HeaderListener](./services.md#type-headerlistener), [HeightRange](./services.md#class-heightrange), [HeightRanges](./services.md#interface-heightranges), [LiveBlockHeader](./services.md#interface-liveblockheader), [ReorgListener](./services.md#type-reorglistener), [Services](./services.md#class-services), [WalletError](./client.md#class-walleterror), [asString](./client.md#function-asstring), [blockHash](./services.md#function-blockhash), [wait](./client.md#function-wait)
 
 ###### Method addHeader
 

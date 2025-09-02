@@ -175,7 +175,7 @@ export class Chaintracks implements ChaintracksManagementApi {
         await wait(100)
       }
 
-      if (this.startupError) throw this.startupError;
+      if (this.startupError) throw this.startupError
     })
   }
 
@@ -445,7 +445,8 @@ export class Chaintracks implements ChaintracksManagementApi {
         const before = await this.storage.getAvailableHeightRanges()
 
         // Skip bulk sync if within less than half the recursion limit of present height
-        let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2
+        let skipBulkSync =
+          !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2
 
         if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
           // If we haven't re-synced in a long time, do it just to check for a CDN update.
@@ -473,12 +474,12 @@ export class Chaintracks implements ChaintracksManagementApi {
         let liveHeaderDupes = 0
         let needSyncCheck = false
 
-        for (; !needSyncCheck && !this.stopMainThread;) {
+        for (; !needSyncCheck && !this.stopMainThread; ) {
           let header = this.liveHeaders.shift()
           if (header) {
             // Process a "live" block header...
             let recursions = this.addLiveRecursionLimit
-            for (; !needSyncCheck && !this.stopMainThread;) {
+            for (; !needSyncCheck && !this.stopMainThread; ) {
               //console.log(`Processing liveHeader: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
               const ihr = await this.addLiveHeader(header)
               if (this.invalidInsertHeaderResult(ihr)) {
@@ -580,12 +581,12 @@ export class Chaintracks implements ChaintracksManagementApi {
           }
         }
       } catch (eu: unknown) {
-        const e = WalletError.fromUnknown(eu);
+        const e = WalletError.fromUnknown(eu)
         if (!this.available) {
-          this.startupError = e;
-          this.stopMainThread = true;
+          this.startupError = e
+          this.stopMainThread = true
         } else {
-          this.log(`Error occurred during chaintracks main thread processing: ${e.stack || e.message}`);
+          this.log(`Error occurred during chaintracks main thread processing: ${e.stack || e.message}`)
         }
       }
     }
