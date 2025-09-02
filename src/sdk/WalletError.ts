@@ -54,7 +54,7 @@ export class WalletError extends Error implements WalletErrorObject {
    *
    */
   static fromUnknown(err: unknown): WalletError {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (err instanceof WalletError) return err
     let name = 'WERR_UNKNOWN'
     let message = ''
     let stack: string | undefined

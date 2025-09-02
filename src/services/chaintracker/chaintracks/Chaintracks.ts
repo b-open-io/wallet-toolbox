@@ -15,6 +15,7 @@ import { SingleWriterMultiReaderLock } from './util/SingleWriterMultiReaderLock'
 import { ChaintracksFsApi } from './Api/ChaintracksFsApi'
 import { randomBytesBase64, wait } from '../../../utility/utilityHelpers'
 import { WalletError } from '../../../sdk/WalletError'
+import { CWIStyleWalletManager } from '../../../CWIStyleWalletManager'
 
 export class Chaintracks implements ChaintracksManagementApi {
   static createOptions(chain: Chain): ChaintracksOptions {
@@ -328,6 +329,7 @@ export class Chaintracks implements ChaintracksManagementApi {
 
     let done = false
     for (; !done; ) {
+      let bulkSyncError: WalletError | undefined
       for (const bulk of this.bulkIngestors) {
         try {
           const r = await bulk.synchronize(presentHeight, before, newLiveHeaders)
@@ -344,23 +346,31 @@ export class Chaintracks implements ChaintracksManagementApi {
             done = true
             break
           }
-        } catch (uerr: unknown) {
-          console.error(uerr)
+        } catch (eu: unknown) {
+          const e = bulkSyncError = WalletError.fromUnknown(eu)
+          this.log(`bulk sync error: ${e.message}`)
         }
       }
-      if (bulkDone) break
+      if (!bulkDone && !this.available && bulkSyncError) {
+        this.startupError = bulkSyncError
+        break;
+      }
+      if (bulkDone)
+        break
     }
 
-    this.liveHeaders.unshift(...newLiveHeaders)
+    if (!this.startupError) {
+      this.liveHeaders.unshift(...newLiveHeaders)
 
-    added = after.bulk.above(initialRanges.bulk)
+      added = after.bulk.above(initialRanges.bulk)
 
-    this.log(`syncBulkStorage done
+      this.log(`syncBulkStorage done
   Before sync: bulk ${initialRanges.bulk}, live ${initialRanges.live}
    After sync: bulk ${after.bulk}, live ${after.live}
   ${added.length} headers added to bulk storage
   ${this.liveHeaders.length} headers forwarded to live header storage
 `)
+    }
   }
 
   private async getMissingBlockHeader(hash: string): Promise<BlockHeader | undefined> {
@@ -468,6 +478,7 @@ export class Chaintracks implements ChaintracksManagementApi {
           else
             // While still not available, the makeAvailable write lock is held.
             await this.syncBulkStorageNoLock(presentHeight, before)
+          if (this.startupError) throw this.startupError;
         }
 
         let count = 0
