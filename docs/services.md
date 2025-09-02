@@ -3480,6 +3480,8 @@ export class Chaintracks implements ChaintracksManagementApi {
                 catch (eu: unknown) {
                     const e = (bulkSyncError = WalletError.fromUnknown(eu));
                     this.log(`bulk sync error: ${e.message}`);
+                    if (!this.available)
+                        break;
                 }
             }
             if (!bulkDone && !this.available && bulkSyncError) {
