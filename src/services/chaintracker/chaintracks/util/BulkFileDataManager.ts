@@ -93,7 +93,7 @@ export class BulkFileDataManager {
   /**
    * If `bfds` are going to be backed by persistent storage,
    * must be called before making storage available.
-   * 
+   *
    * Synchronizes bfds and storage files, after which this manager maintains sync.
    * There should be no changes to bulk files by direct access to storage bulk file methods.
    */
@@ -132,13 +132,17 @@ export class BulkFileDataManager {
     }
   }
 
-  heightRangesFromBulkFiles(files: BulkHeaderFileInfo[]): { all: HeightRange, cdn: HeightRange, incremental: HeightRange } {
-    const ranges = { all: new HeightRange(0,-1), cdn: new HeightRange(0,-1), incremental: new HeightRange(0,-1) }
+  heightRangesFromBulkFiles(files: BulkHeaderFileInfo[]): {
+    all: HeightRange
+    cdn: HeightRange
+    incremental: HeightRange
+  } {
+    const ranges = { all: new HeightRange(0, -1), cdn: new HeightRange(0, -1), incremental: new HeightRange(0, -1) }
     for (const file of files) {
       const range = new HeightRange(file.firstHeight, file.firstHeight + file.count - 1)
       ranges.all = ranges.all.union(range)
-      if (isBdfCdn(file)) ranges.cdn = ranges.cdn.union(range);
-      if (isBdfIncremental(file)) ranges.incremental = ranges.incremental.union(range);
+      if (isBdfCdn(file)) ranges.cdn = ranges.cdn.union(range)
+      if (isBdfIncremental(file)) ranges.incremental = ranges.incremental.union(range)
     }
     return ranges
   }

@@ -8516,10 +8516,15 @@ export class BulkFileDataManager {
     readonly maxRetained?: number;
     readonly fromKnownSourceUrl?: string;
     constructor(options: BulkFileDataManagerOptions | Chain) 
+    async deleteBulkFiles(): Promise<void> 
+    async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> 
+    heightRangesFromBulkFiles(files: BulkHeaderFileInfo[]): {
+        all: HeightRange;
+        cdn: HeightRange;
+        incremental: HeightRange;
+    } 
     async createReader(range?: HeightRange, maxBufferSize?: number): Promise<BulkFileDataReader> 
     async updateFromUrl(cdnUrl: string): Promise<void> 
-    async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> 
-    async deleteBulkFiles(): Promise<void> 
     async merge(files: BulkHeaderFileInfo[]): Promise<BulkFileDataManagerMergeResult> 
     toLogString(what?: BulkFileDataManagerMergeResult | BulkFileData[] | BulkHeaderFileInfo[]): string 
     async mergeIncrementalBlockHeaders(newBulkHeaders: BlockHeader[], incrementalChainWork?: string): Promise<void> 
@@ -8535,6 +8540,19 @@ export class BulkFileDataManager {
 ```
 
 See also: [BlockHeader](./client.md#interface-blockheader), [BulkFileDataManagerMergeResult](./services.md#interface-bulkfiledatamanagermergeresult), [BulkFileDataManagerOptions](./services.md#interface-bulkfiledatamanageroptions), [BulkFileDataReader](./services.md#class-bulkfiledatareader), [BulkHeaderFileInfo](./services.md#interface-bulkheaderfileinfo), [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksFsApi](./services.md#interface-chaintracksfsapi), [ChaintracksStorageBulkFileApi](./services.md#interface-chaintracksstoragebulkfileapi), [HeightRange](./services.md#class-heightrange)
+
+###### Method setStorage
+
+If `bfds` are going to be backed by persistent storage,
+must be called before making storage available.
+
+Synchronizes bfds and storage files, after which this manager maintains sync.
+There should be no changes to bulk files by direct access to storage bulk file methods.
+
+```ts
+async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> 
+```
+See also: [ChaintracksStorageBulkFileApi](./services.md#interface-chaintracksstoragebulkfileapi)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
