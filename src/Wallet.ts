@@ -615,6 +615,15 @@ export class Wallet implements WalletInterface, ProtoWallet {
     return r
   }
 
+  /** 2-minute cache of trust settings for identity resolution paths */
+  private _trustSettingsCache?: {
+    expiresAt: number
+    trustSettings: Awaited<ReturnType<WalletSettingsManager['get']>>['trustSettings']
+  }
+
+  /** 2-minute cache of queryOverlay() results keyed by normalized query */
+  private _overlayCache: Map<string, { expiresAt: number; value: unknown }> = new Map()
+
   async discoverByIdentityKey(
     args: DiscoverByIdentityKeyArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
@@ -622,21 +631,42 @@ export class Wallet implements WalletInterface, ProtoWallet {
     validateOriginator(originator)
     this.validateAuthAndArgs(args, validateDiscoverByIdentityKeyArgs)
 
-    const trustSettings = (await this.settingsManager.get()).trustSettings
-    const results = await queryOverlay(
-      {
-        identityKey: args.identityKey,
-        certifiers: trustSettings.trustedCertifiers.map(certifier => certifier.identityKey)
-      },
-      this.lookupResolver
-    )
-    if (!results) {
-      return {
-        totalCertificates: 0,
-        certificates: []
-      }
+    const TTL_MS = 2 * 60 * 1000
+    const now = Date.now()
+
+    // --- trustSettings cache (2 minutes) ---
+    let trustSettings =
+      this._trustSettingsCache && this._trustSettingsCache.expiresAt > now
+        ? this._trustSettingsCache.trustSettings
+        : undefined
+
+    if (!trustSettings) {
+      const settings = await this.settingsManager.get()
+      trustSettings = settings.trustSettings
+      this._trustSettingsCache = { trustSettings, expiresAt: now + TTL_MS }
     }
-    return transformVerifiableCertificatesWithTrust(trustSettings, results)
+
+    const certifiers = trustSettings.trustedCertifiers.map(c => c.identityKey).sort()
+
+    // --- queryOverlay cache (2 minutes) ---
+    const cacheKey = JSON.stringify({
+      fn: 'discoverByIdentityKey',
+      identityKey: args.identityKey,
+      certifiers
+    })
+
+    let cached = this._overlayCache.get(cacheKey)
+    if (!cached || cached.expiresAt <= now) {
+      const value = await queryOverlay({ identityKey: args.identityKey, certifiers }, this.lookupResolver)
+      cached = { value, expiresAt: now + TTL_MS }
+      this._overlayCache.set(cacheKey, cached)
+    }
+
+    if (!cached.value) {
+      return { totalCertificates: 0, certificates: [] }
+    }
+
+    return transformVerifiableCertificatesWithTrust(trustSettings, cached.value as any)
   }
 
   async discoverByAttributes(
@@ -646,21 +676,52 @@ export class Wallet implements WalletInterface, ProtoWallet {
     validateOriginator(originator)
     this.validateAuthAndArgs(args, validateDiscoverByAttributesArgs)
 
-    const trustSettings = (await this.settingsManager.get()).trustSettings
-    const results = await queryOverlay(
-      {
-        attributes: args.attributes,
-        certifiers: trustSettings.trustedCertifiers.map(certifier => certifier.identityKey)
-      },
-      this.lookupResolver
-    )
-    if (!results) {
-      return {
-        totalCertificates: 0,
-        certificates: []
-      }
+    const TTL_MS = 2 * 60 * 1000
+    const now = Date.now()
+
+    // --- trustSettings cache (2 minutes) ---
+    let trustSettings =
+      this._trustSettingsCache && this._trustSettingsCache.expiresAt > now
+        ? this._trustSettingsCache.trustSettings
+        : undefined
+
+    if (!trustSettings) {
+      const settings = await this.settingsManager.get()
+      trustSettings = settings.trustSettings
+      this._trustSettingsCache = { trustSettings, expiresAt: now + TTL_MS }
     }
-    return transformVerifiableCertificatesWithTrust(trustSettings, results)
+
+    const certifiers = trustSettings.trustedCertifiers.map(c => c.identityKey).sort()
+
+    // Normalize attributes for a stable cache key.
+    // If attributes is an object, sort its top-level keys; if it's an array, sort a shallow copy.
+    let attributesKey: unknown = args.attributes
+    if (Array.isArray(args.attributes)) {
+      attributesKey = [...args.attributes].sort()
+    } else if (args.attributes && typeof args.attributes === 'object') {
+      const keys = Object.keys(args.attributes as Record<string, unknown>).sort()
+      attributesKey = JSON.stringify(args.attributes, keys)
+    }
+
+    // --- queryOverlay cache (2 minutes) ---
+    const cacheKey = JSON.stringify({
+      fn: 'discoverByAttributes',
+      attributes: attributesKey,
+      certifiers
+    })
+
+    let cached = this._overlayCache.get(cacheKey)
+    if (!cached || cached.expiresAt <= now) {
+      const value = await queryOverlay({ attributes: args.attributes, certifiers }, this.lookupResolver)
+      cached = { value, expiresAt: now + TTL_MS }
+      this._overlayCache.set(cacheKey, cached)
+    }
+
+    if (!cached.value) {
+      return { totalCertificates: 0, certificates: [] }
+    }
+
+    return transformVerifiableCertificatesWithTrust(trustSettings, cached.value as any)
   }
 
   verifyReturnedTxidOnly(beef: Beef, knownTxids?: string[]): Beef {
