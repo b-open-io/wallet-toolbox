@@ -14,6 +14,7 @@ import { HeightRange, HeightRanges } from './util/HeightRange'
 import { SingleWriterMultiReaderLock } from './util/SingleWriterMultiReaderLock'
 import { ChaintracksFsApi } from './Api/ChaintracksFsApi'
 import { randomBytesBase64, wait } from '../../../utility/utilityHelpers'
+import { WalletError } from '../../../sdk/WalletError'
 
 export class Chaintracks implements ChaintracksManagementApi {
   static createOptions(chain: Chain): ChaintracksOptions {
@@ -47,6 +48,7 @@ export class Chaintracks implements ChaintracksManagementApi {
   private addLiveRecursionLimit = 11
 
   private available = false
+  private startupError: WalletError | null = null
 
   private subscriberCallbacksEnabled = false
   private stopMainThread = true
@@ -169,9 +171,11 @@ export class Chaintracks implements ChaintracksManagementApi {
       this.promises.push(this.mainThreadShiftLiveHeaders())
 
       // Wait for the main thread to finish initial sync.
-      while (!this.available) {
+      while (!this.available && !this.startupError) {
         await wait(100)
       }
+
+      if (this.startupError) throw this.startupError;
     })
   }
 
@@ -432,146 +436,156 @@ export class Chaintracks implements ChaintracksManagementApi {
     const syncCheckRepeatMsecs = 30 * 60 * 1000 // 30 minutes
 
     while (!this.stopMainThread) {
-      // Review the need for bulk sync...
-      const now = Date.now()
-      lastSyncCheck = now
+      try {
+        // Review the need for bulk sync...
+        const now = Date.now()
+        lastSyncCheck = now
 
-      const presentHeight = await this.getPresentHeight()
-      const before = await this.storage.getAvailableHeightRanges()
+        const presentHeight = await this.getPresentHeight()
+        const before = await this.storage.getAvailableHeightRanges()
 
-      // Skip bulk sync if within less than half the recursion limit of present height
-      let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2
+        // Skip bulk sync if within less than half the recursion limit of present height
+        let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2
 
-      if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
-        // If we haven't re-synced in a long time, do it just to check for a CDN update.
-        skipBulkSync = false
-      }
+        if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
+          // If we haven't re-synced in a long time, do it just to check for a CDN update.
+          skipBulkSync = false
+        }
 
-      this.log(`Chaintracks Update Services: Bulk Header Sync Review
+        this.log(`Chaintracks Update Services: Bulk Header Sync Review
   presentHeight=${presentHeight}   addLiveRecursionLimit=${this.addLiveRecursionLimit}
   Before synchronize: bulk ${before.bulk}, live ${before.live}
   ${skipBulkSync ? 'Skipping' : 'Starting'} syncBulkStorage.
 `)
 
-      if (!skipBulkSync) {
-        // Bring bulk storage up-to-date and (re-)initialize liveHeaders
-        lastBulkSync = now
-        if (this.available)
-          // Once available, initial write lock is released, take a new one to update bulk storage.
-          await this.syncBulkStorage(presentHeight, before)
-        else
-          // While still not available, the makeAvailable write lock is held.
-          await this.syncBulkStorageNoLock(presentHeight, before)
-      }
+        if (!skipBulkSync) {
+          // Bring bulk storage up-to-date and (re-)initialize liveHeaders
+          lastBulkSync = now
+          if (this.available)
+            // Once available, initial write lock is released, take a new one to update bulk storage.
+            await this.syncBulkStorage(presentHeight, before)
+          else
+            // While still not available, the makeAvailable write lock is held.
+            await this.syncBulkStorageNoLock(presentHeight, before)
+        }
 
-      let count = 0
-      let liveHeaderDupes = 0
-      let needSyncCheck = false
+        let count = 0
+        let liveHeaderDupes = 0
+        let needSyncCheck = false
 
-      for (; !needSyncCheck && !this.stopMainThread; ) {
-        let header = this.liveHeaders.shift()
-        if (header) {
-          // Process a "live" block header...
-          let recursions = this.addLiveRecursionLimit
-          for (; !needSyncCheck && !this.stopMainThread; ) {
-            //console.log(`Processing liveHeader: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
-            const ihr = await this.addLiveHeader(header)
-            if (this.invalidInsertHeaderResult(ihr)) {
-              this.log(`Ignoring liveHeader ${header.height} ${header.hash} due to invalid insert result.`)
-              needSyncCheck = true
-            } else if (ihr.noPrev) {
-              // Previous header is unknown, request it by hash from the network and try adding it first...
-              if (recursions-- <= 0) {
-                // Ignore this header...
-                this.log(
-                  `Ignoring liveHeader ${header.height} ${header.hash} addLiveRecursionLimit=${this.addLiveRecursionLimit} exceeded.`
-                )
+        for (; !needSyncCheck && !this.stopMainThread;) {
+          let header = this.liveHeaders.shift()
+          if (header) {
+            // Process a "live" block header...
+            let recursions = this.addLiveRecursionLimit
+            for (; !needSyncCheck && !this.stopMainThread;) {
+              //console.log(`Processing liveHeader: height: ${header.height} hash: ${header.hash} ${new Date().toISOString()}`)
+              const ihr = await this.addLiveHeader(header)
+              if (this.invalidInsertHeaderResult(ihr)) {
+                this.log(`Ignoring liveHeader ${header.height} ${header.hash} due to invalid insert result.`)
                 needSyncCheck = true
-              } else {
-                const hash = header.previousHash
-                const prevHeader = await this.getMissingBlockHeader(hash)
-                if (!prevHeader) {
+              } else if (ihr.noPrev) {
+                // Previous header is unknown, request it by hash from the network and try adding it first...
+                if (recursions-- <= 0) {
+                  // Ignore this header...
                   this.log(
-                    `Ignoring liveHeader ${header.height} ${header.hash} failed to find previous header by hash ${asString(hash)}`
+                    `Ignoring liveHeader ${header.height} ${header.hash} addLiveRecursionLimit=${this.addLiveRecursionLimit} exceeded.`
                   )
                   needSyncCheck = true
                 } else {
-                  // Switch to trying to add prevHeader, unshifting current header to try it again after prevHeader exists.
-                  this.liveHeaders.unshift(header)
-                  header = prevHeader
+                  const hash = header.previousHash
+                  const prevHeader = await this.getMissingBlockHeader(hash)
+                  if (!prevHeader) {
+                    this.log(
+                      `Ignoring liveHeader ${header.height} ${header.hash} failed to find previous header by hash ${asString(hash)}`
+                    )
+                    needSyncCheck = true
+                  } else {
+                    // Switch to trying to add prevHeader, unshifting current header to try it again after prevHeader exists.
+                    this.liveHeaders.unshift(header)
+                    header = prevHeader
+                  }
                 }
-              }
-            } else {
-              if (this.subscriberCallbacksEnabled)
-                this.log(
-                  `addLiveHeader ${header.height}${ihr.added ? ' added' : ''}${ihr.dupe ? ' dupe' : ''}${ihr.isActiveTip ? ' isActiveTip' : ''}${ihr.reorgDepth ? ' reorg depth ' + ihr.reorgDepth : ''}${ihr.noPrev ? ' noPrev' : ''}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? ' error' : ''}`
-                )
-              if (ihr.dupe) {
-                liveHeaderDupes++
-              }
-              // Header wasn't invalid and previous header is known. If it was successfully added, count it as a win.
-              if (ihr.added) {
-                count++
-              }
-              break
-            }
-          }
-        } else {
-          // There are no liveHeaders currently to process, check the out-of-band baseHeaders channel (`addHeader` method called by a client).
-          const bheader = this.baseHeaders.shift()
-          if (bheader) {
-            const prev = await this.storage.findLiveHeaderForBlockHash(bheader.previousHash)
-            if (!prev) {
-              // Ignoring attempt to add a baseHeader with unknown previous hash, no attempt made to find previous header(s).
-              this.log(`Ignoring header with unknown previousHash ${bheader.previousHash} in live storage.`)
-              // Does not trigger a re-sync.
-            } else {
-              const header: BlockHeader = {
-                ...bheader,
-                height: prev.height + 1,
-                hash: blockHash(bheader)
-              }
-              const ihr = await this.addLiveHeader(header)
-              if (this.invalidInsertHeaderResult(ihr)) {
-                this.log(`Ignoring invalid baseHeader ${header.height} ${header.hash}.`)
               } else {
                 if (this.subscriberCallbacksEnabled)
                   this.log(
-                    `addBaseHeader ${header.height}${ihr.added ? ' added' : ''}${ihr.dupe ? ' dupe' : ''}${ihr.isActiveTip ? ' isActiveTip' : ''}${ihr.reorgDepth ? ' reorg depth ' + ihr.reorgDepth : ''}${ihr.noPrev ? ' noPrev' : ''}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? ' error' : ''}`
+                    `addLiveHeader ${header.height}${ihr.added ? ' added' : ''}${ihr.dupe ? ' dupe' : ''}${ihr.isActiveTip ? ' isActiveTip' : ''}${ihr.reorgDepth ? ' reorg depth ' + ihr.reorgDepth : ''}${ihr.noPrev ? ' noPrev' : ''}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? ' error' : ''}`
                   )
-                // baseHeader was successfully added.
+                if (ihr.dupe) {
+                  liveHeaderDupes++
+                }
+                // Header wasn't invalid and previous header is known. If it was successfully added, count it as a win.
                 if (ihr.added) {
                   count++
                 }
+                break
               }
             }
           } else {
-            // There are no liveHeaders and no baseHeaders to add,
-            if (count > 0) {
-              if (liveHeaderDupes > 0) {
-                this.log(`${liveHeaderDupes} duplicate headers ignored.`)
-                liveHeaderDupes = 0
+            // There are no liveHeaders currently to process, check the out-of-band baseHeaders channel (`addHeader` method called by a client).
+            const bheader = this.baseHeaders.shift()
+            if (bheader) {
+              const prev = await this.storage.findLiveHeaderForBlockHash(bheader.previousHash)
+              if (!prev) {
+                // Ignoring attempt to add a baseHeader with unknown previous hash, no attempt made to find previous header(s).
+                this.log(`Ignoring header with unknown previousHash ${bheader.previousHash} in live storage.`)
+                // Does not trigger a re-sync.
+              } else {
+                const header: BlockHeader = {
+                  ...bheader,
+                  height: prev.height + 1,
+                  hash: blockHash(bheader)
+                }
+                const ihr = await this.addLiveHeader(header)
+                if (this.invalidInsertHeaderResult(ihr)) {
+                  this.log(`Ignoring invalid baseHeader ${header.height} ${header.hash}.`)
+                } else {
+                  if (this.subscriberCallbacksEnabled)
+                    this.log(
+                      `addBaseHeader ${header.height}${ihr.added ? ' added' : ''}${ihr.dupe ? ' dupe' : ''}${ihr.isActiveTip ? ' isActiveTip' : ''}${ihr.reorgDepth ? ' reorg depth ' + ihr.reorgDepth : ''}${ihr.noPrev ? ' noPrev' : ''}${ihr.noActiveAncestor || ihr.noTip || ihr.badPrev ? ' error' : ''}`
+                    )
+                  // baseHeader was successfully added.
+                  if (ihr.added) {
+                    count++
+                  }
+                }
               }
-              const updated = await this.storage.getAvailableHeightRanges()
-              this.log(`After adding ${count} live headers
+            } else {
+              // There are no liveHeaders and no baseHeaders to add,
+              if (count > 0) {
+                if (liveHeaderDupes > 0) {
+                  this.log(`${liveHeaderDupes} duplicate headers ignored.`)
+                  liveHeaderDupes = 0
+                }
+                const updated = await this.storage.getAvailableHeightRanges()
+                this.log(`After adding ${count} live headers
    After live: bulk ${updated.bulk}, live ${updated.live}
 `)
-              count = 0
-            }
-            if (!this.subscriberCallbacksEnabled) {
-              const live = await this.storage.findLiveHeightRange()
-              if (!live.isEmpty) {
-                this.subscriberCallbacksEnabled = true
-                this.log(`listening at height of ${live.maxHeight}`)
+                count = 0
               }
+              if (!this.subscriberCallbacksEnabled) {
+                const live = await this.storage.findLiveHeightRange()
+                if (!live.isEmpty) {
+                  this.subscriberCallbacksEnabled = true
+                  this.log(`listening at height of ${live.maxHeight}`)
+                }
+              }
+              if (!this.available) {
+                this.available = true
+              }
+              needSyncCheck = Date.now() - lastSyncCheck > syncCheckRepeatMsecs
+              // If we aren't going to review sync, wait before checking input queues again
+              if (!needSyncCheck) await wait(1000)
             }
-            if (!this.available) {
-              this.available = true
-            }
-            needSyncCheck = Date.now() - lastSyncCheck > syncCheckRepeatMsecs
-            // If we aren't going to review sync, wait before checking input queues again
-            if (!needSyncCheck) await wait(1000)
           }
+        }
+      } catch (eu: unknown) {
+        const e = WalletError.fromUnknown(eu);
+        if (!this.available) {
+          this.startupError = e;
+          this.stopMainThread = true;
+        } else {
+          this.log(`Error occurred during chaintracks main thread processing: ${e.stack || e.message}`);
         }
       }
     }
