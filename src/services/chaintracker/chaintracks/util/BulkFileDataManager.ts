@@ -72,6 +72,77 @@ export class BulkFileDataManager {
     this.deleteBulkFilesNoLock()
   }
 
+  async deleteBulkFiles(): Promise<void> {
+    return this.lock.withWriteLock(async () => this.deleteBulkFilesNoLock())
+  }
+
+  private deleteBulkFilesNoLock(): void {
+    this.bfds = []
+    this.fileHashToIndex = {}
+
+    if (this.fromKnownSourceUrl) {
+      const vbhfs = validBulkHeaderFiles
+      const filtered = vbhfs.filter(f => f.sourceUrl === this.fromKnownSourceUrl)
+      const files = selectBulkHeaderFiles(filtered, this.chain, this.maxPerFile)
+      for (const file of files) {
+        this.add({ ...file, fileHash: file.fileHash!, mru: Date.now() })
+      }
+    }
+  }
+
+  /**
+   * If `bfds` are going to be backed by persistent storage,
+   * must be called before making storage available.
+   * 
+   * Synchronizes bfds and storage files, after which this manager maintains sync.
+   * There should be no changes to bulk files by direct access to storage bulk file methods.
+   */
+  async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
+    return this.lock.withWriteLock(async () => this.setStorageNoLock(storage, log))
+  }
+
+  private async setStorageNoLock(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
+    this.storage = storage
+    this.log = log
+
+    // Get files currently in persistent storage.
+    let sfs = await this.storage.getBulkFiles()
+
+    // Sync bfds with storage. Two scenarios supported:
+
+    const bfdsRanges = this.heightRangesFromBulkFiles(this.bfds)
+    const sfsRanges = this.heightRangesFromBulkFiles(sfs)
+
+    if (sfsRanges.cdn.length >= bfdsRanges.cdn.length) {
+      // Storage win if it has greater or equal CDN coverage
+      // Replace all bfds with sfs
+      this.bfds = []
+      for (const file of sfs) {
+        const vbf: BulkFileData = await this.validateFileInfo(file)
+        this.bfds.push(vbf)
+      }
+    } else {
+      // Bfds win if they have greater CDN coverage
+      // Replace all sfs with bfds
+      for (const s of sfs.reverse()) await this.storage.deleteBulkFile(s.fileId!)
+      for (const bfd of this.bfds) {
+        await this.ensureData(bfd)
+        bfd.fileId = await this.storage.insertBulkFile(bfdToInfo(bfd, true))
+      }
+    }
+  }
+
+  heightRangesFromBulkFiles(files: BulkHeaderFileInfo[]): { all: HeightRange, cdn: HeightRange, incremental: HeightRange } {
+    const ranges = { all: new HeightRange(0,-1), cdn: new HeightRange(0,-1), incremental: new HeightRange(0,-1) }
+    for (const file of files) {
+      const range = new HeightRange(file.firstHeight, file.firstHeight + file.count - 1)
+      ranges.all = ranges.all.union(range)
+      if (isBdfCdn(file)) ranges.cdn = ranges.cdn.union(range);
+      if (isBdfIncremental(file)) ranges.incremental = ranges.incremental.union(range);
+    }
+    return ranges
+  }
+
   async createReader(range?: HeightRange, maxBufferSize?: number): Promise<BulkFileDataReader> {
     range = range || (await this.getHeightRange())
     maxBufferSize = maxBufferSize || 1000000 * 80 // 100,000 headers, 8MB
@@ -112,56 +183,6 @@ export class BulkFileDataManager {
     log += `  bulk range before: ${rangeBefore}\n`
     log += `  bulk range after:  ${rangeAfter}\n`
     this.log(log)
-  }
-
-  async setStorage(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
-    return this.lock.withWriteLock(async () => this.setStorageNoLock(storage, log))
-  }
-
-  private async setStorageNoLock(storage: ChaintracksStorageBulkFileApi, log: (...args: any[]) => void): Promise<void> {
-    this.storage = storage
-    this.log = log
-    // Sync bfds with storage. Two scenarios supported:
-    let sfs = await this.storage.getBulkFiles()
-    const lastCdnBfd = this.bfds.filter(f => isBdfCdn(f)).slice(-1)[0]
-    const lastCdnSfs = sfs.filter(f => isBdfCdn(f)).slice(-1)[0]
-    if (
-      lastCdnBfd &&
-      lastCdnSfs &&
-      lastCdnBfd.firstHeight + lastCdnBfd.count > lastCdnSfs.firstHeight + lastCdnSfs.count
-    ) {
-      // Storage has fewer cdn headers than bfds, clear them and try again.
-      for (const s of sfs.reverse()) await this.storage.deleteBulkFile(s.fileId!)
-      sfs = []
-    }
-    if (sfs.length === 0) {
-      // 1. Storage has no files: Update storage to reflect bfds.
-      for (const bfd of this.bfds) {
-        await this.ensureData(bfd)
-        bfd.fileId = await this.storage.insertBulkFile(bfdToInfo(bfd, true))
-      }
-    } else {
-      // 2. bfds are a prefix of storage, including last bfd having same firstHeight but possibly fewer headers: Merge storage to bfds.
-      const r = await this.mergeNoLock(sfs)
-    }
-  }
-
-  async deleteBulkFiles(): Promise<void> {
-    return this.lock.withWriteLock(async () => this.deleteBulkFilesNoLock())
-  }
-
-  private deleteBulkFilesNoLock(): void {
-    this.bfds = []
-    this.fileHashToIndex = {}
-
-    if (this.fromKnownSourceUrl) {
-      const vbhfs = validBulkHeaderFiles
-      const filtered = vbhfs.filter(f => f.sourceUrl === this.fromKnownSourceUrl)
-      const files = selectBulkHeaderFiles(filtered, this.chain, this.maxPerFile)
-      for (const file of files) {
-        this.add({ ...file, fileHash: file.fileHash!, mru: Date.now() })
-      }
-    }
   }
 
   async merge(files: BulkHeaderFileInfo[]): Promise<BulkFileDataManagerMergeResult> {
