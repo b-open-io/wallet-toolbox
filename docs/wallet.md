@@ -9746,6 +9746,7 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
     whenLastAccess?: Date;
     allStores: string[] = ["live_headers", "bulk_headers"];
     constructor(options: ChaintracksStorageIdbOptions) 
+    override async makeAvailable(): Promise<void> 
     override async migrateLatest(): Promise<void> 
     override async destroy(): Promise<void> 
     override async deleteLiveBlockHeaders(): Promise<void> 

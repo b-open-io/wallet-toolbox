@@ -131,8 +131,7 @@ export class BulkFileDataManager {
       lastCdnBfd.firstHeight + lastCdnBfd.count > lastCdnSfs.firstHeight + lastCdnSfs.count
     ) {
       // Storage has fewer cdn headers than bfds, clear them and try again.
-      for (const s of sfs.reverse())
-        await this.storage.deleteBulkFile(s.fileId!);
+      for (const s of sfs.reverse()) await this.storage.deleteBulkFile(s.fileId!)
       sfs = []
     }
     if (sfs.length === 0) {
