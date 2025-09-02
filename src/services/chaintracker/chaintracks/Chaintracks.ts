@@ -347,16 +347,15 @@ export class Chaintracks implements ChaintracksManagementApi {
             break
           }
         } catch (eu: unknown) {
-          const e = bulkSyncError = WalletError.fromUnknown(eu)
+          const e = (bulkSyncError = WalletError.fromUnknown(eu))
           this.log(`bulk sync error: ${e.message}`)
         }
       }
       if (!bulkDone && !this.available && bulkSyncError) {
         this.startupError = bulkSyncError
-        break;
-      }
-      if (bulkDone)
         break
+      }
+      if (bulkDone) break
     }
 
     if (!this.startupError) {
@@ -478,7 +477,7 @@ export class Chaintracks implements ChaintracksManagementApi {
           else
             // While still not available, the makeAvailable write lock is held.
             await this.syncBulkStorageNoLock(presentHeight, before)
-          if (this.startupError) throw this.startupError;
+          if (this.startupError) throw this.startupError
         }
 
         let count = 0
