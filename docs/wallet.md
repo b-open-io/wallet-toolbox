@@ -8239,32 +8239,33 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [ARC](#class-arc) | [EntityProvenTx](#class-entityproventx) | [TaskNewHeader](#class-tasknewheader) |
-| [AuthMethodInteractor](#class-authmethodinteractor) | [EntityProvenTxReq](#class-entityproventxreq) | [TaskPurge](#class-taskpurge) |
-| [BHServiceClient](#class-bhserviceclient) | [EntitySyncState](#class-entitysyncstate) | [TaskReviewStatus](#class-taskreviewstatus) |
-| [Bitails](#class-bitails) | [EntityTransaction](#class-entitytransaction) | [TaskSendWaiting](#class-tasksendwaiting) |
-| [BulkFileDataManager](#class-bulkfiledatamanager) | [EntityTxLabel](#class-entitytxlabel) | [TaskSyncWhenIdle](#class-tasksyncwhenidle) |
-| [BulkFileDataReader](#class-bulkfiledatareader) | [EntityTxLabelMap](#class-entitytxlabelmap) | [TaskUnFail](#class-taskunfail) |
-| [BulkFilesReader](#class-bulkfilesreader) | [EntityUser](#class-entityuser) | [TwilioPhoneInteractor](#class-twiliophoneinteractor) |
-| [BulkFilesReaderFs](#class-bulkfilesreaderfs) | [HeightRange](#class-heightrange) | [WABClient](#class-wabclient) |
-| [BulkFilesReaderStorage](#class-bulkfilesreaderstorage) | [LiveIngestorBase](#class-liveingestorbase) | [WERR_BAD_REQUEST](#class-werr_bad_request) |
-| [BulkHeaderFile](#class-bulkheaderfile) | [LiveIngestorWhatsOnChainPoll](#class-liveingestorwhatsonchainpoll) | [WERR_BROADCAST_UNAVAILABLE](#class-werr_broadcast_unavailable) |
-| [BulkHeaderFileFs](#class-bulkheaderfilefs) | [MergeEntity](#class-mergeentity) | [WERR_INSUFFICIENT_FUNDS](#class-werr_insufficient_funds) |
-| [BulkHeaderFileStorage](#class-bulkheaderfilestorage) | [Monitor](#class-monitor) | [WERR_INTERNAL](#class-werr_internal) |
-| [BulkHeaderFiles](#class-bulkheaderfiles) | [OverlayUMPTokenInteractor](#class-overlayumptokeninteractor) | [WERR_INVALID_OPERATION](#class-werr_invalid_operation) |
-| [BulkIngestorBase](#class-bulkingestorbase) | [PersonaIDInteractor](#class-personaidinteractor) | [WERR_INVALID_PARAMETER](#class-werr_invalid_parameter) |
-| [BulkIngestorCDN](#class-bulkingestorcdn) | [PrivilegedKeyManager](#class-privilegedkeymanager) | [WERR_INVALID_PUBLIC_KEY](#class-werr_invalid_public_key) |
-| [BulkIngestorCDNBabbage](#class-bulkingestorcdnbabbage) | [ReaderUint8Array](#class-readeruint8array) | [WERR_MISSING_PARAMETER](#class-werr_missing_parameter) |
-| [BulkIngestorWhatsOnChainCdn](#class-bulkingestorwhatsonchaincdn) | [ScriptTemplateBRC29](#class-scripttemplatebrc29) | [WERR_NETWORK_CHAIN](#class-werr_network_chain) |
-| [BulkStorageBase](#class-bulkstoragebase) | [SdkWhatsOnChain](#class-sdkwhatsonchain) | [WERR_NOT_ACTIVE](#class-werr_not_active) |
-| [CWIStyleWalletManager](#class-cwistylewalletmanager) | [ServiceCollection](#class-servicecollection) | [WERR_NOT_IMPLEMENTED](#class-werr_not_implemented) |
-| [Chaintracks](#class-chaintracks) | [Services](#class-services) | [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |
-| [ChaintracksChainTracker](#class-chaintrackschaintracker) | [SetupClient](#class-setupclient) | [WERR_UNAUTHORIZED](#class-werr_unauthorized) |
-| [ChaintracksFetch](#class-chaintracksfetch) | [SimpleWalletManager](#class-simplewalletmanager) | [Wallet](#class-wallet) |
-| [ChaintracksServiceClient](#class-chaintracksserviceclient) | [SingleWriterMultiReaderLock](#class-singlewritermultireaderlock) | [WalletAuthenticationManager](#class-walletauthenticationmanager) |
-| [ChaintracksStorageBase](#class-chaintracksstoragebase) | [StorageClient](#class-storageclient) | [WalletError](#class-walleterror) |
-| [ChaintracksStorageIdb](#class-chaintracksstorageidb) | [StorageIdb](#class-storageidb) | [WalletMonitorTask](#class-walletmonitortask) |
-| [ChaintracksStorageNoDb](#class-chaintracksstoragenodb) | [StorageProvider](#class-storageprovider) | [WalletPermissionsManager](#class-walletpermissionsmanager) |
+| [ARC](#class-arc) | [EntityOutputTagMap](#class-entityoutputtagmap) | [TaskMonitorCallHistory](#class-taskmonitorcallhistory) |
+| [AuthMethodInteractor](#class-authmethodinteractor) | [EntityProvenTx](#class-entityproventx) | [TaskNewHeader](#class-tasknewheader) |
+| [BHServiceClient](#class-bhserviceclient) | [EntityProvenTxReq](#class-entityproventxreq) | [TaskPurge](#class-taskpurge) |
+| [Bitails](#class-bitails) | [EntitySyncState](#class-entitysyncstate) | [TaskReviewStatus](#class-taskreviewstatus) |
+| [BulkFileDataManager](#class-bulkfiledatamanager) | [EntityTransaction](#class-entitytransaction) | [TaskSendWaiting](#class-tasksendwaiting) |
+| [BulkFileDataReader](#class-bulkfiledatareader) | [EntityTxLabel](#class-entitytxlabel) | [TaskSyncWhenIdle](#class-tasksyncwhenidle) |
+| [BulkFilesReader](#class-bulkfilesreader) | [EntityTxLabelMap](#class-entitytxlabelmap) | [TaskUnFail](#class-taskunfail) |
+| [BulkFilesReaderFs](#class-bulkfilesreaderfs) | [EntityUser](#class-entityuser) | [TwilioPhoneInteractor](#class-twiliophoneinteractor) |
+| [BulkFilesReaderStorage](#class-bulkfilesreaderstorage) | [HeightRange](#class-heightrange) | [WABClient](#class-wabclient) |
+| [BulkHeaderFile](#class-bulkheaderfile) | [LiveIngestorBase](#class-liveingestorbase) | [WERR_BAD_REQUEST](#class-werr_bad_request) |
+| [BulkHeaderFileFs](#class-bulkheaderfilefs) | [LiveIngestorWhatsOnChainPoll](#class-liveingestorwhatsonchainpoll) | [WERR_BROADCAST_UNAVAILABLE](#class-werr_broadcast_unavailable) |
+| [BulkHeaderFileStorage](#class-bulkheaderfilestorage) | [MergeEntity](#class-mergeentity) | [WERR_INSUFFICIENT_FUNDS](#class-werr_insufficient_funds) |
+| [BulkHeaderFiles](#class-bulkheaderfiles) | [Monitor](#class-monitor) | [WERR_INTERNAL](#class-werr_internal) |
+| [BulkIngestorBase](#class-bulkingestorbase) | [OverlayUMPTokenInteractor](#class-overlayumptokeninteractor) | [WERR_INVALID_OPERATION](#class-werr_invalid_operation) |
+| [BulkIngestorCDN](#class-bulkingestorcdn) | [PersonaIDInteractor](#class-personaidinteractor) | [WERR_INVALID_PARAMETER](#class-werr_invalid_parameter) |
+| [BulkIngestorCDNBabbage](#class-bulkingestorcdnbabbage) | [PrivilegedKeyManager](#class-privilegedkeymanager) | [WERR_INVALID_PUBLIC_KEY](#class-werr_invalid_public_key) |
+| [BulkIngestorWhatsOnChainCdn](#class-bulkingestorwhatsonchaincdn) | [ReaderUint8Array](#class-readeruint8array) | [WERR_MISSING_PARAMETER](#class-werr_missing_parameter) |
+| [BulkStorageBase](#class-bulkstoragebase) | [ScriptTemplateBRC29](#class-scripttemplatebrc29) | [WERR_NETWORK_CHAIN](#class-werr_network_chain) |
+| [CWIStyleWalletManager](#class-cwistylewalletmanager) | [SdkWhatsOnChain](#class-sdkwhatsonchain) | [WERR_NOT_ACTIVE](#class-werr_not_active) |
+| [Chaintracks](#class-chaintracks) | [ServiceCollection](#class-servicecollection) | [WERR_NOT_IMPLEMENTED](#class-werr_not_implemented) |
+| [ChaintracksChainTracker](#class-chaintrackschaintracker) | [Services](#class-services) | [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |
+| [ChaintracksFetch](#class-chaintracksfetch) | [SetupClient](#class-setupclient) | [WERR_UNAUTHORIZED](#class-werr_unauthorized) |
+| [ChaintracksServiceClient](#class-chaintracksserviceclient) | [SimpleWalletManager](#class-simplewalletmanager) | [Wallet](#class-wallet) |
+| [ChaintracksStorageBase](#class-chaintracksstoragebase) | [SingleWriterMultiReaderLock](#class-singlewritermultireaderlock) | [WalletAuthenticationManager](#class-walletauthenticationmanager) |
+| [ChaintracksStorageIdb](#class-chaintracksstorageidb) | [StorageClient](#class-storageclient) | [WalletError](#class-walleterror) |
+| [ChaintracksStorageNoDb](#class-chaintracksstoragenodb) | [StorageIdb](#class-storageidb) | [WalletMonitorTask](#class-walletmonitortask) |
+| [DevConsoleInteractor](#class-devconsoleinteractor) | [StorageProvider](#class-storageprovider) | [WalletPermissionsManager](#class-walletpermissionsmanager) |
 | [EntityBase](#class-entitybase) | [StorageReader](#class-storagereader) | [WalletSettingsManager](#class-walletsettingsmanager) |
 | [EntityCertificate](#class-entitycertificate) | [StorageReaderWriter](#class-storagereaderwriter) | [WalletSigner](#class-walletsigner) |
 | [EntityCertificateField](#class-entitycertificatefield) | [StorageSyncReader](#class-storagesyncreader) | [WalletStorageManager](#class-walletstoragemanager) |
@@ -8272,7 +8273,6 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [EntityOutput](#class-entityoutput) | [TaskCheckNoSends](#class-taskchecknosends) | [WhatsOnChainNoServices](#class-whatsonchainnoservices) |
 | [EntityOutputBasket](#class-entityoutputbasket) | [TaskClock](#class-taskclock) | [WhatsOnChainServices](#class-whatsonchainservices) |
 | [EntityOutputTag](#class-entityoutputtag) | [TaskFailAbandoned](#class-taskfailabandoned) |  |
-| [EntityOutputTagMap](#class-entityoutputtagmap) | [TaskMonitorCallHistory](#class-taskmonitorcallhistory) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -9909,6 +9909,72 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
 ```
 
 See also: [BlockHeader](./client.md#interface-blockheader), [ChaintracksStorageBase](./services.md#class-chaintracksstoragebase), [ChaintracksStorageNoDbOptions](./services.md#interface-chaintracksstoragenodboptions), [HeightRange](./services.md#class-heightrange), [InsertHeaderResult](./services.md#type-insertheaderresult), [LiveBlockHeader](./services.md#interface-liveblockheader)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Class: DevConsoleInteractor
+
+DevConsoleInteractor
+
+A client-side class that knows how to call the WAB server for DevConsole-based authentication.
+This is a development-only auth method that generates OTP codes and logs them to the console.
+
+```ts
+export class DevConsoleInteractor extends AuthMethodInteractor {
+    public methodType = "DevConsole";
+    public async startAuth(serverUrl: string, presentationKey: string, payload: AuthPayload): Promise<StartAuthResponse> 
+    public async completeAuth(serverUrl: string, presentationKey: string, payload: AuthPayload): Promise<CompleteAuthResponse> 
+}
+```
+
+See also: [AuthMethodInteractor](./client.md#class-authmethodinteractor), [AuthPayload](./client.md#interface-authpayload), [CompleteAuthResponse](./client.md#interface-completeauthresponse), [StartAuthResponse](./client.md#interface-startauthresponse)
+
+###### Method completeAuth
+
+Complete the DevConsole authentication on the server.
+- The server will verify the OTP code that was generated and logged to the console.
+
+```ts
+public async completeAuth(serverUrl: string, presentationKey: string, payload: AuthPayload): Promise<CompleteAuthResponse> 
+```
+See also: [AuthPayload](./client.md#interface-authpayload), [CompleteAuthResponse](./client.md#interface-completeauthresponse)
+
+Returns
+
+- { success, message, presentationKey }
+
+Argument Details
+
++ **serverUrl**
+  + The base URL of the WAB server
++ **presentationKey**
+  + The 256-bit key
++ **payload**
+  + { phoneNumber: string, otp: string } (the identifier and OTP code from console)
+
+###### Method startAuth
+
+Start the DevConsole authentication on the server.
+- The server will generate an OTP code and log it to the console for development use.
+
+```ts
+public async startAuth(serverUrl: string, presentationKey: string, payload: AuthPayload): Promise<StartAuthResponse> 
+```
+See also: [AuthPayload](./client.md#interface-authpayload), [StartAuthResponse](./client.md#interface-startauthresponse)
+
+Returns
+
+- { success, message, data }
+
+Argument Details
+
++ **serverUrl**
+  + The base URL of the WAB server (e.g. http://localhost:3000)
++ **presentationKey**
+  + The 256-bit key the client is attempting to authenticate with
++ **payload**
+  + { phoneNumber: string } (identifier for the authentication)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
