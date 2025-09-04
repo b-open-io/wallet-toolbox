@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.7
+
+- Add DevConsoleInteractor
+
 ## wallet-toolbox 1.6.6
 
 - Add robots.txt to StorageServer
