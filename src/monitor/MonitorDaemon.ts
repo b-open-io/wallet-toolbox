@@ -11,6 +11,7 @@ import { Monitor } from './Monitor'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../sdk/WERR_errors'
 import { wait } from '../utility/utilityHelpers'
 import { WalletError } from '../sdk/WalletError'
+import { Chaintracks } from '../services/chaintracker/chaintracks/Chaintracks'
 dotenv.config()
 
 const mainDojoConnection = process.env.MAIN_DOJO_CONNECTION || ''
@@ -28,6 +29,7 @@ export interface MonitorDaemonSetup {
   servicesOptions?: WalletServicesOptions
   services?: Services
   monitor?: Monitor
+  chaintracks?: Chaintracks
 }
 
 export class MonitorDaemon {
@@ -99,6 +101,7 @@ export class MonitorDaemon {
       if (a.servicesOptions) {
         if (a.servicesOptions.chain != a.chain)
           throw new WERR_INVALID_PARAMETER('serviceOptions.chain', 'same as args.chain')
+        a.servicesOptions.chaintracks ||= a.chaintracks
         a.services = new Services(a.servicesOptions)
       }
 
@@ -108,7 +111,7 @@ export class MonitorDaemon {
 
       a.storageManager.setServices(a.services)
 
-      const monitorOptions = Monitor.createDefaultWalletMonitorOptions(a.chain, a.storageManager, a.services)
+      const monitorOptions = Monitor.createDefaultWalletMonitorOptions(a.chain, a.storageManager, a.services, a.chaintracks)
       a.monitor = new Monitor(monitorOptions)
     }
 
