@@ -47,10 +47,10 @@ describe('Monitor tests', () => {
         monitor._tasks.push(task)
         const msecsFirst = task.nextMinute
         const startTasksPromise = monitor.startTasks()
-        await wait(monitor.oneMinute * 1.1)
+        await wait(Monitor.oneMinute * 1.1)
         const msecsNext = task.nextMinute
         monitor.stopTasks()
-        const elapsed = (msecsNext - msecsFirst) / monitor.oneMinute
+        const elapsed = (msecsNext - msecsFirst) / Monitor.oneMinute
         expect(elapsed === 1 || elapsed === 2).toBe(true)
         await startTasksPromise
       }
@@ -71,7 +71,7 @@ describe('Monitor tests', () => {
         monitor._tasks.push(task)
         expect(TaskCheckForProofs.checkNow).toBe(false)
         const startTasksPromise = monitor.startTasks()
-        await wait(monitor.oneSecond * 10)
+        await wait(Monitor.oneSecond * 10)
         expect(task.header).toBeTruthy()
         expect(TaskCheckForProofs.checkNow).toBe(true)
         monitor.stopTasks()

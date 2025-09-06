@@ -21,7 +21,8 @@ import { WERR_BAD_REQUEST, WERR_INVALID_PARAMETER } from '../sdk/WERR_errors'
 import { WalletError } from '../sdk/WalletError'
 import { BlockHeader } from '../sdk/WalletServices.interfaces'
 import { Services } from '../services/Services'
-import { ChaintracksClientApi } from '../services/chaintracker/chaintracks/Api/ChaintracksClientApi'
+import { ChaintracksClientApi, ReorgListener } from '../services/chaintracker/chaintracks/Api/ChaintracksClientApi'
+import { Chaintracks } from '../services/chaintracker/chaintracks/Chaintracks'
 
 export type MonitorStorage = WalletStorageManager
 
@@ -33,6 +34,8 @@ export interface MonitorOptions {
   storage: MonitorStorage
 
   chaintracks: ChaintracksClientApi
+
+  chaintracksWithEvents?: Chaintracks
 
   /**
    * How many msecs to wait after each getMerkleProof service request.
@@ -59,7 +62,7 @@ export interface MonitorOptions {
  * and potentially that reorgs update proofs that were already received.
  */
 export class Monitor {
-  static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services): MonitorOptions {
+  static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services, chaintracks?: Chaintracks): MonitorOptions {
     services ||= new Services(chain)
     if (!services.options.chaintracks) throw new WERR_INVALID_PARAMETER('services.options.chaintracks', 'valid')
     const o: MonitorOptions = {
@@ -71,7 +74,8 @@ export class Monitor {
       abandonedMsecs: 1000 * 60 * 5,
       unprovenAttemptsLimitTest: 10,
       unprovenAttemptsLimitMain: 144,
-      chaintracks: services.options.chaintracks
+      chaintracks: services.options.chaintracks,
+      chaintracksWithEvents: chaintracks
     }
     return o
   }
@@ -81,6 +85,7 @@ export class Monitor {
   chain: Chain
   storage: MonitorStorage
   chaintracks: ChaintracksClientApi
+  chaintracksWithEvents?: Chaintracks
   onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>
   onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>
 
@@ -90,15 +95,22 @@ export class Monitor {
     this.chain = this.services.chain
     this.storage = options.storage
     this.chaintracks = options.chaintracks
+    this.chaintracksWithEvents = options.chaintracksWithEvents
     this.onTransactionProven = options.onTransactionProven
     this.onTransactionBroadcasted = options.onTransactionBroadcasted
+
+    if (this.chaintracksWithEvents) {
+      const c = this.chaintracksWithEvents
+      c.subscribeReorgs(this.processReorg.bind(this))
+    }
   }
 
-  oneSecond = 1000
-  oneMinute = 60 * this.oneSecond
-  oneHour = 60 * this.oneMinute
-  oneDay = 24 * this.oneHour
-  oneWeek = 7 * this.oneDay
+  static readonly oneSecond = 1000
+  static readonly oneMinute = 60 * Monitor.oneSecond
+  static readonly oneHour = 60 * Monitor.oneMinute
+  static readonly oneDay = 24 * Monitor.oneHour
+  static readonly oneWeek = 7 * Monitor.oneDay
+
   /**
    * _tasks are typically run by the scheduler but may also be run by runTask.
    */
@@ -113,9 +125,9 @@ export class Monitor {
     purgeSpent: false,
     purgeCompleted: false,
     purgeFailed: true,
-    purgeSpentAge: 2 * this.oneWeek,
-    purgeCompletedAge: 2 * this.oneWeek,
-    purgeFailedAge: 5 * this.oneDay
+    purgeSpentAge: 2 * Monitor.oneWeek,
+    purgeCompletedAge: 2 * Monitor.oneWeek,
+    purgeFailedAge: 5 * Monitor.oneDay
   }
 
   addAllTasksToOther(): void {
@@ -141,12 +153,12 @@ export class Monitor {
     this._tasks.push(new TaskClock(this))
     this._tasks.push(new TaskNewHeader(this))
     this._tasks.push(new TaskMonitorCallHistory(this))
-    this._tasks.push(new TaskSendWaiting(this, 8 * this.oneSecond, 7 * this.oneSecond)) // Check every 8 seconds but must be 7 seconds old
-    this._tasks.push(new TaskCheckForProofs(this, 2 * this.oneHour)) // Every two hours if no block found
+    this._tasks.push(new TaskSendWaiting(this, 8 * Monitor.oneSecond, 7 * Monitor.oneSecond)) // Check every 8 seconds but must be 7 seconds old
+    this._tasks.push(new TaskCheckForProofs(this, 2 * Monitor.oneHour)) // Every two hours if no block found
     this._tasks.push(new TaskCheckNoSends(this))
-    this._tasks.push(new TaskFailAbandoned(this, 8 * this.oneMinute))
+    this._tasks.push(new TaskFailAbandoned(this, 8 * Monitor.oneMinute))
     this._tasks.push(new TaskUnFail(this))
-    //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * this.oneHour))
+    //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * Monitor.oneHour))
     this._tasks.push(new TaskReviewStatus(this))
   }
 
@@ -158,12 +170,12 @@ export class Monitor {
     this._tasks.push(new TaskClock(this))
     this._tasks.push(new TaskNewHeader(this))
     this._tasks.push(new TaskMonitorCallHistory(this))
-    this._tasks.push(new TaskSendWaiting(this, 8 * this.oneSecond, 7 * this.oneSecond)) // Check every 8 seconds but must be 7 seconds old
-    this._tasks.push(new TaskCheckForProofs(this, 2 * this.oneHour)) // Every two hours if no block found
+    this._tasks.push(new TaskSendWaiting(this, 8 * Monitor.oneSecond, 7 * Monitor.oneSecond)) // Check every 8 seconds but must be 7 seconds old
+    this._tasks.push(new TaskCheckForProofs(this, 2 * Monitor.oneHour)) // Every two hours if no block found
     this._tasks.push(new TaskCheckNoSends(this))
-    this._tasks.push(new TaskFailAbandoned(this, 8 * this.oneMinute))
+    this._tasks.push(new TaskFailAbandoned(this, 8 * Monitor.oneMinute))
     this._tasks.push(new TaskUnFail(this))
-    //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * this.oneHour))
+    //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * Monitor.oneHour))
     this._tasks.push(new TaskReviewStatus(this))
   }
 
@@ -322,6 +334,8 @@ export class Monitor {
     }
   }
 
+  deactivatedHeaders: BlockHeader[] = []
+
   /**
    * Process reorg event received from Chaintracks
    *
@@ -333,7 +347,8 @@ export class Monitor {
    * Coinbase transactions always become invalid.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader): void {
-    /* */
+  processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void {
+    if (deactivatedHeaders)
+      this.deactivatedHeaders.push(...deactivatedHeaders)
   }
 }

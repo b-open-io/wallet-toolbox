@@ -7,7 +7,7 @@ export class TaskMonitorCallHistory extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = monitor.oneMinute * 12
+    public triggerMsecs = Monitor.oneMinute * 12
   ) {
     super(monitor, TaskMonitorCallHistory.taskName)
   }

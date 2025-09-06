@@ -7,7 +7,7 @@ export class TaskClock extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = 1 * monitor.oneSecond
+    public triggerMsecs = 1 * Monitor.oneSecond
   ) {
     super(monitor, TaskClock.taskName)
     this.nextMinute = this.getNextMinute()
@@ -28,6 +28,6 @@ export class TaskClock extends WalletMonitorTask {
   }
 
   getNextMinute(): number {
-    return Math.ceil(Date.now() / this.monitor.oneMinute) * this.monitor.oneMinute
+    return Math.ceil(Date.now() / this.Monitor.oneMinute) * this.Monitor.oneMinute
   }
 }

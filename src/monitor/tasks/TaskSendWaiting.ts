@@ -16,9 +16,9 @@ export class TaskSendWaiting extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = monitor.oneSecond * 8,
-    public agedMsecs = monitor.oneSecond * 7,
-    public sendingMsecs = monitor.oneMinute * 5
+    public triggerMsecs = Monitor.oneSecond * 8,
+    public agedMsecs = Monitor.oneSecond * 7,
+    public sendingMsecs = Monitor.oneMinute * 5
   ) {
     super(monitor, TaskSendWaiting.taskName)
   }
