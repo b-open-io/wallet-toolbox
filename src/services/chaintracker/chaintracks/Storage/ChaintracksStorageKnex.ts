@@ -4,25 +4,15 @@ import { InsertHeaderResult, ChaintracksStorageBaseOptions } from '../Api/Chaint
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
-import {
-  addWork,
-  convertBitsToWork,
-  isMoreWork,
-  serializeBaseBlockHeader,
-  serializeBaseBlockHeaders
-} from '../util/blockHeaderUtilities'
+import { addWork, convertBitsToWork, isMoreWork, } from '../util/blockHeaderUtilities'
 import { verifyOneOrNone } from '../../../../utility/utilityHelpers'
 import { DBType } from '../../../../storage/StorageReader'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
 import { HeightRange } from '../util/HeightRange'
-import { BulkFilesReaderStorage } from '../util/BulkFilesReader'
-import { ChaintracksFetch } from '../util/ChaintracksFetch'
 import { ChaintracksStorageBulkFileApi } from '../Api/ChaintracksStorageApi'
 import { Chain } from '../../../../sdk/types'
 import { WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER } from '../../../../sdk/WERR_errors'
 import { determineDBType } from '../../../../storage/schema/KnexMigrations'
-import { BulkFileDataReader } from '../index.client'
-import { asArray } from '../../../../utility/utilityHelpers.noBuffer'
 
 export interface ChaintracksStorageKnexOptions extends ChaintracksStorageBaseOptions {
   /**
@@ -231,7 +221,8 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       isActiveTip: false,
       reorgDepth: 0,
       priorTip: undefined,
-      noTip: false
+      noTip: false,
+      deactivatedHeaders: [],
     }
 
     await this.knex.transaction(async trx => {
@@ -337,6 +328,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
           let [headerToDeactivate] = await trx<LiveBlockHeader>(table).where({ isChainTip: true, isActive: true })
           while (headerToDeactivate.headerId !== activeAncestor.headerId) {
             // Headers are deactivated until we reach the activeAncestor
+            r.deactivatedHeaders.push(headerToDeactivate)
             await trx<LiveBlockHeader>(table)
               .where({ headerId: headerToDeactivate.headerId })
               .update({ isActive: false })

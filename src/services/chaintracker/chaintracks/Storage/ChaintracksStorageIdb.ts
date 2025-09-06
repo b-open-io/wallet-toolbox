@@ -263,7 +263,8 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
       isActiveTip: false,
       reorgDepth: 0,
       priorTip: undefined,
-      noTip: false
+      noTip: false,
+      deactivatedHeaders: []
     }
 
     // Check for duplicate
@@ -359,8 +360,10 @@ export class ChaintracksStorageIdb extends ChaintracksStorageBase implements Cha
       }
 
       if (activeAncestor.headerId !== oneBack.headerId) {
+        // Deactivate reorg'ed headers
         let headerToDeactivate = this.repairStoredLiveHeader(await activeTipIndex.get([1, 1]))!
         while (headerToDeactivate && headerToDeactivate.headerId !== activeAncestor.headerId) {
+          r.deactivatedHeaders.push(headerToDeactivate)
           await store.put(this.prepareStoredLiveHeader({ ...headerToDeactivate, isActive: false }))
           headerToDeactivate = this.repairStoredLiveHeader(await store.get(headerToDeactivate.previousHeaderId!))!
         }

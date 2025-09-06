@@ -10,7 +10,7 @@ export type HeaderListener = (header: BlockHeader) => void
 /**
  * @public
  */
-export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader) => void
+export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]) => void
 
 /**
  * @public
