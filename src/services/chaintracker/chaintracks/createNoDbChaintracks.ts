@@ -2,10 +2,10 @@ import { Chain } from '../../../sdk'
 import { Chaintracks } from './Chaintracks'
 import { ChaintracksFetch } from './util/ChaintracksFetch'
 import { ChaintracksFetchApi } from './Api/ChaintracksFetchApi'
-import { ChaintracksStorageIdb } from './Storage/ChaintracksStorageIdb'
-import { createDefaultIdbChaintracksOptions } from './createDefaultIdbChaintracksOptions'
+import { ChaintracksStorageNoDb } from './Storage/ChaintracksStorageNoDb'
+import { createDefaultNoDbChaintracksOptions } from './createDefaultNoDbChaintracksOptions'
 
-export async function createIdbChaintracks(
+export async function createNoDbChaintracks(
   chain: Chain,
   whatsonchainApiKey: string = '',
   maxPerFile: number = 100000,
@@ -21,14 +21,14 @@ export async function createIdbChaintracks(
   chain: Chain
   maxPerFile: number
   fetch: ChaintracksFetchApi
-  storage: ChaintracksStorageIdb
+  storage: ChaintracksStorageNoDb
   chaintracks: Chaintracks
   available: Promise<void>
 }> {
   try {
     fetch ||= new ChaintracksFetch()
 
-    const co = createDefaultIdbChaintracksOptions(
+    const co = createDefaultNoDbChaintracksOptions(
       chain,
       whatsonchainApiKey,
       maxPerFile,
@@ -49,13 +49,13 @@ export async function createIdbChaintracks(
       chain,
       fetch,
       maxPerFile,
-      storage: co.storage as ChaintracksStorageIdb,
+      storage: co.storage as ChaintracksStorageNoDb,
       chaintracks,
       available
     }
 
   } catch (error) {
-    console.error('Error setting up Chaintracks with Idb Storage:', error)
+    console.error('Error setting up Chaintracks with NoDb Storage:', error)
     throw error
   }
 }

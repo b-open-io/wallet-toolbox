@@ -2,7 +2,7 @@ import { createDefaultKnexChaintracksOptions } from '../createDefaultKnexChaintr
 import { Chaintracks } from '../Chaintracks'
 import { wait } from '../../../../utility/utilityHelpers'
 import { Chain } from '../../../../sdk'
-import { createNoDbChaintracksOptions } from '../createDefaultNoDbChaintracksOptions'
+import { createDefaultNoDbChaintracksOptions } from '../createDefaultNoDbChaintracksOptions'
 import { ChaintracksFs } from '../util/ChaintracksFs'
 import { LocalCdnServer } from './LocalCdnServer'
 
@@ -52,7 +52,7 @@ describe('Chaintracks tests', () => {
   })
 
   async function NoDbBody(chain: Chain, exportHeaders?: boolean) {
-    const o = createNoDbChaintracksOptions(chain)
+    const o = createDefaultNoDbChaintracksOptions(chain)
     const c = new Chaintracks(o)
     await c.makeAvailable()
 

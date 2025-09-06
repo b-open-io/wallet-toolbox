@@ -1,12 +1,15 @@
+import { Knex, knex as makeKnex } from 'knex'
 import { Chain } from '../../../sdk'
 import { Chaintracks } from './Chaintracks'
 import { ChaintracksFetch } from './util/ChaintracksFetch'
 import { ChaintracksFetchApi } from './Api/ChaintracksFetchApi'
-import { ChaintracksStorageIdb } from './Storage/ChaintracksStorageIdb'
-import { createDefaultIdbChaintracksOptions } from './createDefaultIdbChaintracksOptions'
+import { ChaintracksStorageKnex } from './Storage/ChaintracksStorageKnex'
+import { createDefaultKnexChaintracksOptions } from './createDefaultKnexChaintracksOptions'
 
-export async function createIdbChaintracks(
+export async function createKnexChaintracks(
   chain: Chain,
+  rootFolder: string = './data/',
+  knexConfig?: Knex.Config,
   whatsonchainApiKey: string = '',
   maxPerFile: number = 100000,
   maxRetained: number = 2,
@@ -21,15 +24,17 @@ export async function createIdbChaintracks(
   chain: Chain
   maxPerFile: number
   fetch: ChaintracksFetchApi
-  storage: ChaintracksStorageIdb
+  storage: ChaintracksStorageKnex
   chaintracks: Chaintracks
   available: Promise<void>
 }> {
   try {
     fetch ||= new ChaintracksFetch()
 
-    const co = createDefaultIdbChaintracksOptions(
+    const co = createDefaultKnexChaintracksOptions(
       chain,
+      rootFolder,
+      knexConfig,
       whatsonchainApiKey,
       maxPerFile,
       maxRetained,
@@ -49,13 +54,13 @@ export async function createIdbChaintracks(
       chain,
       fetch,
       maxPerFile,
-      storage: co.storage as ChaintracksStorageIdb,
+      storage: co.storage as ChaintracksStorageKnex,
       chaintracks,
       available
     }
 
   } catch (error) {
-    console.error('Error setting up Chaintracks with Idb Storage:', error)
+    console.error('Error setting up Chaintracks with Knex Storage:', error)
     throw error
   }
 }

@@ -2,7 +2,7 @@ export * as sdk from './sdk/index'
 
 export * from './utility/index.client'
 export * from './storage/index.mobile'
-export * from './services/chaintracker/chaintracks/index.client'
+export * from './services/chaintracker/chaintracks/index.mobile'
 
 export * from './CWIStyleWalletManager'
 export * from './monitor/Monitor'
