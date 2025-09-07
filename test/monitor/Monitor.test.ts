@@ -1,13 +1,18 @@
 import { Beef, MerklePath } from '@bsv/sdk'
-import { asArray, EntityProvenTxReq, sdk, verifyOne, verifyTruthy, wait } from '../../src/index.client'
 import { TaskCheckForProofs } from '../../src/monitor/tasks/TaskCheckForProofs'
 import { TaskClock } from '../../src/monitor/tasks/TaskClock'
 import { TaskNewHeader } from '../../src/monitor/tasks/TaskNewHeader'
 import { TaskPurge } from '../../src/monitor/tasks/TaskPurge'
 import { TaskSendWaiting } from '../../src/monitor/tasks/TaskSendWaiting'
 import { _tu, TestSetup1Wallet, TestWallet } from '../utils/TestUtilsWalletStorage'
-import exp from 'constants'
 import { TaskReviewStatus } from '../../src/monitor/tasks/TaskReviewStatus'
+import { WERR_INTERNAL } from '../../src/sdk/WERR_errors'
+import { Monitor } from '../../src/monitor/Monitor'
+import { verifyOne, verifyTruthy, wait } from '../../src/utility/utilityHelpers'
+import { EntityProvenTxReq } from '../../src/storage/schema/entities/EntityProvenTxReq'
+import { GetMerklePathResult } from '../../src/sdk/WalletServices.interfaces'
+import { ProvenTransactionStatus } from '../../src/sdk/types'
+import { ReviewActionResult } from '../../src/sdk/WalletStorage.interfaces'
 
 describe('Monitor tests', () => {
   jest.setTimeout(99999999)
@@ -37,7 +42,7 @@ describe('Monitor tests', () => {
 
     // This test takes a bit over a minute to run... un-skip it to work on it.
     for (const { chain, wallet, services, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       {
         // The clock attempts to update nextMinute to msecs for each minute.
@@ -62,7 +67,7 @@ describe('Monitor tests', () => {
 
     // This test takes 10+ seconds to run... un-skip it to work on it.
     for (const { chain, wallet, services, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       {
         // The new header task polls chaintracks for latest header and if new sets flag to check for proofs.
@@ -91,7 +96,7 @@ describe('Monitor tests', () => {
         */
 
     for (const { chain, wallet, services, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       {
         const task = new TaskPurge(monitor, {
@@ -141,7 +146,7 @@ describe('Monitor tests', () => {
     })
 
     for (const { activeStorage: storage, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       monitor.lastNewHeader = {
         height: 999999999,
@@ -203,7 +208,7 @@ describe('Monitor tests', () => {
     })
 
     for (const { activeStorage: storage, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       {
         const attempts: number[] = []
@@ -238,7 +243,7 @@ describe('Monitor tests', () => {
     }
   })
 
-  const mockGetMerklePathResults: sdk.GetMerklePathResult[] = [
+  const mockGetMerklePathResults: GetMerklePathResult[] = [
     {
       name: 'WoCTsc',
       merklePath: new MerklePath(1652142, [
@@ -411,7 +416,7 @@ describe('Monitor tests', () => {
     })
 
     for (const { activeStorage: storage, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       {
         const task = new TaskSendWaiting(monitor, 1, 1)
@@ -512,7 +517,7 @@ describe('Monitor tests', () => {
     })
 
     for (const { activeStorage: storage, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       monitor.lastNewHeader = {
         height: 999999999,
@@ -525,7 +530,7 @@ describe('Monitor tests', () => {
         nonce: 0
       }
 
-      monitor.onTransactionProven = async (txStatus: sdk.ProvenTransactionStatus) => {
+      monitor.onTransactionProven = async (txStatus: ProvenTransactionStatus) => {
         expect(txStatus.txid).toBeTruthy()
         expect(txStatus.blockHash).toBeTruthy()
         expect(txStatus.blockHeight).toBeTruthy()
@@ -581,14 +586,14 @@ describe('Monitor tests', () => {
     })
 
     for (const { activeStorage: storage, monitor } of ctxs) {
-      if (!monitor) throw new sdk.WERR_INTERNAL('test requires setup with monitor')
+      if (!monitor) throw new WERR_INTERNAL('test requires setup with monitor')
 
       for (const txid of expectedTxids) {
         const req = verifyTruthy(await EntityProvenTxReq.fromStorageTxid(storage, txid))
         expect(req.status).toBe('unsent')
       }
 
-      monitor.onTransactionBroadcasted = async (broadcastResult: sdk.ReviewActionResult) => {
+      monitor.onTransactionBroadcasted = async (broadcastResult: ReviewActionResult) => {
         expect(broadcastResult.status).toBe('success')
         expect(expectedTxids).toContain(broadcastResult.txid)
         updatesReceived++
