@@ -11,6 +11,7 @@ import { TaskCheckForProofs } from './tasks/TaskCheckForProofs'
 import { TaskClock } from './tasks/TaskClock'
 import { TaskNewHeader } from './tasks/TaskNewHeader'
 import { TaskMonitorCallHistory } from './tasks/TaskMonitorCallHistory'
+import { TaskReorg } from './tasks/TaskReorg'
 
 import { TaskSendWaiting } from './tasks/TaskSendWaiting'
 import { TaskCheckNoSends } from './tasks/TaskCheckNoSends'
@@ -141,6 +142,8 @@ export class Monitor {
     this._otherTasks.push(new TaskCheckNoSends(this))
     this._otherTasks.push(new TaskUnFail(this))
 
+    this._otherTasks.push(new TaskReorg(this))
+
     this._otherTasks.push(new TaskFailAbandoned(this))
 
     this._otherTasks.push(new TaskSyncWhenIdle(this))
@@ -160,6 +163,7 @@ export class Monitor {
     this._tasks.push(new TaskUnFail(this))
     //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * Monitor.oneHour))
     this._tasks.push(new TaskReviewStatus(this))
+    this._tasks.push(new TaskReorg(this))
   }
 
   /**
@@ -177,6 +181,7 @@ export class Monitor {
     this._tasks.push(new TaskUnFail(this))
     //this._tasks.push(new TaskPurge(this, this.defaultPurgeParams, 6 * Monitor.oneHour))
     this._tasks.push(new TaskReviewStatus(this))
+    this._tasks.push(new TaskReorg(this))
   }
 
   addTask(task: WalletMonitorTask): void {
@@ -187,14 +192,6 @@ export class Monitor {
 
   removeTask(name: string): void {
     this._tasks = this._tasks.filter(t => t.name !== name)
-  }
-
-  async setupChaintracksListeners(): Promise<void> {
-    try {
-      // TODO: Use a task monitoring the newest block headere to trigger processNewHeader and reorg handling.
-    } catch (err) {
-      /* this chaintracks doesn't support event subscriptions */
-    }
   }
 
   async runTask(name: string): Promise<string> {
