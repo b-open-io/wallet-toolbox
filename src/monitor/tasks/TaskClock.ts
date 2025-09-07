@@ -28,6 +28,6 @@ export class TaskClock extends WalletMonitorTask {
   }
 
   getNextMinute(): number {
-    return Math.ceil(Date.now() / this.Monitor.oneMinute) * this.Monitor.oneMinute
+    return Math.ceil(Date.now() / Monitor.oneMinute) * Monitor.oneMinute
   }
 }
