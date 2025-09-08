@@ -331,7 +331,7 @@ export class Monitor {
     }
   }
 
-  deactivatedHeaders: BlockHeader[] = []
+  deactivatedHeaders: DeactivedHeader[] = []
 
   /**
    * Process reorg event received from Chaintracks
@@ -345,7 +345,30 @@ export class Monitor {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void {
-    if (deactivatedHeaders)
-      this.deactivatedHeaders.push(...deactivatedHeaders)
+    if (deactivatedHeaders) {
+      for (const header of deactivatedHeaders) {
+        this.deactivatedHeaders.push({
+          whenMsecs: Date.now(),
+          tries: 0,
+          header
+        })
+      }
+    }
   }
+}
+
+export interface DeactivedHeader {
+  /**
+   * To control aging of notification before pursuing updated proof data.
+   */
+  whenMsecs: number
+  /**
+   * Number of attempts made to process the header.
+   * Supports returning deactivation notification to the queue if proof data is not yet available.
+   */
+  tries: number
+  /**
+   * The deactivated block header.
+   */
+  header: BlockHeader
 }
