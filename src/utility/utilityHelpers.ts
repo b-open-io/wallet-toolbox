@@ -80,7 +80,8 @@ export function verifyTruthy<T>(v: T | null | undefined, description?: string): 
  */
 export function verifyLegalSatoshiValue(v: number | undefined): number {
   if (typeof v !== 'number' || !Number.isInteger(v)) throw new WERR_INTERNAL('Satoshi value must be an integer.')
-  if (v < 0 || v > 2100000000000000) throw new WERR_INTERNAL('Satoshi value must be between 0 and 2,100,000,000,000,000.')
+  if (v < 0 || v > 2100000000000000)
+    throw new WERR_INTERNAL('Satoshi value must be between 0 and 2,100,000,000,000,000.')
   return v
 }
 
