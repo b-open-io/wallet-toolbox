@@ -76,6 +76,17 @@ export function verifyTruthy<T>(v: T | null | undefined, description?: string): 
 /**
  * Helper function.
  *
+ * Verifies that a value is a legal satoshi value between 0 and 2,100,000,000,000,000.
+ */
+export function verifyLegalSatoshiValue(v: number | undefined): number {
+  if (typeof v !== 'number' || !Number.isInteger(v)) throw new WERR_INTERNAL('Satoshi value must be an integer.')
+  if (v < 0 || v > 2100000000000000) throw new WERR_INTERNAL('Satoshi value must be between 0 and 2,100,000,000,000,000.')
+  return v
+}
+
+/**
+ * Helper function.
+ *
  * Verifies that a hex string is trimmed and lower case.
  */
 export function verifyHexString(v: string): string {

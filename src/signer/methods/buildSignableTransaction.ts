@@ -7,7 +7,7 @@ import {
 } from '../../sdk/WalletStorage.interfaces'
 import { ValidCreateActionArgs, ValidCreateActionInput } from '../../sdk/validationHelpers'
 import { WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
-import { asBsvSdkScript, verifyTruthy } from '../../utility/utilityHelpers'
+import { asBsvSdkScript, verifyLegalSatoshiValue, verifyTruthy } from '../../utility/utilityHelpers'
 import { KeyPair } from '../../sdk/types'
 import { ScriptTemplateBRC29 } from '../../utility/ScriptTemplateBRC29'
 
@@ -143,7 +143,7 @@ export function buildSignableTransaction(
         sequence: 0xffffffff
       }
       tx.addInput(inputToAdd)
-      totalChangeInputs += verifyTruthy(storageInput.sourceSatoshis)
+      totalChangeInputs += verifyLegalSatoshiValue(storageInput.sourceSatoshis)
     }
   }
 
