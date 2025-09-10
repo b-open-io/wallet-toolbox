@@ -27,7 +27,7 @@ import {
   StorageGetBeefOptions,
   StorageProvidedBy
 } from '../../sdk/WalletStorage.interfaces'
-import { ValidCreateActionArgs, ValidCreateActionInput, ValidCreateActionOutput } from '../../sdk/validationHelpers'
+import { ValidCreateActionArgs, ValidCreateActionInput, ValidCreateActionOutput, validateSatoshis } from '../../sdk/validationHelpers'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import {
   randomBytesBase64,
@@ -417,7 +417,7 @@ async function createNewOutputs(
 
     const ro: StorageCreateTransactionSdkOutput = {
       vout: verifyInteger(o.vout),
-      satoshis: verifyTruthy(o.satoshis),
+      satoshis: validateSatoshis(o.satoshis, 'o.satoshis'),
       lockingScript: !o.lockingScript ? '' : asString(o.lockingScript),
       providedBy: verifyTruthy(o.providedBy) as StorageProvidedBy,
       purpose: o.purpose || undefined,
@@ -630,7 +630,7 @@ async function validateRequiredInputs(
       if (!disableDoubleSpendCheckForTest && !output.spendable && !vargs.isNoSend)
         throw new WERR_INVALID_PARAMETER(`${txid}.${vout}`, 'spendable output unless noSend is true')
       // input is spending an existing user output which has an lockingScript
-      input.satoshis = verifyNumber(output.satoshis)
+      input.satoshis = validateSatoshis(output.satoshis, 'output.satoshis')
       input.lockingScript = Script.fromBinary(asArray(output.lockingScript!))
     } else {
       let btx = beef.findTxid(txid)!
@@ -644,7 +644,7 @@ async function validateRequiredInputs(
       // btx is valid has parsed transaction data.
       if (vout >= btx.tx!.outputs.length) throw new WERR_INVALID_PARAMETER(`${txid}.${vout}`, 'valid outpoint')
       const so = btx.tx!.outputs[vout]
-      input.satoshis = verifyTruthy(so.satoshis)
+      input.satoshis = validateSatoshis(so.satoshis, 'so.satoshis')
       input.lockingScript = so.lockingScript
     }
   }
