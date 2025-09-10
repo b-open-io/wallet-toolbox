@@ -1067,7 +1067,7 @@ export class CWIStyleWalletManager implements WalletInterface {
    * Lists all available profiles, including the default profile.
    * @returns Array of profile info objects, including an 'active' flag.
    */
-  listProfiles(): Array<{ id: number[]; name: string; createdAt: number | null; active: boolean }> {
+  listProfiles(): Array<{ id: number[]; name: string; createdAt: number | null; active: boolean; identityKey: string; }> {
     if (!this.authenticated) {
       throw new Error('Not authenticated.')
     }
