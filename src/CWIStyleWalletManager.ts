@@ -1071,7 +1071,6 @@ export class CWIStyleWalletManager implements WalletInterface {
     if (!this.authenticated) {
       throw new Error('Not authenticated.')
     }
-    const rootIdentityKey = new Curve().g.mul(new BigNumber(this.rootPrimaryKey))
     const profileList = [
       // Default profile
       {
@@ -1079,7 +1078,7 @@ export class CWIStyleWalletManager implements WalletInterface {
         name: 'default',
         createdAt: null, // Default profile doesn't have a creation timestamp in the same way
         active: this.activeProfileId.every(x => x === 0),
-        identityKey: rootIdentityKey.toString()
+        identityKey: new PrivateKey(this.rootPrimaryKey).toPublicKey().toString()
       },
       // Other profiles
       ...this.profiles.map(p => ({
@@ -1087,7 +1086,7 @@ export class CWIStyleWalletManager implements WalletInterface {
         name: p.name,
         createdAt: p.createdAt,
         active: this.activeProfileId.every((x, i) => x === p.id[i]),
-        identityKey: rootIdentityKey.add(new Curve().g.mul(p.primaryPad)).toString()
+        identityKey: new PrivateKey(this.XOR(this.rootPrimaryKey, p.primaryPad)).toPublicKey().toString()
       }))
     ]
     return profileList
