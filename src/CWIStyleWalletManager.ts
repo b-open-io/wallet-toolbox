@@ -61,7 +61,9 @@ import {
   Transaction,
   PushDrop,
   CreateActionInput,
-  SHIPBroadcaster
+  SHIPBroadcaster,
+  BigNumber,
+  Curve
 } from '@bsv/sdk'
 import { PrivilegedKeyManager } from './sdk/PrivilegedKeyManager'
 
@@ -1065,7 +1067,13 @@ export class CWIStyleWalletManager implements WalletInterface {
    * Lists all available profiles, including the default profile.
    * @returns Array of profile info objects, including an 'active' flag.
    */
-  listProfiles(): Array<{ id: number[]; name: string; createdAt: number | null; active: boolean }> {
+  listProfiles(): Array<{
+    id: number[]
+    name: string
+    createdAt: number | null
+    active: boolean
+    identityKey: string
+  }> {
     if (!this.authenticated) {
       throw new Error('Not authenticated.')
     }
@@ -1075,14 +1083,16 @@ export class CWIStyleWalletManager implements WalletInterface {
         id: DEFAULT_PROFILE_ID,
         name: 'default',
         createdAt: null, // Default profile doesn't have a creation timestamp in the same way
-        active: this.activeProfileId.every(x => x === 0)
+        active: this.activeProfileId.every(x => x === 0),
+        identityKey: new PrivateKey(this.rootPrimaryKey).toPublicKey().toString()
       },
       // Other profiles
       ...this.profiles.map(p => ({
         id: p.id,
         name: p.name,
         createdAt: p.createdAt,
-        active: this.activeProfileId.every((x, i) => x === p.id[i])
+        active: this.activeProfileId.every((x, i) => x === p.id[i]),
+        identityKey: new PrivateKey(this.XOR(this.rootPrimaryKey as number[], p.primaryPad)).toPublicKey().toString()
       }))
     ]
     return profileList
