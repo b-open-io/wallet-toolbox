@@ -6,7 +6,7 @@ attention to changes that materially alter behavior or extend functionality.
 
 ## wallet-toolbox 1.6.22
 
-- Change verifyTruthy => verifyLegalSatoshiValue during input validation for createAction.
+- Change verifyTruthy => validateSatoshis during input validation for createAction.
 
 ## wallet-toolbox 1.6.20
 
