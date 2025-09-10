@@ -22,8 +22,9 @@
     "test:coverage": "npm run build && jest --testPathIgnorePatterns=man.test.ts --coverage",
     "lint": "prettier --write 'src/**/*.ts' --write 'test/**/*.ts' --log-level silent",
     "build": "tsc --build",
-    "prepublish": "npm run lint && npm run build && npm run doc",
-    "doc": "ts2md"
+    "prepublish": "npm run lint && npm run build && npm run doc && npm run sync-versions",
+    "doc": "ts2md",
+    "sync-versions": "node syncVersions.js"
   },
   "bugs": {
     "url": "https://github.com/bsv-blockchain/wallet-toolbox/issues"

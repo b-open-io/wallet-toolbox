@@ -27,7 +27,12 @@ import {
   StorageGetBeefOptions,
   StorageProvidedBy
 } from '../../sdk/WalletStorage.interfaces'
-import { ValidCreateActionArgs, ValidCreateActionInput, ValidCreateActionOutput, validateSatoshis } from '../../sdk/validationHelpers'
+import {
+  ValidCreateActionArgs,
+  ValidCreateActionInput,
+  ValidCreateActionOutput,
+  validateSatoshis
+} from '../../sdk/validationHelpers'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import {
   randomBytesBase64,
