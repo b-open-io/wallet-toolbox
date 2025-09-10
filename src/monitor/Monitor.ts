@@ -92,6 +92,8 @@ export class Monitor {
   storage: MonitorStorage
   chaintracks: ChaintracksClientApi
   chaintracksWithEvents?: Chaintracks
+  reorgSubscriptionPromise?: Promise<string>
+  headersSubscriptionPromise?: Promise<string>
   onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>
   onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>
 
@@ -107,7 +109,18 @@ export class Monitor {
 
     if (this.chaintracksWithEvents) {
       const c = this.chaintracksWithEvents
-      c.subscribeReorgs(this.processReorg.bind(this))
+      this.reorgSubscriptionPromise = c.subscribeReorgs(this.processReorg.bind(this))
+      this.headersSubscriptionPromise = c.subscribeHeaders(this.processHeader.bind(this))
+    }
+  }
+
+  async destroy(): Promise<void> {
+    if (this.chaintracksWithEvents) {
+      const c = this.chaintracksWithEvents
+      if (this.reorgSubscriptionPromise)
+        await c.unsubscribe(await this.reorgSubscriptionPromise)
+      if (this.headersSubscriptionPromise)
+        await c.unsubscribe(await this.headersSubscriptionPromise)
     }
   }
 
@@ -262,16 +275,27 @@ export class Monitor {
   }
 
   _runAsyncSetup: boolean = true
+  _tasksRunningPromise?: PromiseLike<void>
+  resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined;
 
   async startTasks(): Promise<void> {
     if (this._tasksRunning) throw new WERR_BAD_REQUEST('monitor tasks are already runnining.')
 
     this._tasksRunning = true
+    this._tasksRunningPromise = new Promise((resolve) => {
+      this.resolveCompletion = resolve;
+    });
+
     for (; this._tasksRunning; ) {
       await this.runOnce()
 
       // console.log(`${new Date().toISOString()} tasks run, waiting...`)
       await wait(this.options.taskRunWaitMsecs)
+    }
+
+    if (this.resolveCompletion) {
+      this.resolveCompletion();
+      this.resolveCompletion = undefined;
     }
   }
 
@@ -359,6 +383,11 @@ export class Monitor {
         })
       }
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  processHeader(header: BlockHeader) : void {
+
   }
 }
 
