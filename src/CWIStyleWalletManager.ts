@@ -1087,7 +1087,7 @@ export class CWIStyleWalletManager implements WalletInterface {
         name: p.name,
         createdAt: p.createdAt,
         active: this.activeProfileId.every((x, i) => x === p.id[i]),
-        identityKey: rootIdentityKey.add(new Curve().g.mul(p.primaryPad))
+        identityKey: rootIdentityKey.add(new Curve().g.mul(p.primaryPad)).toString()
       }))
     ]
     return profileList
