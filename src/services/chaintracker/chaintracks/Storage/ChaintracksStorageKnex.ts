@@ -4,7 +4,7 @@ import { InsertHeaderResult, ChaintracksStorageBaseOptions } from '../Api/Chaint
 import { ChaintracksStorageBase } from './ChaintracksStorageBase'
 import { LiveBlockHeader } from '../Api/BlockHeaderApi'
 import { BlockHeader } from '../../../../sdk/WalletServices.interfaces'
-import { addWork, convertBitsToWork, isMoreWork, } from '../util/blockHeaderUtilities'
+import { addWork, convertBitsToWork, isMoreWork } from '../util/blockHeaderUtilities'
 import { verifyOneOrNone } from '../../../../utility/utilityHelpers'
 import { DBType } from '../../../../storage/StorageReader'
 import { BulkHeaderFileInfo } from '../util/BulkHeaderFile'
@@ -222,7 +222,7 @@ export class ChaintracksStorageKnex extends ChaintracksStorageBase implements Ch
       reorgDepth: 0,
       priorTip: undefined,
       noTip: false,
-      deactivatedHeaders: [],
+      deactivatedHeaders: []
     }
 
     await this.knex.transaction(async trx => {

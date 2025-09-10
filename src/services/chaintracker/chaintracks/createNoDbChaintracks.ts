@@ -53,7 +53,6 @@ export async function createNoDbChaintracks(
       chaintracks,
       available
     }
-
   } catch (error) {
     console.error('Error setting up Chaintracks with NoDb Storage:', error)
     throw error

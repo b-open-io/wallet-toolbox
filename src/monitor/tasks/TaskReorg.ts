@@ -5,7 +5,7 @@ import { WalletMonitorTask } from './WalletMonitorTask'
 
 /**
  * Check the `monitor.deactivatedHeaders` for any headers that have been deactivated.
- * 
+ *
  * When headers are found, review matching ProvenTx records and update proof data as appropriate.
  *
  * New deactivated headers are pushed onto the `deactivatedHeaders` array.
@@ -13,21 +13,21 @@ import { WalletMonitorTask } from './WalletMonitorTask'
  *
  * The current implementation ages deactivation notifications by 10 minutes with each retry.
  * If a successful proof update confirms original proof data after 3 retries, the original is retained.
- * 
+ *
  * In normal operation there should never be any work for this task to perform.
  * The most common result is that there are no matching proven_txs records because
  * generating new proven_txs records intentionally lags new block generation to
  * minimize this disruption.
- * 
+ *
  * It is very disruptive to update a proven_txs record because:
  * - Sync'ed storage is impacted.
  * - Generated beefs are impacted.
  * - Updated proof data may be unavailable at the time a reorg is first reported.
- * 
+ *
  * Instead of reorg notification derived from new header notification, reorg repair to
  * the proven_txs table is more effectively driven by noticing that a beef generated for a new
  * createAction fails to verify against the chaintracker.
- * 
+ *
  * An alternate approach to processing these events is to revert the proven_txs record to a proven_tx_reqs record.
  * Pros:
  * - The same multiple attempt logic that already exists is reused.
@@ -65,7 +65,7 @@ export class TaskReorg extends WalletMonitorTask {
   async runTask(): Promise<string> {
     let log = ''
 
-    for (; ;) {
+    for (;;) {
       const header = this.process.shift()
       if (!header) break
 
@@ -106,11 +106,12 @@ export class TaskReorg extends WalletMonitorTask {
               const chaintracker = await this.monitor.services.getChainTracker()
               const isValid = await chaintracker.isValidRootForHeight(merkleRoot, update.height!)
               const logUpdate = `      height ${ptx.height} ${ptx.height === update.height ? 'unchanged' : `-> ${update.height}`}\n`
-                log += `      blockHash ${ptx.blockHash} -> ${update.blockHash}\n`
-                log += `      merkleRoot ${ptx.merkleRoot} -> ${update.merkleRoot}\n`
-                log += `      index ${ptx.index} -> ${update.index}\n`
+              log += `      blockHash ${ptx.blockHash} -> ${update.blockHash}\n`
+              log += `      merkleRoot ${ptx.merkleRoot} -> ${update.merkleRoot}\n`
+              log += `      index ${ptx.index} -> ${update.index}\n`
               if (!isValid) {
-                log += `    txid ${ptx.txid} chaintracker fails to confirm updated merkle path update invalid\n` + logUpdate
+                log +=
+                  `    txid ${ptx.txid} chaintracker fails to confirm updated merkle path update invalid\n` + logUpdate
               } else {
                 await this.storage.runAsStorageProvider(async sp => {
                   await sp.updateProvenTx(ptx.provenTxId, update)

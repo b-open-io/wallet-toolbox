@@ -53,7 +53,6 @@ export async function createIdbChaintracks(
       chaintracks,
       available
     }
-
   } catch (error) {
     console.error('Error setting up Chaintracks with Idb Storage:', error)
     throw error

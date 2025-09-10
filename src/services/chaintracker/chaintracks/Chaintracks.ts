@@ -416,8 +416,8 @@ export class Chaintracks implements ChaintracksManagementApi {
           const reorgListener = this.callbacks.reorg[id]
           if (reorgListener) {
             try {
-              const priorTip: BlockHeader = {...ihr.priorTip }
-              const deactivated: BlockHeader[] = ihr.deactivatedHeaders.map(lbh => ({...lbh}))
+              const priorTip: BlockHeader = { ...ihr.priorTip }
+              const deactivated: BlockHeader[] = ihr.deactivatedHeaders.map(lbh => ({ ...lbh }))
               reorgListener(ihr.reorgDepth, priorTip, header, deactivated)
             } catch {
               /* ignore all errors thrown */

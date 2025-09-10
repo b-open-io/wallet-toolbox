@@ -33,7 +33,6 @@ export function createDefaultKnexChaintracksOptions(
   batchInsertLimit: number = 400,
   addLiveRecursionLimit: number = 36
 ): ChaintracksOptions {
-
   fetch ||= new ChaintracksFetch()
 
   const bfo: BulkFileDataManagerOptions = {
@@ -107,7 +106,6 @@ export function createDefaultKnexChaintracksOptions(
     idleWait: 100000
   }
   co.liveIngestors.push(new LiveIngestorWhatsOnChainPoll(liveOptions))
-
 
   return co
 }

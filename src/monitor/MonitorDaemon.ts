@@ -111,7 +111,12 @@ export class MonitorDaemon {
 
       a.storageManager.setServices(a.services)
 
-      const monitorOptions = Monitor.createDefaultWalletMonitorOptions(a.chain, a.storageManager, a.services, a.chaintracks)
+      const monitorOptions = Monitor.createDefaultWalletMonitorOptions(
+        a.chain,
+        a.storageManager,
+        a.services,
+        a.chaintracks
+      )
       a.monitor = new Monitor(monitorOptions)
     }
 

@@ -58,7 +58,6 @@ export async function createKnexChaintracks(
       chaintracks,
       available
     }
-
   } catch (error) {
     console.error('Error setting up Chaintracks with Knex Storage:', error)
     throw error

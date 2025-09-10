@@ -24,9 +24,9 @@ describe('MonitorDaemon tests', () => {
       servicesOptions.taalApiKey = env.taalApiKey
       servicesOptions.arcConfig.apiKey = env.taalApiKey
     }
-    if (env.whatsonchainApiKey) servicesOptions.whatsOnChainApiKey = env.whatsonchainApiKey;
-    if (env.bitailsApiKey) servicesOptions.bitailsApiKey = env.bitailsApiKey;
-    
+    if (env.whatsonchainApiKey) servicesOptions.whatsOnChainApiKey = env.whatsonchainApiKey
+    if (env.bitailsApiKey) servicesOptions.bitailsApiKey = env.bitailsApiKey
+
     const u = undefined
     const maxRetained = 32
     const chaintracksOptions = createDefaultNoDbChaintracksOptions(chain, env.whatsonchainApiKey, u, maxRetained)

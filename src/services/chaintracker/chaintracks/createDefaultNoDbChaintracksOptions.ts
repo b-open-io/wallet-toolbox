@@ -23,7 +23,6 @@ export function createDefaultNoDbChaintracksOptions(
   batchInsertLimit: number = 400,
   addLiveRecursionLimit: number = 36
 ): ChaintracksOptions {
-
   fetch ||= new ChaintracksFetch()
 
   const bfo: BulkFileDataManagerOptions = {

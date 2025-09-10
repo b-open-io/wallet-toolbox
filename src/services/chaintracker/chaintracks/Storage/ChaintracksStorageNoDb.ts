@@ -178,7 +178,7 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
       reorgDepth: 0,
       priorTip: undefined,
       noTip: false,
-      deactivatedHeaders: [],
+      deactivatedHeaders: []
     }
 
     // Check for duplicate
