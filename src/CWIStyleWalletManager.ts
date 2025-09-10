@@ -61,7 +61,9 @@ import {
   Transaction,
   PushDrop,
   CreateActionInput,
-  SHIPBroadcaster
+  SHIPBroadcaster,
+  BigNumber,
+  Curve
 } from '@bsv/sdk'
 import { PrivilegedKeyManager } from './sdk/PrivilegedKeyManager'
 
@@ -1069,20 +1071,23 @@ export class CWIStyleWalletManager implements WalletInterface {
     if (!this.authenticated) {
       throw new Error('Not authenticated.')
     }
+    const rootIdentityKey = new Curve().g.mul(new BigNumber(this.rootPrimaryKey))
     const profileList = [
       // Default profile
       {
         id: DEFAULT_PROFILE_ID,
         name: 'default',
         createdAt: null, // Default profile doesn't have a creation timestamp in the same way
-        active: this.activeProfileId.every(x => x === 0)
+        active: this.activeProfileId.every(x => x === 0),
+        identityKey: rootIdentityKey.toString()
       },
       // Other profiles
       ...this.profiles.map(p => ({
         id: p.id,
         name: p.name,
         createdAt: p.createdAt,
-        active: this.activeProfileId.every((x, i) => x === p.id[i])
+        active: this.activeProfileId.every((x, i) => x === p.id[i]),
+        identityKey: rootIdentityKey.add(new Curve().g.mul(p.primaryPad))
       }))
     ]
     return profileList
