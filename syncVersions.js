@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 /**
  * Synchronizes version numbers from root package.json to mobile and client package.json files
+ * and updates package-lock.json files by running npm install
  */
 function syncVersions() {
   try {
@@ -13,15 +15,16 @@ function syncVersions() {
 
     console.log(`Root package version: ${version}`);
 
-    // Paths to update
-    const packagesToUpdate = [
-      './mobile/package.json',
-      './client/package.json'
+    // Directories to update
+    const directoriesToUpdate = [
+      { packagePath: './mobile/package.json', dir: './mobile' },
+      { packagePath: './client/package.json', dir: './client' }
     ];
 
-    // Update each package.json file
-    packagesToUpdate.forEach(packagePath => {
+    // Update each package.json file and run npm install
+    directoriesToUpdate.forEach(({ packagePath, dir }) => {
       const fullPath = path.join(__dirname, packagePath);
+      const fullDirPath = path.join(__dirname, dir);
       
       if (fs.existsSync(fullPath)) {
         const packageData = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
@@ -31,6 +34,23 @@ function syncVersions() {
         fs.writeFileSync(fullPath, JSON.stringify(packageData, null, 2) + '\n');
         
         console.log(`Updated ${packagePath}: ${oldVersion} → ${version}`);
+        
+        // Run npm install to update package-lock.json
+        if (fs.existsSync(fullDirPath)) {
+          console.log(`Running npm install in ${dir}...`);
+          try {
+            execSync('npm install', { 
+              cwd: fullDirPath, 
+              stdio: 'inherit',
+              timeout: 60000 // 60 second timeout
+            });
+            console.log(`✓ npm install completed in ${dir}`);
+          } catch (installError) {
+            console.error(`✗ npm install failed in ${dir}:`, installError.message);
+          }
+        } else {
+          console.warn(`Warning: Directory ${dir} not found`);
+        }
       } else {
         console.warn(`Warning: ${packagePath} not found`);
       }
