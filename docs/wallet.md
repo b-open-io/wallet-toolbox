@@ -9135,6 +9135,7 @@ export class CWIStyleWalletManager implements WalletInterface {
         name: string;
         createdAt: number | null;
         active: boolean;
+        identityKey: string;
     }> 
     async addProfile(name: string): Promise<number[]> 
     async deleteProfile(profileId: number[]): Promise<void> 
@@ -9310,6 +9311,7 @@ listProfiles(): Array<{
     name: string;
     createdAt: number | null;
     active: boolean;
+    identityKey: string;
 }> 
 ```
 
