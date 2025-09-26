@@ -1359,6 +1359,86 @@ export class WalletPermissionsManager implements WalletInterface {
     return undefined
   }
 
+  /** Finds ALL DPACP permission tokens matching origin/domain, privileged, protocol, cpty. Never filters by expiry. */
+  private async findAllProtocolTokens(
+    originator: string,
+    privileged: boolean,
+    protocolID: WalletProtocol,
+    counterparty: string
+  ): Promise<PermissionToken[]> {
+    const [secLevel, protoName] = protocolID
+    const tags = [
+      `originator ${originator}`,
+      `privileged ${!!privileged}`,
+      `protocolName ${protoName}`,
+      `protocolSecurityLevel ${secLevel}`
+    ]
+    if (secLevel === 2) {
+      tags.push(`counterparty ${counterparty}`)
+    }
+
+    const result = await this.underlying.listOutputs(
+      {
+        basket: BASKET_MAP.protocol,
+        tags,
+        tagQueryMode: 'all',
+        include: 'entire transactions'
+      },
+      this.adminOriginator
+    )
+
+    const matches: PermissionToken[] = []
+
+    for (const out of result.outputs) {
+      const [txid, outputIndexStr] = out.outpoint.split('.')
+      const tx = Transaction.fromBEEF(result.BEEF!, txid)
+      const vout = Number(outputIndexStr)
+      const dec = PushDrop.decode(tx.outputs[vout].lockingScript)
+      if (!dec || !dec.fields || dec.fields.length < 6) continue
+
+      const domainRaw = dec.fields[0]
+      const expiryRaw = dec.fields[1]
+      const privRaw = dec.fields[2]
+      const secLevelRaw = dec.fields[3]
+      const protoNameRaw = dec.fields[4]
+      const counterpartyRaw = dec.fields[5]
+
+      // Decrypt all fields
+      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+      const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as 0 | 1 | 2
+      const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
+      const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
+
+      // Strict attribute match; NO expiry filtering
+      if (
+        domainDecoded !== originator ||
+        privDecoded !== !!privileged ||
+        secLevelDecoded !== secLevel ||
+        protoNameDecoded !== protoName ||
+        (secLevelDecoded === 2 && cptyDecoded !== counterparty)
+      ) {
+        continue
+      }
+
+      matches.push({
+        tx: tx.toBEEF(),
+        txid,
+        outputIndex: vout,
+        outputScript: tx.outputs[vout].lockingScript.toHex(),
+        satoshis: out.satoshis,
+        originator,
+        privileged,
+        protocol: protoName,
+        securityLevel: secLevel,
+        expiry: expiryDecoded,
+        counterparty: cptyDecoded
+      })
+    }
+
+    return matches
+  }
   /** Looks for a DBAP token matching (originator, basket). */
   private async findBasketToken(
     originator: string,
@@ -1619,8 +1699,7 @@ export class WalletPermissionsManager implements WalletInterface {
       'self',
       true,
       true
-    )
-
+    )    
     const tags = this.buildTagsForRequest(r)
 
     // 3) For BRC-100, we do a "createAction" with a partial input referencing oldToken
