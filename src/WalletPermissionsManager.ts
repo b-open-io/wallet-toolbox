@@ -656,17 +656,41 @@ export class WalletPermissionsManager implements WalletInterface {
       )
     }
     for (const p of params.granted.protocolPermissions || []) {
-      await this.createPermissionOnChain(
+
+      const token = await this.findProtocolToken(
+        originator,
+        false, // No privileged protocols allowed in groups for added security.
+        p.protocolID,
+        p.counterparty || 'self',
+        true
+      )
+      if (token) {
+      await this.renewPermissionOnChain(
+        token,
         {
           type: 'protocol',
           originator,
           privileged: false, // No privileged protocols allowed in groups for added security.
-          protocolID: p.protocolID,
-          counterparty: p.counterparty || 'self',
+          protocolID: p.protocolID, 
+          counterparty: p.counterparty || 'self', 
           reason: p.description
         },
         expiry
       )
+      }
+      else{
+        await this.createPermissionOnChain(
+          {
+            type: 'protocol',
+            originator,
+            privileged: false, // No privileged protocols allowed in groups for added security.
+            protocolID: p.protocolID,
+            counterparty: p.counterparty || 'self',
+            reason: p.description
+          },
+          expiry
+        )
+      }
     }
     for (const b of params.granted.basketAccess || []) {
       await this.createPermissionOnChain(
