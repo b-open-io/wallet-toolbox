@@ -11321,9 +11321,12 @@ export class Monitor {
     storage: MonitorStorage;
     chaintracks: ChaintracksClientApi;
     chaintracksWithEvents?: Chaintracks;
+    reorgSubscriptionPromise?: Promise<string>;
+    headersSubscriptionPromise?: Promise<string>;
     onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>;
     onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>;
     constructor(options: MonitorOptions) 
+    async destroy(): Promise<void> 
     static readonly oneSecond = 1000;
     static readonly oneMinute = 60 * Monitor.oneSecond;
     static readonly oneHour = 60 * Monitor.oneMinute;
@@ -11348,6 +11351,8 @@ export class Monitor {
     async runTask(name: string): Promise<string> 
     async runOnce(): Promise<void> 
     _runAsyncSetup: boolean = true;
+    _tasksRunningPromise?: PromiseLike<void>;
+    resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined;
     async startTasks(): Promise<void> 
     async logEvent(event: string, details?: string): Promise<void> 
     stopTasks(): void 
@@ -11358,6 +11363,7 @@ export class Monitor {
     callOnProvenTransaction(txStatus: ProvenTransactionStatus): void 
     deactivatedHeaders: DeactivedHeader[] = [];
     processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void 
+    processHeader(header: BlockHeader): void 
 }
 ```
 
