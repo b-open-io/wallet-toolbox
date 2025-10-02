@@ -117,10 +117,8 @@ export class Monitor {
   async destroy(): Promise<void> {
     if (this.chaintracksWithEvents) {
       const c = this.chaintracksWithEvents
-      if (this.reorgSubscriptionPromise)
-        await c.unsubscribe(await this.reorgSubscriptionPromise)
-      if (this.headersSubscriptionPromise)
-        await c.unsubscribe(await this.headersSubscriptionPromise)
+      if (this.reorgSubscriptionPromise) await c.unsubscribe(await this.reorgSubscriptionPromise)
+      if (this.headersSubscriptionPromise) await c.unsubscribe(await this.headersSubscriptionPromise)
     }
   }
 
@@ -276,15 +274,15 @@ export class Monitor {
 
   _runAsyncSetup: boolean = true
   _tasksRunningPromise?: PromiseLike<void>
-  resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined;
+  resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined
 
   async startTasks(): Promise<void> {
     if (this._tasksRunning) throw new WERR_BAD_REQUEST('monitor tasks are already runnining.')
 
     this._tasksRunning = true
-    this._tasksRunningPromise = new Promise((resolve) => {
-      this.resolveCompletion = resolve;
-    });
+    this._tasksRunningPromise = new Promise(resolve => {
+      this.resolveCompletion = resolve
+    })
 
     for (; this._tasksRunning; ) {
       await this.runOnce()
@@ -294,8 +292,8 @@ export class Monitor {
     }
 
     if (this.resolveCompletion) {
-      this.resolveCompletion();
-      this.resolveCompletion = undefined;
+      this.resolveCompletion()
+      this.resolveCompletion = undefined
     }
   }
 
@@ -385,10 +383,16 @@ export class Monitor {
     }
   }
 
+  /**
+   * Handler for new header events from Chaintracks.
+   *
+   * To minimize reorg processing, new headers are aged before processing via TaskNewHeader.
+   * Therefore this handler is intentionally a no-op.
+   *
+   * @param header
+   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  processHeader(header: BlockHeader) : void {
-
-  }
+  processHeader(header: BlockHeader): void {}
 }
 
 export interface DeactivedHeader {

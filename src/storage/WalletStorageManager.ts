@@ -16,6 +16,7 @@ import {
   TableCertificateX,
   TableOutput,
   TableOutputBasket,
+  TableProvenTx,
   TableProvenTxReq,
   TableSettings,
   TableUser
@@ -514,6 +515,12 @@ export class WalletStorageManager implements sdk.WalletStorage {
   }
 
   async findProvenTxReqs(args: sdk.FindProvenTxReqsArgs): Promise<TableProvenTxReq[]> {
+    return await this.runAsReader(async reader => {
+      return await reader.findProvenTxReqs(args)
+    })
+  }
+
+  async reproveHeader(header: BlockHeader): Promise<TableProvenTxReq[]> {
     return await this.runAsReader(async reader => {
       return await reader.findProvenTxReqs(args)
     })
