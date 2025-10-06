@@ -177,7 +177,8 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
       isActiveTip: false,
       reorgDepth: 0,
       priorTip: undefined,
-      noTip: false
+      noTip: false,
+      deactivatedHeaders: []
     }
 
     // Check for duplicate
@@ -272,6 +273,7 @@ export class ChaintracksStorageNoDb extends ChaintracksStorageBase {
       if (activeAncestor.headerId !== oneBack.headerId) {
         let headerToDeactivate = Array.from(data.liveHeaders.values()).find(h => h.isChainTip && h.isActive)
         while (headerToDeactivate && headerToDeactivate.headerId !== activeAncestor.headerId) {
+          r.deactivatedHeaders.push(headerToDeactivate)
           data.liveHeaders.set(headerToDeactivate.headerId, { ...headerToDeactivate, isActive: false })
           headerToDeactivate = data.liveHeaders.get(headerToDeactivate.previousHeaderId!)
         }

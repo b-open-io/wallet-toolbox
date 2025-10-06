@@ -29,7 +29,7 @@ export class TaskNewHeader extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = 1 * monitor.oneMinute
+    public triggerMsecs = 1 * Monitor.oneMinute
   ) {
     super(monitor, TaskNewHeader.taskName)
   }

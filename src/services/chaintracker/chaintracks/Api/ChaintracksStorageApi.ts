@@ -257,6 +257,10 @@ export type InsertHeaderResult = {
    */
   priorTip: LiveBlockHeader | undefined
   /**
+   * If a reorg has occurred, these headers where active and are now deactivated.
+   */
+  deactivatedHeaders: LiveBlockHeader[]
+  /**
    * header's previousHash was not found in database
    */
   noPrev: boolean

@@ -21,6 +21,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | |
 | --- |
+| [DeactivedHeader](#interface-deactivedheader) |
 | [MonitorDaemonSetup](#interface-monitordaemonsetup) |
 | [MonitorOptions](#interface-monitoroptions) |
 | [TaskPurgeParams](#interface-taskpurgeparams) |
@@ -29,6 +30,47 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 ---
 
+##### Interface: DeactivedHeader
+
+```ts
+export interface DeactivedHeader {
+    whenMsecs: number;
+    tries: number;
+    header: BlockHeader;
+}
+```
+
+See also: [BlockHeader](./client.md#interface-blockheader)
+
+###### Property header
+
+The deactivated block header.
+
+```ts
+header: BlockHeader
+```
+See also: [BlockHeader](./client.md#interface-blockheader)
+
+###### Property tries
+
+Number of attempts made to process the header.
+Supports returning deactivation notification to the queue if proof data is not yet available.
+
+```ts
+tries: number
+```
+
+###### Property whenMsecs
+
+To control aging of notification before pursuing updated proof data.
+
+```ts
+whenMsecs: number
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Interface: MonitorDaemonSetup
 
 ```ts
@@ -44,10 +86,11 @@ export interface MonitorDaemonSetup {
     servicesOptions?: WalletServicesOptions;
     services?: Services;
     monitor?: Monitor;
+    chaintracks?: Chaintracks;
 }
 ```
 
-See also: [Chain](./client.md#type-chain), [Monitor](./monitor.md#class-monitor), [Services](./services.md#class-services), [StorageKnexOptions](./storage.md#interface-storageknexoptions), [StorageProvider](./storage.md#class-storageprovider), [WalletServicesOptions](./client.md#interface-walletservicesoptions), [WalletStorageManager](./storage.md#class-walletstoragemanager)
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [Monitor](./monitor.md#class-monitor), [Services](./services.md#class-services), [StorageKnexOptions](./storage.md#interface-storageknexoptions), [StorageProvider](./storage.md#class-storageprovider), [WalletServicesOptions](./client.md#interface-walletservicesoptions), [WalletStorageManager](./storage.md#class-walletstoragemanager)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -60,6 +103,7 @@ export interface MonitorOptions {
     services: Services;
     storage: MonitorStorage;
     chaintracks: ChaintracksClientApi;
+    chaintracksWithEvents?: Chaintracks;
     msecsWaitPerMerkleProofServiceReq: number;
     taskRunWaitMsecs: number;
     abandonedMsecs: number;
@@ -70,7 +114,7 @@ export interface MonitorOptions {
 }
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
 
 ###### Property msecsWaitPerMerkleProofServiceReq
 
@@ -132,13 +176,14 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | |
 | --- | --- |
-| [Monitor](#class-monitor) | [TaskNewHeader](#class-tasknewheader) |
-| [MonitorDaemon](#class-monitordaemon) | [TaskPurge](#class-taskpurge) |
+| [Monitor](#class-monitor) | [TaskPurge](#class-taskpurge) |
+| [MonitorDaemon](#class-monitordaemon) | [TaskReorg](#class-taskreorg) |
 | [TaskCheckForProofs](#class-taskcheckforproofs) | [TaskReviewStatus](#class-taskreviewstatus) |
 | [TaskCheckNoSends](#class-taskchecknosends) | [TaskSendWaiting](#class-tasksendwaiting) |
 | [TaskClock](#class-taskclock) | [TaskSyncWhenIdle](#class-tasksyncwhenidle) |
 | [TaskFailAbandoned](#class-taskfailabandoned) | [TaskUnFail](#class-taskunfail) |
 | [TaskMonitorCallHistory](#class-taskmonitorcallhistory) | [WalletMonitorTask](#class-walletmonitortask) |
+| [TaskNewHeader](#class-tasknewheader) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -151,20 +196,24 @@ and potentially that reorgs update proofs that were already received.
 
 ```ts
 export class Monitor {
-    static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services): MonitorOptions 
+    static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services, chaintracks?: Chaintracks): MonitorOptions 
     options: MonitorOptions;
     services: Services;
     chain: Chain;
     storage: MonitorStorage;
     chaintracks: ChaintracksClientApi;
+    chaintracksWithEvents?: Chaintracks;
+    reorgSubscriptionPromise?: Promise<string>;
+    headersSubscriptionPromise?: Promise<string>;
     onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>;
     onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>;
     constructor(options: MonitorOptions) 
-    oneSecond = 1000;
-    oneMinute = 60 * this.oneSecond;
-    oneHour = 60 * this.oneMinute;
-    oneDay = 24 * this.oneHour;
-    oneWeek = 7 * this.oneDay;
+    async destroy(): Promise<void> 
+    static readonly oneSecond = 1000;
+    static readonly oneMinute = 60 * Monitor.oneSecond;
+    static readonly oneHour = 60 * Monitor.oneMinute;
+    static readonly oneDay = 24 * Monitor.oneHour;
+    static readonly oneWeek = 7 * Monitor.oneDay;
     _tasks: WalletMonitorTask[] = [];
     _otherTasks: WalletMonitorTask[] = [];
     _tasksRunning = false;
@@ -172,19 +221,20 @@ export class Monitor {
         purgeSpent: false,
         purgeCompleted: false,
         purgeFailed: true,
-        purgeSpentAge: 2 * this.oneWeek,
-        purgeCompletedAge: 2 * this.oneWeek,
-        purgeFailedAge: 5 * this.oneDay
+        purgeSpentAge: 2 * Monitor.oneWeek,
+        purgeCompletedAge: 2 * Monitor.oneWeek,
+        purgeFailedAge: 5 * Monitor.oneDay
     };
     addAllTasksToOther(): void 
     addDefaultTasks(): void 
     addMultiUserTasks(): void 
     addTask(task: WalletMonitorTask): void 
     removeTask(name: string): void 
-    async setupChaintracksListeners(): Promise<void> 
     async runTask(name: string): Promise<string> 
     async runOnce(): Promise<void> 
     _runAsyncSetup: boolean = true;
+    _tasksRunningPromise?: PromiseLike<void>;
+    resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined;
     async startTasks(): Promise<void> 
     async logEvent(event: string, details?: string): Promise<void> 
     stopTasks(): void 
@@ -193,11 +243,13 @@ export class Monitor {
     processNewBlockHeader(header: BlockHeader): void 
     callOnBroadcastedTransaction(broadcastResult: ReviewActionResult): void 
     callOnProvenTransaction(txStatus: ProvenTransactionStatus): void 
-    processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader): void 
+    deactivatedHeaders: DeactivedHeader[] = [];
+    processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void 
+    processHeader(header: BlockHeader): void 
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
+See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [DeactivedHeader](./monitor.md#interface-deactivedheader), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
 
 ###### Property _otherTasks
 
@@ -280,7 +332,7 @@ It is possible for a transaction to become invalid.
 Coinbase transactions always become invalid.
 
 ```ts
-processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader): void 
+processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void 
 ```
 See also: [BlockHeader](./client.md#interface-blockheader)
 
@@ -376,7 +428,7 @@ the original ProvenTxReq status is advanced to 'notifying'.
 export class TaskCheckNoSends extends WalletMonitorTask {
     static taskName = "CheckNoSends";
     static checkNow = false;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneDay * 1) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneDay * 1) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -414,7 +466,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export class TaskClock extends WalletMonitorTask {
     static taskName = "Clock";
     nextMinute: number;
-    constructor(monitor: Monitor, public triggerMsecs = 1 * monitor.oneSecond) 
+    constructor(monitor: Monitor, public triggerMsecs = 1 * Monitor.oneSecond) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -458,7 +510,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export class TaskMonitorCallHistory extends WalletMonitorTask {
     static taskName = "MonitorCallHistory";
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneMinute * 12) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneMinute * 12) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -490,7 +542,7 @@ export class TaskNewHeader extends WalletMonitorTask {
     header?: BlockHeader;
     queuedHeader?: BlockHeader;
     queuedHeaderWhen?: Date;
-    constructor(monitor: Monitor, public triggerMsecs = 1 * monitor.oneMinute) 
+    constructor(monitor: Monitor, public triggerMsecs = 1 * Monitor.oneMinute) 
     async getHeader(): Promise<BlockHeader> 
     override async asyncSetup(): Promise<void> 
     trigger(nowMsecsSinceEpoch: number): {
@@ -569,6 +621,57 @@ static checkNow = false
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Class: TaskReorg
+
+Check the `monitor.deactivatedHeaders` for any headers that have been deactivated.
+
+When headers are found, review matching ProvenTx records and update proof data as appropriate.
+
+New deactivated headers are pushed onto the `deactivatedHeaders` array.
+They must be shifted out as they are processed.
+
+The current implementation ages deactivation notifications by 10 minutes with each retry.
+If a successful proof update confirms original proof data after 3 retries, the original is retained.
+
+In normal operation there should never be any work for this task to perform.
+The most common result is that there are no matching proven_txs records because
+generating new proven_txs records intentionally lags new block generation to
+minimize this disruption.
+
+It is very disruptive to update a proven_txs record because:
+- Sync'ed storage is impacted.
+- Generated beefs are impacted.
+- Updated proof data may be unavailable at the time a reorg is first reported.
+
+Instead of reorg notification derived from new header notification, reorg repair to
+the proven_txs table is more effectively driven by noticing that a beef generated for a new
+createAction fails to verify against the chaintracker.
+
+An alternate approach to processing these events is to revert the proven_txs record to a proven_tx_reqs record.
+Pros:
+- The same multiple attempt logic that already exists is reused.
+- Failing to obtain a new proof already has transaction failure handling in place.
+- Generated beefs automatically become one generation deeper, potentially allowing transaction outputs to be spent.
+Cons:
+- Transactions must revert to un-proven / un-mined.
+
+```ts
+export class TaskReorg extends WalletMonitorTask {
+    static taskName = "Reorg";
+    process: DeactivedHeader[] = [];
+    constructor(monitor: Monitor, public agedMsecs = Monitor.oneMinute * 10, public maxRetries = 3) 
+    trigger(nowMsecsSinceEpoch: number): {
+        run: boolean;
+    } 
+    async runTask(): Promise<string> 
+}
+```
+
+See also: [DeactivedHeader](./monitor.md#interface-deactivedheader), [Monitor](./monitor.md#class-monitor), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Class: TaskReviewStatus
 
 Notify Transaction records of changes in ProvenTxReq records they may have missed.
@@ -611,7 +714,7 @@ export class TaskSendWaiting extends WalletMonitorTask {
     static taskName = "SendWaiting";
     lastSendingRunMsecsSinceEpoch: number | undefined;
     includeSending: boolean = true;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneSecond * 8, public agedMsecs = monitor.oneSecond * 7, public sendingMsecs = monitor.oneMinute * 5) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneSecond * 8, public agedMsecs = Monitor.oneSecond * 7, public sendingMsecs = Monitor.oneMinute * 5) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -679,7 +782,7 @@ If it fails (to find a merklePath), returns the req status to 'invalid'.
 export class TaskUnFail extends WalletMonitorTask {
     static taskName = "UnFail";
     static checkNow = false;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneMinute * 10) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneMinute * 10) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 

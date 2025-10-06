@@ -4,7 +4,7 @@ import { IncomingMessage, Server, ServerResponse } from 'http'
 import express, { Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import { Chain } from '../../../sdk/types'
-import { createNoDbChaintracksOptions } from './createDefaultNoDbChaintracksOptions'
+import { createDefaultNoDbChaintracksOptions } from './createDefaultNoDbChaintracksOptions'
 import { Services } from '../../Services'
 import { FiatExchangeRates, WERR_INVALID_PARAMETER } from '../../../sdk'
 import { ChaintracksInfoApi } from './Api/ChaintracksClientApi'
@@ -45,7 +45,7 @@ export class ChaintracksService {
     this.options = { ...options }
     this.port = options.port
     this.chain = options.chain
-    this.chaintracks = options.chaintracks || new Chaintracks(createNoDbChaintracksOptions(this.chain))
+    this.chaintracks = options.chaintracks || new Chaintracks(createDefaultNoDbChaintracksOptions(this.chain))
     this.services = options.services || new Services(this.chain)
     // Prevent recursion...
     this.services.updateFiatExchangeRateServices.remove('ChaintracksService')

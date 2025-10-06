@@ -1,16 +1,17 @@
 import { Chain } from '../../../sdk'
 import { ChaintracksOptions } from './Api/ChaintracksApi'
+import { Chaintracks } from './Chaintracks'
 import { BulkIngestorCDNBabbage } from './Ingest/BulkIngestorCDNBabbage'
 import { ChaintracksFetch } from './util/ChaintracksFetch'
 import { LiveIngestorWhatsOnChainOptions, LiveIngestorWhatsOnChainPoll } from './Ingest/LiveIngestorWhatsOnChainPoll'
 import { BulkIngestorWhatsOnChainCdn, BulkIngestorWhatsOnChainOptions } from './Ingest/BulkIngestorWhatsOnChainCdn'
-import { ChaintracksStorageNoDb, ChaintracksStorageNoDbOptions } from './Storage/ChaintracksStorageNoDb'
 import { ChaintracksFetchApi } from './Api/ChaintracksFetchApi'
+import { ChaintracksStorageIdb, ChaintracksStorageIdbOptions } from './Storage/ChaintracksStorageIdb'
 import { BulkFileDataManager, BulkFileDataManagerOptions } from './util/BulkFileDataManager'
 import { BulkIngestorCDNOptions } from './Ingest/BulkIngestorCDN'
 import { WhatsOnChainServicesOptions } from './Ingest/WhatsOnChainServices'
 
-export function createDefaultNoDbChaintracksOptions(
+export function createDefaultIdbChaintracksOptions(
   chain: Chain,
   whatsonchainApiKey: string = '',
   maxPerFile: number = 100000,
@@ -34,7 +35,7 @@ export function createDefaultNoDbChaintracksOptions(
   }
   const bulkFileDataManager = new BulkFileDataManager(bfo)
 
-  const so: ChaintracksStorageNoDbOptions = {
+  const so: ChaintracksStorageIdbOptions = {
     chain,
     bulkFileDataManager,
     liveHeightThreshold,
@@ -42,7 +43,7 @@ export function createDefaultNoDbChaintracksOptions(
     bulkMigrationChunkSize,
     batchInsertLimit
   }
-  const storage = new ChaintracksStorageNoDb(so)
+  const storage = new ChaintracksStorageIdb(so)
 
   const co: ChaintracksOptions = {
     chain,

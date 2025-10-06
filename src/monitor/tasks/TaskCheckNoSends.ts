@@ -26,7 +26,7 @@ export class TaskCheckNoSends extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = monitor.oneDay * 1
+    public triggerMsecs = Monitor.oneDay * 1
   ) {
     super(monitor, TaskCheckNoSends.taskName)
   }

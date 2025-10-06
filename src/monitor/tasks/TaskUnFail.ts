@@ -25,7 +25,7 @@ export class TaskUnFail extends WalletMonitorTask {
 
   constructor(
     monitor: Monitor,
-    public triggerMsecs = monitor.oneMinute * 10
+    public triggerMsecs = Monitor.oneMinute * 10
   ) {
     super(monitor, TaskUnFail.taskName)
   }

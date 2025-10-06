@@ -13,53 +13,54 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [AdminStatsResult](#interface-adminstatsresult) | [GetReqsAndBeefDetail](#interface-getreqsandbeefdetail) | [SyncChunk](#interface-syncchunk) |
-| [ArcConfig](#interface-arcconfig) | [GetReqsAndBeefResult](#interface-getreqsandbeefresult) | [SyncError](#interface-syncerror) |
-| [ArcMinerGetTxData](#interface-arcminergettxdata) | [GetScriptHashHistory](#interface-getscripthashhistory) | [SyncMap](#interface-syncmap) |
-| [AuthId](#interface-authid) | [GetScriptHashHistoryResult](#interface-getscripthashhistoryresult) | [TableCertificate](#interface-tablecertificate) |
-| [AuthPayload](#interface-authpayload) | [GetStatusForTxidsResult](#interface-getstatusfortxidsresult) | [TableCertificateField](#interface-tablecertificatefield) |
-| [BaseBlockHeader](#interface-baseblockheader) | [GetUtxoStatusDetails](#interface-getutxostatusdetails) | [TableCertificateX](#interface-tablecertificatex) |
-| [BitailsConfig](#interface-bitailsconfig) | [GetUtxoStatusResult](#interface-getutxostatusresult) | [TableCommission](#interface-tablecommission) |
-| [BitailsMerkleProof](#interface-bitailsmerkleproof) | [GroupedPermissionRequest](#interface-groupedpermissionrequest) | [TableMonitorEvent](#interface-tablemonitorevent) |
-| [BlockHeader](#interface-blockheader) | [GroupedPermissions](#interface-groupedpermissions) | [TableOutput](#interface-tableoutput) |
-| [BsvExchangeRate](#interface-bsvexchangerate) | [HeightRangeApi](#interface-heightrangeapi) | [TableOutputBasket](#interface-tableoutputbasket) |
-| [BulkFileDataManagerMergeResult](#interface-bulkfiledatamanagermergeresult) | [HeightRanges](#interface-heightranges) | [TableOutputTag](#interface-tableoutputtag) |
-| [BulkFileDataManagerOptions](#interface-bulkfiledatamanageroptions) | [KeyPair](#interface-keypair) | [TableOutputTagMap](#interface-tableoutputtagmap) |
-| [BulkHeaderFileInfo](#interface-bulkheaderfileinfo) | [KeyPairAddress](#interface-keypairaddress) | [TableOutputX](#interface-tableoutputx) |
-| [BulkHeaderFilesInfo](#interface-bulkheaderfilesinfo) | [ListActionsSpecOp](#interface-listactionsspecop) | [TableProvenTx](#interface-tableproventx) |
-| [BulkIngestorApi](#interface-bulkingestorapi) | [ListOutputsSpecOp](#interface-listoutputsspecop) | [TableProvenTxReq](#interface-tableproventxreq) |
-| [BulkIngestorBaseOptions](#interface-bulkingestorbaseoptions) | [LiveBlockHeader](#interface-liveblockheader) | [TableProvenTxReqDynamics](#interface-tableproventxreqdynamics) |
-| [BulkIngestorCDNOptions](#interface-bulkingestorcdnoptions) | [LiveIngestorApi](#interface-liveingestorapi) | [TableSettings](#interface-tablesettings) |
-| [BulkIngestorWhatsOnChainOptions](#interface-bulkingestorwhatsonchainoptions) | [LiveIngestorBaseOptions](#interface-liveingestorbaseoptions) | [TableSyncState](#interface-tablesyncstate) |
-| [BulkStorageApi](#interface-bulkstorageapi) | [LiveIngestorWhatsOnChainOptions](#interface-liveingestorwhatsonchainoptions) | [TableTransaction](#interface-tabletransaction) |
-| [BulkStorageBaseOptions](#interface-bulkstoragebaseoptions) | [MonitorOptions](#interface-monitoroptions) | [TableTxLabel](#interface-tabletxlabel) |
-| [BulkSyncResult](#interface-bulksyncresult) | [OutPoint](#interface-outpoint) | [TableTxLabelMap](#interface-tabletxlabelmap) |
-| [CertOpsWallet](#interface-certopswallet) | [Paged](#interface-paged) | [TableUser](#interface-tableuser) |
-| [Certifier](#interface-certifier) | [PendingSignAction](#interface-pendingsignaction) | [TaskPurgeParams](#interface-taskpurgeparams) |
-| [ChaintracksApi](#interface-chaintracksapi) | [PendingStorageInput](#interface-pendingstorageinput) | [TrustSettings](#interface-trustsettings) |
-| [ChaintracksAppendableFileApi](#interface-chaintracksappendablefileapi) | [PermissionRequest](#interface-permissionrequest) | [TrxToken](#interface-trxtoken) |
-| [ChaintracksChainTrackerOptions](#interface-chaintrackschaintrackeroptions) | [PermissionToken](#interface-permissiontoken) | [TscMerkleProofApi](#interface-tscmerkleproofapi) |
-| [ChaintracksClientApi](#interface-chaintracksclientapi) | [PermissionsManagerConfig](#interface-permissionsmanagerconfig) | [TxScriptOffsets](#interface-txscriptoffsets) |
-| [ChaintracksFetchApi](#interface-chaintracksfetchapi) | [PostBeefResult](#interface-postbeefresult) | [UMPToken](#interface-umptoken) |
-| [ChaintracksFsApi](#interface-chaintracksfsapi) | [PostBeefResultForTxidApi](#interface-postbeefresultfortxidapi) | [UMPTokenInteractor](#interface-umptokeninteractor) |
-| [ChaintracksInfoApi](#interface-chaintracksinfoapi) | [PostReqsToNetworkDetails](#interface-postreqstonetworkdetails) | [UpdateProvenTxReqWithNewProvenTxArgs](#interface-updateproventxreqwithnewproventxargs) |
-| [ChaintracksManagementApi](#interface-chaintracksmanagementapi) | [PostReqsToNetworkResult](#interface-postreqstonetworkresult) | [UpdateProvenTxReqWithNewProvenTxResult](#interface-updateproventxreqwithnewproventxresult) |
-| [ChaintracksOptions](#interface-chaintracksoptions) | [PostTxResultForTxid](#interface-posttxresultfortxid) | [ValidAbortActionArgs](#interface-validabortactionargs) |
-| [ChaintracksPackageInfoApi](#interface-chaintrackspackageinfoapi) | [PostTxResultForTxidError](#interface-posttxresultfortxiderror) | [ValidAcquireCertificateArgs](#interface-validacquirecertificateargs) |
-| [ChaintracksReadableFileApi](#interface-chaintracksreadablefileapi) | [PostTxsResult](#interface-posttxsresult) | [ValidAcquireDirectCertificateArgs](#interface-validacquiredirectcertificateargs) |
-| [ChaintracksServiceClientOptions](#interface-chaintracksserviceclientoptions) | [ProcessSyncChunkResult](#interface-processsyncchunkresult) | [ValidAcquireIssuanceCertificateArgs](#interface-validacquireissuancecertificateargs) |
-| [ChaintracksStorageApi](#interface-chaintracksstorageapi) | [Profile](#interface-profile) | [ValidBasketInsertion](#interface-validbasketinsertion) |
-| [ChaintracksStorageBaseOptions](#interface-chaintracksstoragebaseoptions) | [ProvenOrRawTx](#interface-provenorrawtx) | [ValidCreateActionArgs](#interface-validcreateactionargs) |
-| [ChaintracksStorageBulkFileApi](#interface-chaintracksstoragebulkfileapi) | [ProvenTransactionStatus](#interface-proventransactionstatus) | [ValidCreateActionInput](#interface-validcreateactioninput) |
-| [ChaintracksStorageIdbOptions](#interface-chaintracksstorageidboptions) | [ProvenTxFromTxidResult](#interface-proventxfromtxidresult) | [ValidCreateActionOptions](#interface-validcreateactionoptions) |
-| [ChaintracksStorageIdbSchema](#interface-chaintracksstorageidbschema) | [ProvenTxReqHistory](#interface-proventxreqhistory) | [ValidCreateActionOutput](#interface-validcreateactionoutput) |
-| [ChaintracksStorageIngestApi](#interface-chaintracksstorageingestapi) | [ProvenTxReqHistorySummaryApi](#interface-proventxreqhistorysummaryapi) | [ValidDiscoverByAttributesArgs](#interface-validdiscoverbyattributesargs) |
-| [ChaintracksStorageNoDbOptions](#interface-chaintracksstoragenodboptions) | [ProvenTxReqNotify](#interface-proventxreqnotify) | [ValidDiscoverByIdentityKeyArgs](#interface-validdiscoverbyidentitykeyargs) |
-| [ChaintracksStorageQueryApi](#interface-chaintracksstoragequeryapi) | [ProviderCallHistory](#interface-providercallhistory) | [ValidInternalizeActionArgs](#interface-validinternalizeactionargs) |
-| [ChaintracksWritableFileApi](#interface-chaintrackswritablefileapi) | [PurgeParams](#interface-purgeparams) | [ValidInternalizeOutput](#interface-validinternalizeoutput) |
-| [CommitNewTxResults](#interface-commitnewtxresults) | [PurgeResults](#interface-purgeresults) | [ValidListActionsArgs](#interface-validlistactionsargs) |
-| [CompleteAuthResponse](#interface-completeauthresponse) | [RequestSyncChunkArgs](#interface-requestsyncchunkargs) | [ValidListCertificatesArgs](#interface-validlistcertificatesargs) |
-| [CreateActionResultX](#interface-createactionresultx) | [ReviewActionResult](#interface-reviewactionresult) | [ValidListOutputsArgs](#interface-validlistoutputsargs) |
+| [AdminStatsResult](#interface-adminstatsresult) | [GetRawTxResult](#interface-getrawtxresult) | [StorageSyncReaderOptions](#interface-storagesyncreaderoptions) |
+| [ArcConfig](#interface-arcconfig) | [GetReqsAndBeefDetail](#interface-getreqsandbeefdetail) | [SyncChunk](#interface-syncchunk) |
+| [ArcMinerGetTxData](#interface-arcminergettxdata) | [GetReqsAndBeefResult](#interface-getreqsandbeefresult) | [SyncError](#interface-syncerror) |
+| [AuthId](#interface-authid) | [GetScriptHashHistory](#interface-getscripthashhistory) | [SyncMap](#interface-syncmap) |
+| [AuthPayload](#interface-authpayload) | [GetScriptHashHistoryResult](#interface-getscripthashhistoryresult) | [TableCertificate](#interface-tablecertificate) |
+| [BaseBlockHeader](#interface-baseblockheader) | [GetStatusForTxidsResult](#interface-getstatusfortxidsresult) | [TableCertificateField](#interface-tablecertificatefield) |
+| [BitailsConfig](#interface-bitailsconfig) | [GetUtxoStatusDetails](#interface-getutxostatusdetails) | [TableCertificateX](#interface-tablecertificatex) |
+| [BitailsMerkleProof](#interface-bitailsmerkleproof) | [GetUtxoStatusResult](#interface-getutxostatusresult) | [TableCommission](#interface-tablecommission) |
+| [BlockHeader](#interface-blockheader) | [GroupedPermissionRequest](#interface-groupedpermissionrequest) | [TableMonitorEvent](#interface-tablemonitorevent) |
+| [BsvExchangeRate](#interface-bsvexchangerate) | [GroupedPermissions](#interface-groupedpermissions) | [TableOutput](#interface-tableoutput) |
+| [BulkFileDataManagerMergeResult](#interface-bulkfiledatamanagermergeresult) | [HeightRangeApi](#interface-heightrangeapi) | [TableOutputBasket](#interface-tableoutputbasket) |
+| [BulkFileDataManagerOptions](#interface-bulkfiledatamanageroptions) | [HeightRanges](#interface-heightranges) | [TableOutputTag](#interface-tableoutputtag) |
+| [BulkHeaderFileInfo](#interface-bulkheaderfileinfo) | [KeyPair](#interface-keypair) | [TableOutputTagMap](#interface-tableoutputtagmap) |
+| [BulkHeaderFilesInfo](#interface-bulkheaderfilesinfo) | [KeyPairAddress](#interface-keypairaddress) | [TableOutputX](#interface-tableoutputx) |
+| [BulkIngestorApi](#interface-bulkingestorapi) | [ListActionsSpecOp](#interface-listactionsspecop) | [TableProvenTx](#interface-tableproventx) |
+| [BulkIngestorBaseOptions](#interface-bulkingestorbaseoptions) | [ListOutputsSpecOp](#interface-listoutputsspecop) | [TableProvenTxReq](#interface-tableproventxreq) |
+| [BulkIngestorCDNOptions](#interface-bulkingestorcdnoptions) | [LiveBlockHeader](#interface-liveblockheader) | [TableProvenTxReqDynamics](#interface-tableproventxreqdynamics) |
+| [BulkIngestorWhatsOnChainOptions](#interface-bulkingestorwhatsonchainoptions) | [LiveIngestorApi](#interface-liveingestorapi) | [TableSettings](#interface-tablesettings) |
+| [BulkStorageApi](#interface-bulkstorageapi) | [LiveIngestorBaseOptions](#interface-liveingestorbaseoptions) | [TableSyncState](#interface-tablesyncstate) |
+| [BulkStorageBaseOptions](#interface-bulkstoragebaseoptions) | [LiveIngestorWhatsOnChainOptions](#interface-liveingestorwhatsonchainoptions) | [TableTransaction](#interface-tabletransaction) |
+| [BulkSyncResult](#interface-bulksyncresult) | [MonitorOptions](#interface-monitoroptions) | [TableTxLabel](#interface-tabletxlabel) |
+| [CertOpsWallet](#interface-certopswallet) | [OutPoint](#interface-outpoint) | [TableTxLabelMap](#interface-tabletxlabelmap) |
+| [Certifier](#interface-certifier) | [Paged](#interface-paged) | [TableUser](#interface-tableuser) |
+| [ChaintracksApi](#interface-chaintracksapi) | [PendingSignAction](#interface-pendingsignaction) | [TaskPurgeParams](#interface-taskpurgeparams) |
+| [ChaintracksAppendableFileApi](#interface-chaintracksappendablefileapi) | [PendingStorageInput](#interface-pendingstorageinput) | [TrustSettings](#interface-trustsettings) |
+| [ChaintracksChainTrackerOptions](#interface-chaintrackschaintrackeroptions) | [PermissionRequest](#interface-permissionrequest) | [TrxToken](#interface-trxtoken) |
+| [ChaintracksClientApi](#interface-chaintracksclientapi) | [PermissionToken](#interface-permissiontoken) | [TscMerkleProofApi](#interface-tscmerkleproofapi) |
+| [ChaintracksFetchApi](#interface-chaintracksfetchapi) | [PermissionsManagerConfig](#interface-permissionsmanagerconfig) | [TxScriptOffsets](#interface-txscriptoffsets) |
+| [ChaintracksFsApi](#interface-chaintracksfsapi) | [PostBeefResult](#interface-postbeefresult) | [UMPToken](#interface-umptoken) |
+| [ChaintracksInfoApi](#interface-chaintracksinfoapi) | [PostBeefResultForTxidApi](#interface-postbeefresultfortxidapi) | [UMPTokenInteractor](#interface-umptokeninteractor) |
+| [ChaintracksManagementApi](#interface-chaintracksmanagementapi) | [PostReqsToNetworkDetails](#interface-postreqstonetworkdetails) | [UpdateProvenTxReqWithNewProvenTxArgs](#interface-updateproventxreqwithnewproventxargs) |
+| [ChaintracksOptions](#interface-chaintracksoptions) | [PostReqsToNetworkResult](#interface-postreqstonetworkresult) | [UpdateProvenTxReqWithNewProvenTxResult](#interface-updateproventxreqwithnewproventxresult) |
+| [ChaintracksPackageInfoApi](#interface-chaintrackspackageinfoapi) | [PostTxResultForTxid](#interface-posttxresultfortxid) | [ValidAbortActionArgs](#interface-validabortactionargs) |
+| [ChaintracksReadableFileApi](#interface-chaintracksreadablefileapi) | [PostTxResultForTxidError](#interface-posttxresultfortxiderror) | [ValidAcquireCertificateArgs](#interface-validacquirecertificateargs) |
+| [ChaintracksServiceClientOptions](#interface-chaintracksserviceclientoptions) | [PostTxsResult](#interface-posttxsresult) | [ValidAcquireDirectCertificateArgs](#interface-validacquiredirectcertificateargs) |
+| [ChaintracksStorageApi](#interface-chaintracksstorageapi) | [ProcessSyncChunkResult](#interface-processsyncchunkresult) | [ValidAcquireIssuanceCertificateArgs](#interface-validacquireissuancecertificateargs) |
+| [ChaintracksStorageBaseOptions](#interface-chaintracksstoragebaseoptions) | [Profile](#interface-profile) | [ValidBasketInsertion](#interface-validbasketinsertion) |
+| [ChaintracksStorageBulkFileApi](#interface-chaintracksstoragebulkfileapi) | [ProvenOrRawTx](#interface-provenorrawtx) | [ValidCreateActionArgs](#interface-validcreateactionargs) |
+| [ChaintracksStorageIdbOptions](#interface-chaintracksstorageidboptions) | [ProvenTransactionStatus](#interface-proventransactionstatus) | [ValidCreateActionInput](#interface-validcreateactioninput) |
+| [ChaintracksStorageIdbSchema](#interface-chaintracksstorageidbschema) | [ProvenTxFromTxidResult](#interface-proventxfromtxidresult) | [ValidCreateActionOptions](#interface-validcreateactionoptions) |
+| [ChaintracksStorageIngestApi](#interface-chaintracksstorageingestapi) | [ProvenTxReqHistory](#interface-proventxreqhistory) | [ValidCreateActionOutput](#interface-validcreateactionoutput) |
+| [ChaintracksStorageNoDbOptions](#interface-chaintracksstoragenodboptions) | [ProvenTxReqHistorySummaryApi](#interface-proventxreqhistorysummaryapi) | [ValidDiscoverByAttributesArgs](#interface-validdiscoverbyattributesargs) |
+| [ChaintracksStorageQueryApi](#interface-chaintracksstoragequeryapi) | [ProvenTxReqNotify](#interface-proventxreqnotify) | [ValidDiscoverByIdentityKeyArgs](#interface-validdiscoverbyidentitykeyargs) |
+| [ChaintracksWritableFileApi](#interface-chaintrackswritablefileapi) | [ProviderCallHistory](#interface-providercallhistory) | [ValidInternalizeActionArgs](#interface-validinternalizeactionargs) |
+| [CommitNewTxResults](#interface-commitnewtxresults) | [PurgeParams](#interface-purgeparams) | [ValidInternalizeOutput](#interface-validinternalizeoutput) |
+| [CompleteAuthResponse](#interface-completeauthresponse) | [PurgeResults](#interface-purgeresults) | [ValidListActionsArgs](#interface-validlistactionsargs) |
+| [CreateActionResultX](#interface-createactionresultx) | [RequestSyncChunkArgs](#interface-requestsyncchunkargs) | [ValidListCertificatesArgs](#interface-validlistcertificatesargs) |
+| [DeactivedHeader](#interface-deactivedheader) | [ReviewActionResult](#interface-reviewactionresult) | [ValidListOutputsArgs](#interface-validlistoutputsargs) |
 | [EntitySyncMap](#interface-entitysyncmap) | [ScriptTemplateParamsBRC29](#interface-scripttemplateparamsbrc29) | [ValidProcessActionArgs](#interface-validprocessactionargs) |
 | [EntityTimeStamp](#interface-entitytimestamp) | [ScriptTemplateUnlock](#interface-scripttemplateunlock) | [ValidProcessActionOptions](#interface-validprocessactionoptions) |
 | [ExchangeRatesIoApi](#interface-exchangeratesioapi) | [ServiceCall](#interface-servicecall) | [ValidProveCertificateArgs](#interface-validprovecertificateargs) |
@@ -92,7 +93,6 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [GenerateChangeSdkStorageChange](#interface-generatechangesdkstoragechange) | [StorageProviderOptions](#interface-storageprovideroptions) | [WocGetHeadersHeader](#interface-wocgetheadersheader) |
 | [GetHeaderByteFileLinksResult](#interface-getheaderbytefilelinksresult) | [StorageReaderOptions](#interface-storagereaderoptions) | [WocHeader](#interface-wocheader) |
 | [GetMerklePathResult](#interface-getmerklepathresult) | [StorageReaderWriterOptions](#interface-storagereaderwriteroptions) | [XValidCreateActionOutput](#interface-xvalidcreateactionoutput) |
-| [GetRawTxResult](#interface-getrawtxresult) | [StorageSyncReaderOptions](#interface-storagesyncreaderoptions) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -2339,6 +2339,47 @@ See also: [ReviewActionResult](./client.md#interface-reviewactionresult)
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Interface: DeactivedHeader
+
+```ts
+export interface DeactivedHeader {
+    whenMsecs: number;
+    tries: number;
+    header: BlockHeader;
+}
+```
+
+See also: [BlockHeader](./client.md#interface-blockheader)
+
+###### Property header
+
+The deactivated block header.
+
+```ts
+header: BlockHeader
+```
+See also: [BlockHeader](./client.md#interface-blockheader)
+
+###### Property tries
+
+Number of attempts made to process the header.
+Supports returning deactivation notification to the queue if proof data is not yet available.
+
+```ts
+tries: number
+```
+
+###### Property whenMsecs
+
+To control aging of notification before pursuing updated proof data.
+
+```ts
+whenMsecs: number
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Interface: EntitySyncMap
 
 ```ts
@@ -3578,6 +3619,7 @@ export interface MonitorOptions {
     services: Services;
     storage: MonitorStorage;
     chaintracks: ChaintracksClientApi;
+    chaintracksWithEvents?: Chaintracks;
     msecsWaitPerMerkleProofServiceReq: number;
     taskRunWaitMsecs: number;
     abandonedMsecs: number;
@@ -3588,7 +3630,7 @@ export interface MonitorOptions {
 }
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services)
 
 ###### Property msecsWaitPerMerkleProofServiceReq
 
@@ -8242,37 +8284,37 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [ARC](#class-arc) | [EntityOutputTagMap](#class-entityoutputtagmap) | [TaskMonitorCallHistory](#class-taskmonitorcallhistory) |
 | [AuthMethodInteractor](#class-authmethodinteractor) | [EntityProvenTx](#class-entityproventx) | [TaskNewHeader](#class-tasknewheader) |
 | [BHServiceClient](#class-bhserviceclient) | [EntityProvenTxReq](#class-entityproventxreq) | [TaskPurge](#class-taskpurge) |
-| [Bitails](#class-bitails) | [EntitySyncState](#class-entitysyncstate) | [TaskReviewStatus](#class-taskreviewstatus) |
-| [BulkFileDataManager](#class-bulkfiledatamanager) | [EntityTransaction](#class-entitytransaction) | [TaskSendWaiting](#class-tasksendwaiting) |
-| [BulkFileDataReader](#class-bulkfiledatareader) | [EntityTxLabel](#class-entitytxlabel) | [TaskSyncWhenIdle](#class-tasksyncwhenidle) |
-| [BulkFilesReader](#class-bulkfilesreader) | [EntityTxLabelMap](#class-entitytxlabelmap) | [TaskUnFail](#class-taskunfail) |
-| [BulkFilesReaderFs](#class-bulkfilesreaderfs) | [EntityUser](#class-entityuser) | [TwilioPhoneInteractor](#class-twiliophoneinteractor) |
-| [BulkFilesReaderStorage](#class-bulkfilesreaderstorage) | [HeightRange](#class-heightrange) | [WABClient](#class-wabclient) |
-| [BulkHeaderFile](#class-bulkheaderfile) | [LiveIngestorBase](#class-liveingestorbase) | [WERR_BAD_REQUEST](#class-werr_bad_request) |
-| [BulkHeaderFileFs](#class-bulkheaderfilefs) | [LiveIngestorWhatsOnChainPoll](#class-liveingestorwhatsonchainpoll) | [WERR_BROADCAST_UNAVAILABLE](#class-werr_broadcast_unavailable) |
-| [BulkHeaderFileStorage](#class-bulkheaderfilestorage) | [MergeEntity](#class-mergeentity) | [WERR_INSUFFICIENT_FUNDS](#class-werr_insufficient_funds) |
-| [BulkHeaderFiles](#class-bulkheaderfiles) | [Monitor](#class-monitor) | [WERR_INTERNAL](#class-werr_internal) |
-| [BulkIngestorBase](#class-bulkingestorbase) | [OverlayUMPTokenInteractor](#class-overlayumptokeninteractor) | [WERR_INVALID_OPERATION](#class-werr_invalid_operation) |
-| [BulkIngestorCDN](#class-bulkingestorcdn) | [PersonaIDInteractor](#class-personaidinteractor) | [WERR_INVALID_PARAMETER](#class-werr_invalid_parameter) |
-| [BulkIngestorCDNBabbage](#class-bulkingestorcdnbabbage) | [PrivilegedKeyManager](#class-privilegedkeymanager) | [WERR_INVALID_PUBLIC_KEY](#class-werr_invalid_public_key) |
-| [BulkIngestorWhatsOnChainCdn](#class-bulkingestorwhatsonchaincdn) | [ReaderUint8Array](#class-readeruint8array) | [WERR_MISSING_PARAMETER](#class-werr_missing_parameter) |
-| [BulkStorageBase](#class-bulkstoragebase) | [ScriptTemplateBRC29](#class-scripttemplatebrc29) | [WERR_NETWORK_CHAIN](#class-werr_network_chain) |
-| [CWIStyleWalletManager](#class-cwistylewalletmanager) | [SdkWhatsOnChain](#class-sdkwhatsonchain) | [WERR_NOT_ACTIVE](#class-werr_not_active) |
-| [Chaintracks](#class-chaintracks) | [ServiceCollection](#class-servicecollection) | [WERR_NOT_IMPLEMENTED](#class-werr_not_implemented) |
-| [ChaintracksChainTracker](#class-chaintrackschaintracker) | [Services](#class-services) | [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |
-| [ChaintracksFetch](#class-chaintracksfetch) | [SetupClient](#class-setupclient) | [WERR_UNAUTHORIZED](#class-werr_unauthorized) |
-| [ChaintracksServiceClient](#class-chaintracksserviceclient) | [SimpleWalletManager](#class-simplewalletmanager) | [Wallet](#class-wallet) |
-| [ChaintracksStorageBase](#class-chaintracksstoragebase) | [SingleWriterMultiReaderLock](#class-singlewritermultireaderlock) | [WalletAuthenticationManager](#class-walletauthenticationmanager) |
-| [ChaintracksStorageIdb](#class-chaintracksstorageidb) | [StorageClient](#class-storageclient) | [WalletError](#class-walleterror) |
-| [ChaintracksStorageNoDb](#class-chaintracksstoragenodb) | [StorageIdb](#class-storageidb) | [WalletMonitorTask](#class-walletmonitortask) |
-| [DevConsoleInteractor](#class-devconsoleinteractor) | [StorageProvider](#class-storageprovider) | [WalletPermissionsManager](#class-walletpermissionsmanager) |
-| [EntityBase](#class-entitybase) | [StorageReader](#class-storagereader) | [WalletSettingsManager](#class-walletsettingsmanager) |
-| [EntityCertificate](#class-entitycertificate) | [StorageReaderWriter](#class-storagereaderwriter) | [WalletSigner](#class-walletsigner) |
-| [EntityCertificateField](#class-entitycertificatefield) | [StorageSyncReader](#class-storagesyncreader) | [WalletStorageManager](#class-walletstoragemanager) |
-| [EntityCommission](#class-entitycommission) | [TaskCheckForProofs](#class-taskcheckforproofs) | [WhatsOnChain](#class-whatsonchain) |
-| [EntityOutput](#class-entityoutput) | [TaskCheckNoSends](#class-taskchecknosends) | [WhatsOnChainNoServices](#class-whatsonchainnoservices) |
-| [EntityOutputBasket](#class-entityoutputbasket) | [TaskClock](#class-taskclock) | [WhatsOnChainServices](#class-whatsonchainservices) |
-| [EntityOutputTag](#class-entityoutputtag) | [TaskFailAbandoned](#class-taskfailabandoned) |  |
+| [Bitails](#class-bitails) | [EntitySyncState](#class-entitysyncstate) | [TaskReorg](#class-taskreorg) |
+| [BulkFileDataManager](#class-bulkfiledatamanager) | [EntityTransaction](#class-entitytransaction) | [TaskReviewStatus](#class-taskreviewstatus) |
+| [BulkFileDataReader](#class-bulkfiledatareader) | [EntityTxLabel](#class-entitytxlabel) | [TaskSendWaiting](#class-tasksendwaiting) |
+| [BulkFilesReader](#class-bulkfilesreader) | [EntityTxLabelMap](#class-entitytxlabelmap) | [TaskSyncWhenIdle](#class-tasksyncwhenidle) |
+| [BulkFilesReaderFs](#class-bulkfilesreaderfs) | [EntityUser](#class-entityuser) | [TaskUnFail](#class-taskunfail) |
+| [BulkFilesReaderStorage](#class-bulkfilesreaderstorage) | [HeightRange](#class-heightrange) | [TwilioPhoneInteractor](#class-twiliophoneinteractor) |
+| [BulkHeaderFile](#class-bulkheaderfile) | [LiveIngestorBase](#class-liveingestorbase) | [WABClient](#class-wabclient) |
+| [BulkHeaderFileFs](#class-bulkheaderfilefs) | [LiveIngestorWhatsOnChainPoll](#class-liveingestorwhatsonchainpoll) | [WERR_BAD_REQUEST](#class-werr_bad_request) |
+| [BulkHeaderFileStorage](#class-bulkheaderfilestorage) | [MergeEntity](#class-mergeentity) | [WERR_BROADCAST_UNAVAILABLE](#class-werr_broadcast_unavailable) |
+| [BulkHeaderFiles](#class-bulkheaderfiles) | [Monitor](#class-monitor) | [WERR_INSUFFICIENT_FUNDS](#class-werr_insufficient_funds) |
+| [BulkIngestorBase](#class-bulkingestorbase) | [OverlayUMPTokenInteractor](#class-overlayumptokeninteractor) | [WERR_INTERNAL](#class-werr_internal) |
+| [BulkIngestorCDN](#class-bulkingestorcdn) | [PersonaIDInteractor](#class-personaidinteractor) | [WERR_INVALID_OPERATION](#class-werr_invalid_operation) |
+| [BulkIngestorCDNBabbage](#class-bulkingestorcdnbabbage) | [PrivilegedKeyManager](#class-privilegedkeymanager) | [WERR_INVALID_PARAMETER](#class-werr_invalid_parameter) |
+| [BulkIngestorWhatsOnChainCdn](#class-bulkingestorwhatsonchaincdn) | [ReaderUint8Array](#class-readeruint8array) | [WERR_INVALID_PUBLIC_KEY](#class-werr_invalid_public_key) |
+| [BulkStorageBase](#class-bulkstoragebase) | [ScriptTemplateBRC29](#class-scripttemplatebrc29) | [WERR_MISSING_PARAMETER](#class-werr_missing_parameter) |
+| [CWIStyleWalletManager](#class-cwistylewalletmanager) | [SdkWhatsOnChain](#class-sdkwhatsonchain) | [WERR_NETWORK_CHAIN](#class-werr_network_chain) |
+| [Chaintracks](#class-chaintracks) | [ServiceCollection](#class-servicecollection) | [WERR_NOT_ACTIVE](#class-werr_not_active) |
+| [ChaintracksChainTracker](#class-chaintrackschaintracker) | [Services](#class-services) | [WERR_NOT_IMPLEMENTED](#class-werr_not_implemented) |
+| [ChaintracksFetch](#class-chaintracksfetch) | [SetupClient](#class-setupclient) | [WERR_REVIEW_ACTIONS](#class-werr_review_actions) |
+| [ChaintracksServiceClient](#class-chaintracksserviceclient) | [SimpleWalletManager](#class-simplewalletmanager) | [WERR_UNAUTHORIZED](#class-werr_unauthorized) |
+| [ChaintracksStorageBase](#class-chaintracksstoragebase) | [SingleWriterMultiReaderLock](#class-singlewritermultireaderlock) | [Wallet](#class-wallet) |
+| [ChaintracksStorageIdb](#class-chaintracksstorageidb) | [StorageClient](#class-storageclient) | [WalletAuthenticationManager](#class-walletauthenticationmanager) |
+| [ChaintracksStorageNoDb](#class-chaintracksstoragenodb) | [StorageIdb](#class-storageidb) | [WalletError](#class-walleterror) |
+| [DevConsoleInteractor](#class-devconsoleinteractor) | [StorageProvider](#class-storageprovider) | [WalletMonitorTask](#class-walletmonitortask) |
+| [EntityBase](#class-entitybase) | [StorageReader](#class-storagereader) | [WalletPermissionsManager](#class-walletpermissionsmanager) |
+| [EntityCertificate](#class-entitycertificate) | [StorageReaderWriter](#class-storagereaderwriter) | [WalletSettingsManager](#class-walletsettingsmanager) |
+| [EntityCertificateField](#class-entitycertificatefield) | [StorageSyncReader](#class-storagesyncreader) | [WalletSigner](#class-walletsigner) |
+| [EntityCommission](#class-entitycommission) | [TaskCheckForProofs](#class-taskcheckforproofs) | [WalletStorageManager](#class-walletstoragemanager) |
+| [EntityOutput](#class-entityoutput) | [TaskCheckNoSends](#class-taskchecknosends) | [WhatsOnChain](#class-whatsonchain) |
+| [EntityOutputBasket](#class-entityoutputbasket) | [TaskClock](#class-taskclock) | [WhatsOnChainNoServices](#class-whatsonchainnoservices) |
+| [EntityOutputTag](#class-entityoutputtag) | [TaskFailAbandoned](#class-taskfailabandoned) | [WhatsOnChainServices](#class-whatsonchainservices) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -11271,20 +11313,24 @@ and potentially that reorgs update proofs that were already received.
 
 ```ts
 export class Monitor {
-    static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services): MonitorOptions 
+    static createDefaultWalletMonitorOptions(chain: Chain, storage: MonitorStorage, services?: Services, chaintracks?: Chaintracks): MonitorOptions 
     options: MonitorOptions;
     services: Services;
     chain: Chain;
     storage: MonitorStorage;
     chaintracks: ChaintracksClientApi;
+    chaintracksWithEvents?: Chaintracks;
+    reorgSubscriptionPromise?: Promise<string>;
+    headersSubscriptionPromise?: Promise<string>;
     onTransactionBroadcasted?: (broadcastResult: ReviewActionResult) => Promise<void>;
     onTransactionProven?: (txStatus: ProvenTransactionStatus) => Promise<void>;
     constructor(options: MonitorOptions) 
-    oneSecond = 1000;
-    oneMinute = 60 * this.oneSecond;
-    oneHour = 60 * this.oneMinute;
-    oneDay = 24 * this.oneHour;
-    oneWeek = 7 * this.oneDay;
+    async destroy(): Promise<void> 
+    static readonly oneSecond = 1000;
+    static readonly oneMinute = 60 * Monitor.oneSecond;
+    static readonly oneHour = 60 * Monitor.oneMinute;
+    static readonly oneDay = 24 * Monitor.oneHour;
+    static readonly oneWeek = 7 * Monitor.oneDay;
     _tasks: WalletMonitorTask[] = [];
     _otherTasks: WalletMonitorTask[] = [];
     _tasksRunning = false;
@@ -11292,19 +11338,20 @@ export class Monitor {
         purgeSpent: false,
         purgeCompleted: false,
         purgeFailed: true,
-        purgeSpentAge: 2 * this.oneWeek,
-        purgeCompletedAge: 2 * this.oneWeek,
-        purgeFailedAge: 5 * this.oneDay
+        purgeSpentAge: 2 * Monitor.oneWeek,
+        purgeCompletedAge: 2 * Monitor.oneWeek,
+        purgeFailedAge: 5 * Monitor.oneDay
     };
     addAllTasksToOther(): void 
     addDefaultTasks(): void 
     addMultiUserTasks(): void 
     addTask(task: WalletMonitorTask): void 
     removeTask(name: string): void 
-    async setupChaintracksListeners(): Promise<void> 
     async runTask(name: string): Promise<string> 
     async runOnce(): Promise<void> 
     _runAsyncSetup: boolean = true;
+    _tasksRunningPromise?: PromiseLike<void>;
+    resolveCompletion: ((value: void | PromiseLike<void>) => void) | undefined = undefined;
     async startTasks(): Promise<void> 
     async logEvent(event: string, details?: string): Promise<void> 
     stopTasks(): void 
@@ -11313,11 +11360,13 @@ export class Monitor {
     processNewBlockHeader(header: BlockHeader): void 
     callOnBroadcastedTransaction(broadcastResult: ReviewActionResult): void 
     callOnProvenTransaction(txStatus: ProvenTransactionStatus): void 
-    processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader): void 
+    deactivatedHeaders: DeactivedHeader[] = [];
+    processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void 
+    processHeader(header: BlockHeader): void 
 }
 ```
 
-See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
+See also: [BlockHeader](./client.md#interface-blockheader), [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksClientApi](./services.md#interface-chaintracksclientapi), [DeactivedHeader](./monitor.md#interface-deactivedheader), [MonitorOptions](./monitor.md#interface-monitoroptions), [MonitorStorage](./monitor.md#type-monitorstorage), [ProvenTransactionStatus](./client.md#interface-proventransactionstatus), [ReviewActionResult](./client.md#interface-reviewactionresult), [Services](./services.md#class-services), [TaskPurgeParams](./monitor.md#interface-taskpurgeparams), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
 
 ###### Property _otherTasks
 
@@ -11400,7 +11449,7 @@ It is possible for a transaction to become invalid.
 Coinbase transactions always become invalid.
 
 ```ts
-processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader): void 
+processReorg(depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]): void 
 ```
 See also: [BlockHeader](./client.md#interface-blockheader)
 
@@ -13618,7 +13667,7 @@ the original ProvenTxReq status is advanced to 'notifying'.
 export class TaskCheckNoSends extends WalletMonitorTask {
     static taskName = "CheckNoSends";
     static checkNow = false;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneDay * 1) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneDay * 1) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -13656,7 +13705,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 export class TaskClock extends WalletMonitorTask {
     static taskName = "Clock";
     nextMinute: number;
-    constructor(monitor: Monitor, public triggerMsecs = 1 * monitor.oneSecond) 
+    constructor(monitor: Monitor, public triggerMsecs = 1 * Monitor.oneSecond) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -13700,7 +13749,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ```ts
 export class TaskMonitorCallHistory extends WalletMonitorTask {
     static taskName = "MonitorCallHistory";
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneMinute * 12) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneMinute * 12) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -13732,7 +13781,7 @@ export class TaskNewHeader extends WalletMonitorTask {
     header?: BlockHeader;
     queuedHeader?: BlockHeader;
     queuedHeaderWhen?: Date;
-    constructor(monitor: Monitor, public triggerMsecs = 1 * monitor.oneMinute) 
+    constructor(monitor: Monitor, public triggerMsecs = 1 * Monitor.oneMinute) 
     async getHeader(): Promise<BlockHeader> 
     override async asyncSetup(): Promise<void> 
     trigger(nowMsecsSinceEpoch: number): {
@@ -13811,6 +13860,57 @@ static checkNow = false
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Class: TaskReorg
+
+Check the `monitor.deactivatedHeaders` for any headers that have been deactivated.
+
+When headers are found, review matching ProvenTx records and update proof data as appropriate.
+
+New deactivated headers are pushed onto the `deactivatedHeaders` array.
+They must be shifted out as they are processed.
+
+The current implementation ages deactivation notifications by 10 minutes with each retry.
+If a successful proof update confirms original proof data after 3 retries, the original is retained.
+
+In normal operation there should never be any work for this task to perform.
+The most common result is that there are no matching proven_txs records because
+generating new proven_txs records intentionally lags new block generation to
+minimize this disruption.
+
+It is very disruptive to update a proven_txs record because:
+- Sync'ed storage is impacted.
+- Generated beefs are impacted.
+- Updated proof data may be unavailable at the time a reorg is first reported.
+
+Instead of reorg notification derived from new header notification, reorg repair to
+the proven_txs table is more effectively driven by noticing that a beef generated for a new
+createAction fails to verify against the chaintracker.
+
+An alternate approach to processing these events is to revert the proven_txs record to a proven_tx_reqs record.
+Pros:
+- The same multiple attempt logic that already exists is reused.
+- Failing to obtain a new proof already has transaction failure handling in place.
+- Generated beefs automatically become one generation deeper, potentially allowing transaction outputs to be spent.
+Cons:
+- Transactions must revert to un-proven / un-mined.
+
+```ts
+export class TaskReorg extends WalletMonitorTask {
+    static taskName = "Reorg";
+    process: DeactivedHeader[] = [];
+    constructor(monitor: Monitor, public agedMsecs = Monitor.oneMinute * 10, public maxRetries = 3) 
+    trigger(nowMsecsSinceEpoch: number): {
+        run: boolean;
+    } 
+    async runTask(): Promise<string> 
+}
+```
+
+See also: [DeactivedHeader](./monitor.md#interface-deactivedheader), [Monitor](./monitor.md#class-monitor), [WalletMonitorTask](./monitor.md#class-walletmonitortask)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Class: TaskReviewStatus
 
 Notify Transaction records of changes in ProvenTxReq records they may have missed.
@@ -13853,7 +13953,7 @@ export class TaskSendWaiting extends WalletMonitorTask {
     static taskName = "SendWaiting";
     lastSendingRunMsecsSinceEpoch: number | undefined;
     includeSending: boolean = true;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneSecond * 8, public agedMsecs = monitor.oneSecond * 7, public sendingMsecs = monitor.oneMinute * 5) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneSecond * 8, public agedMsecs = Monitor.oneSecond * 7, public sendingMsecs = Monitor.oneMinute * 5) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -13921,7 +14021,7 @@ If it fails (to find a merklePath), returns the req status to 'invalid'.
 export class TaskUnFail extends WalletMonitorTask {
     static taskName = "UnFail";
     static checkNow = false;
-    constructor(monitor: Monitor, public triggerMsecs = monitor.oneMinute * 10) 
+    constructor(monitor: Monitor, public triggerMsecs = Monitor.oneMinute * 10) 
     trigger(nowMsecsSinceEpoch: number): {
         run: boolean;
     } 
@@ -15795,59 +15895,60 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBlockHeader](#function-isblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
-| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
-| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isHexString](#function-ishexstring) | [validateBasketInsertion](#function-validatebasketinsertion) |
-| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
-| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateBulkFileData](#function-validatebulkfiledata) |
-| [addWork](#function-addwork) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
-| [arcDefaultUrl](#function-arcdefaulturl) | [isLive](#function-islive) | [validateCreateActionInput](#function-validatecreateactioninput) |
-| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
-| [arraysEqual](#function-arraysequal) | [isMoreWork](#function-ismorework) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
-| [asArray](#function-asarray) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
-| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listCertificates](#function-listcertificates) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
-| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
-| [asBsvSdkScript](#function-asbsvsdkscript) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
-| [asBsvSdkTx](#function-asbsvsdktx) | [makeAtomicBeef](#function-makeatomicbeef) | [validateGenesisHeader](#function-validategenesisheader) |
-| [asString](#function-asstring) | [makeChangeLock](#function-makechangelock) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
-| [asUint8Array](#function-asuint8array) | [maxDate](#function-maxdate) | [validateHeaderFormat](#function-validateheaderformat) |
-| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [offsetPubKey](#function-offsetpubkey) | [validateInteger](#function-validateinteger) |
-| [blockHash](#function-blockhash) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
-| [buildSignableTransaction](#function-buildsignabletransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
-| [completeSignedTransaction](#function-completesignedtransaction) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListActionsArgs](#function-validatelistactionsargs) |
-| [convertBitsToTarget](#function-convertbitstotarget) | [processAction](#function-processaction) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
+| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
+| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isBlockHeader](#function-isblockheader) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
+| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateBasketInsertion](#function-validatebasketinsertion) |
+| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isHexString](#function-ishexstring) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
+| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBulkFileData](#function-validatebulkfiledata) |
+| [addWork](#function-addwork) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
+| [arcDefaultUrl](#function-arcdefaulturl) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionInput](#function-validatecreateactioninput) |
+| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLive](#function-islive) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
+| [arraysEqual](#function-arraysequal) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
+| [asArray](#function-asarray) | [isMoreWork](#function-ismorework) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
+| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
+| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listCertificates](#function-listcertificates) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
+| [asBsvSdkScript](#function-asbsvsdkscript) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
+| [asBsvSdkTx](#function-asbsvsdktx) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenesisHeader](#function-validategenesisheader) |
+| [asString](#function-asstring) | [makeAtomicBeef](#function-makeatomicbeef) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
+| [asUint8Array](#function-asuint8array) | [makeChangeLock](#function-makechangelock) | [validateHeaderFormat](#function-validateheaderformat) |
+| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [maxDate](#function-maxdate) | [validateInteger](#function-validateinteger) |
+| [blockHash](#function-blockhash) | [offsetPubKey](#function-offsetpubkey) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
+| [buildSignableTransaction](#function-buildsignabletransaction) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
+| [completeSignedTransaction](#function-completesignedtransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateListActionsArgs](#function-validatelistactionsargs) |
+| [convertBitsToTarget](#function-convertbitstotarget) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
 | [convertBitsToWork](#function-convertbitstowork) | [processAction](#function-processaction) | [validateListOutputsArgs](#function-validatelistoutputsargs) |
-| [convertBufferToUint32](#function-convertbuffertouint32) | [proveCertificate](#function-provecertificate) | [validateOptionalInteger](#function-validateoptionalinteger) |
-| [convertProofToMerklePath](#function-convertprooftomerklepath) | [purgeDataIdb](#function-purgedataidb) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
-| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [randomBytes](#function-randombytes) | [validateOriginator](#function-validateoriginator) |
-| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytesBase64](#function-randombytesbase64) | [validateOutpointString](#function-validateoutpointstring) |
-| [createAction](#function-createaction) | [randomBytesHex](#function-randombyteshex) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
-| [createAction](#function-createaction) | [readUInt32BE](#function-readuint32be) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
-| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
-| [createIdbChaintracks](#function-createidbchaintracks) | [reviewStatusIdb](#function-reviewstatusidb) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
-| [createNoDbChaintracksOptions](#function-createnodbchaintracksoptions) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateSatoshis](#function-validatesatoshis) |
-| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateScriptHash](#function-validatescripthash) |
-| [createSyncMap](#function-createsyncmap) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
-| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionArgs](#function-validatesignactionargs) |
-| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [sha256Hash](#function-sha256hash) | [validateSignActionOptions](#function-validatesignactionoptions) |
-| [deserializeBlockHeader](#function-deserializeblockheader) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
-| [deserializeBlockHeaders](#function-deserializeblockheaders) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateStringLength](#function-validatestringlength) |
-| [doubleSha256BE](#function-doublesha256be) | [signAction](#function-signaction) | [validateWalletPayment](#function-validatewalletpayment) |
-| [doubleSha256LE](#function-doublesha256le) | [stampLog](#function-stamplog) | [varUintSize](#function-varuintsize) |
-| [generateChangeSdk](#function-generatechangesdk) | [stampLogFormat](#function-stamplogformat) | [verifyHexString](#function-verifyhexstring) |
-| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [subWork](#function-subwork) | [verifyId](#function-verifyid) |
-| [genesisBuffer](#function-genesisbuffer) | [swapByteOrder](#function-swapbyteorder) | [verifyInteger](#function-verifyinteger) |
-| [genesisHeader](#function-genesisheader) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyNumber](#function-verifynumber) |
-| [getBeefForTransaction](#function-getbeeffortransaction) | [toWalletNetwork](#function-towalletnetwork) | [verifyOne](#function-verifyone) |
-| [getBeefForTxid](#function-getbeeffortxid) | [transactionInputSize](#function-transactioninputsize) | [verifyOneOrNone](#function-verifyoneornone) |
-| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionOutputSize](#function-transactionoutputsize) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
-| [getIdentityKey](#function-getidentitykey) | [transactionSize](#function-transactionsize) | [verifyTruthy](#function-verifytruthy) |
-| [getProofs](#function-getproofs) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [verifyUnlockScripts](#function-verifyunlockscripts) |
-| [getSyncChunk](#function-getsyncchunk) | [updateExchangeratesapi](#function-updateexchangeratesapi) | [wait](#function-wait) |
-| [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
-| [internalizeAction](#function-internalizeaction) | [validateAbortActionArgs](#function-validateabortactionargs) | [workBNtoBuffer](#function-workbntobuffer) |
-| [internalizeAction](#function-internalizeaction) | [validateAcquireCertificateArgs](#function-validateacquirecertificateargs) | [writeUInt32BE](#function-writeuint32be) |
-| [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) | [writeUInt32LE](#function-writeuint32le) |
+| [convertBufferToUint32](#function-convertbuffertouint32) | [processAction](#function-processaction) | [validateOptionalInteger](#function-validateoptionalinteger) |
+| [convertProofToMerklePath](#function-convertprooftomerklepath) | [proveCertificate](#function-provecertificate) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
+| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [purgeDataIdb](#function-purgedataidb) | [validateOriginator](#function-validateoriginator) |
+| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytes](#function-randombytes) | [validateOutpointString](#function-validateoutpointstring) |
+| [createAction](#function-createaction) | [randomBytesBase64](#function-randombytesbase64) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
+| [createAction](#function-createaction) | [randomBytesHex](#function-randombyteshex) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
+| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
+| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
+| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [reviewStatusIdb](#function-reviewstatusidb) | [validateSatoshis](#function-validatesatoshis) |
+| [createIdbChaintracks](#function-createidbchaintracks) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateScriptHash](#function-validatescripthash) |
+| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
+| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSignActionArgs](#function-validatesignactionargs) |
+| [createSyncMap](#function-createsyncmap) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionOptions](#function-validatesignactionoptions) |
+| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256Hash](#function-sha256hash) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
+| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStringLength](#function-validatestringlength) |
+| [deserializeBlockHeader](#function-deserializeblockheader) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateWalletPayment](#function-validatewalletpayment) |
+| [deserializeBlockHeaders](#function-deserializeblockheaders) | [signAction](#function-signaction) | [varUintSize](#function-varuintsize) |
+| [doubleSha256BE](#function-doublesha256be) | [stampLog](#function-stamplog) | [verifyHexString](#function-verifyhexstring) |
+| [doubleSha256LE](#function-doublesha256le) | [stampLogFormat](#function-stamplogformat) | [verifyId](#function-verifyid) |
+| [generateChangeSdk](#function-generatechangesdk) | [subWork](#function-subwork) | [verifyInteger](#function-verifyinteger) |
+| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [swapByteOrder](#function-swapbyteorder) | [verifyNumber](#function-verifynumber) |
+| [genesisBuffer](#function-genesisbuffer) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyOne](#function-verifyone) |
+| [genesisHeader](#function-genesisheader) | [toWalletNetwork](#function-towalletnetwork) | [verifyOneOrNone](#function-verifyoneornone) |
+| [getBeefForTransaction](#function-getbeeffortransaction) | [transactionInputSize](#function-transactioninputsize) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
+| [getBeefForTxid](#function-getbeeffortxid) | [transactionOutputSize](#function-transactionoutputsize) | [verifyTruthy](#function-verifytruthy) |
+| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionSize](#function-transactionsize) | [verifyUnlockScripts](#function-verifyunlockscripts) |
+| [getIdentityKey](#function-getidentitykey) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [wait](#function-wait) |
+| [getProofs](#function-getproofs) | [updateExchangeratesapi](#function-updateexchangeratesapi) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
+| [getSyncChunk](#function-getsyncchunk) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) | [workBNtoBuffer](#function-workbntobuffer) |
+| [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateAbortActionArgs](#function-validateabortactionargs) | [writeUInt32BE](#function-writeuint32be) |
+| [internalizeAction](#function-internalizeaction) | [validateAcquireCertificateArgs](#function-validateacquirecertificateargs) | [writeUInt32LE](#function-writeuint32le) |
+| [internalizeAction](#function-internalizeaction) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -16379,6 +16480,28 @@ See also: [AuthId](./client.md#interface-authid), [CreateActionResultX](./client
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Function: createDefaultIdbChaintracksOptions
+
+```ts
+export function createDefaultIdbChaintracksOptions(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): ChaintracksOptions 
+```
+
+See also: [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: createDefaultNoDbChaintracksOptions
+
+```ts
+export function createDefaultNoDbChaintracksOptions(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): ChaintracksOptions 
+```
+
+See also: [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Function: createDefaultWalletServicesOptions
 
 ```ts
@@ -16393,7 +16516,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Function: createIdbChaintracks
 
 ```ts
-export async function createIdbChaintracks(chain: Chain, whatsonchainApiKey: string, maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
+export async function createIdbChaintracks(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
     chain: Chain;
     maxPerFile: number;
     fetch: ChaintracksFetchApi;
@@ -16408,13 +16531,20 @@ See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-cha
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
-##### Function: createNoDbChaintracksOptions
+##### Function: createNoDbChaintracks
 
 ```ts
-export function createNoDbChaintracksOptions(chain: Chain): ChaintracksOptions 
+export async function createNoDbChaintracks(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
+    chain: Chain;
+    maxPerFile: number;
+    fetch: ChaintracksFetchApi;
+    storage: ChaintracksStorageNoDb;
+    chaintracks: Chaintracks;
+    available: Promise<void>;
+}> 
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksStorageNoDb](./services.md#class-chaintracksstoragenodb)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -18587,6 +18717,7 @@ export type InsertHeaderResult = {
     isActiveTip: boolean;
     reorgDepth: number;
     priorTip: LiveBlockHeader | undefined;
+    deactivatedHeaders: LiveBlockHeader[];
     noPrev: boolean;
     badPrev: boolean;
     noActiveAncestor: boolean;
@@ -18713,7 +18844,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Type: ReorgListener
 
 ```ts
-export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader) => void
+export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]) => void
 ```
 
 See also: [BlockHeader](./client.md#interface-blockheader)

@@ -4828,25 +4828,26 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [deserializeBlockHeader](#function-deserializeblockheader) | [subWork](#function-subwork) |
-| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [deserializeBlockHeaders](#function-deserializeblockheaders) | [swapByteOrder](#function-swapbyteorder) |
-| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [genesisBuffer](#function-genesisbuffer) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) |
-| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [genesisHeader](#function-genesisheader) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) |
-| [addWork](#function-addwork) | [getBeefForTxid](#function-getbeeffortxid) | [updateExchangeratesapi](#function-updateexchangeratesapi) |
-| [arcDefaultUrl](#function-arcdefaulturl) | [getExchangeRatesIo](#function-getexchangeratesio) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) |
-| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
-| [blockHash](#function-blockhash) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
-| [convertBitsToTarget](#function-convertbitstotarget) | [isBlockHeader](#function-isblockheader) | [validateBulkFileData](#function-validatebulkfiledata) |
-| [convertBitsToWork](#function-convertbitstowork) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateGenesisHeader](#function-validategenesisheader) |
-| [convertBufferToUint32](#function-convertbuffertouint32) | [isLive](#function-islive) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
-| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [isLiveBlockHeader](#function-isliveblockheader) | [validateHeaderFormat](#function-validateheaderformat) |
-| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [isMoreWork](#function-ismorework) | [validateScriptHash](#function-validatescripthash) |
-| [createDefaultKnexChaintracksOptions](#function-createdefaultknexchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
-| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [readUInt32LE](#function-readuint32le) | [workBNtoBuffer](#function-workbntobuffer) |
-| [createIdbChaintracks](#function-createidbchaintracks) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [writeUInt32BE](#function-writeuint32be) |
-| [createNoDbChaintracksOptions](#function-createnodbchaintracksoptions) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [writeUInt32LE](#function-writeuint32le) |
-| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) |  |
-| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) |  |
+| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) |
+| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [subWork](#function-subwork) |
+| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [deserializeBlockHeader](#function-deserializeblockheader) | [swapByteOrder](#function-swapbyteorder) |
+| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [deserializeBlockHeaders](#function-deserializeblockheaders) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) |
+| [addWork](#function-addwork) | [genesisBuffer](#function-genesisbuffer) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) |
+| [arcDefaultUrl](#function-arcdefaulturl) | [genesisHeader](#function-genesisheader) | [updateExchangeratesapi](#function-updateexchangeratesapi) |
+| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [getBeefForTxid](#function-getbeeffortxid) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) |
+| [blockHash](#function-blockhash) | [getExchangeRatesIo](#function-getexchangeratesio) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
+| [convertBitsToTarget](#function-convertbitstotarget) | [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
+| [convertBitsToWork](#function-convertbitstowork) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateBulkFileData](#function-validatebulkfiledata) |
+| [convertBufferToUint32](#function-convertbuffertouint32) | [isBlockHeader](#function-isblockheader) | [validateGenesisHeader](#function-validategenesisheader) |
+| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
+| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [isLive](#function-islive) | [validateHeaderFormat](#function-validateheaderformat) |
+| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [isLiveBlockHeader](#function-isliveblockheader) | [validateScriptHash](#function-validatescripthash) |
+| [createDefaultKnexChaintracksOptions](#function-createdefaultknexchaintracksoptions) | [isMoreWork](#function-ismorework) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
+| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [workBNtoBuffer](#function-workbntobuffer) |
+| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [readUInt32LE](#function-readuint32le) | [writeUInt32BE](#function-writeuint32be) |
+| [createIdbChaintracks](#function-createidbchaintracks) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [writeUInt32LE](#function-writeuint32le) |
+| [createKnexChaintracks](#function-createknexchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) |  |
+| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -5112,18 +5113,40 @@ See also: [BlockHeader](./client.md#interface-blockheader), [WocHeader](./servic
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Function: createDefaultIdbChaintracksOptions
+
+```ts
+export function createDefaultIdbChaintracksOptions(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): ChaintracksOptions 
+```
+
+See also: [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Function: createDefaultKnexChaintracksOptions
 
 ```ts
-export function createDefaultKnexChaintracksOptions(chain: Chain, rootFolder?: string, knexConfig?: Knex.Config): ChaintracksOptions 
+export function createDefaultKnexChaintracksOptions(chain: Chain, rootFolder: string = "./data/", knexConfig?: Knex.Config, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): ChaintracksOptions 
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+See also: [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
 
 Argument Details
 
 + **rootFolder**
   + defaults to "./data/"
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: createDefaultNoDbChaintracksOptions
+
+```ts
+export function createDefaultNoDbChaintracksOptions(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): ChaintracksOptions 
+```
+
+See also: [Chain](./client.md#type-chain), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -5142,7 +5165,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Function: createIdbChaintracks
 
 ```ts
-export async function createIdbChaintracks(chain: Chain, whatsonchainApiKey: string, maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
+export async function createIdbChaintracks(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
     chain: Chain;
     maxPerFile: number;
     fetch: ChaintracksFetchApi;
@@ -5157,13 +5180,38 @@ See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-cha
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
-##### Function: createNoDbChaintracksOptions
+##### Function: createKnexChaintracks
 
 ```ts
-export function createNoDbChaintracksOptions(chain: Chain): ChaintracksOptions 
+export async function createKnexChaintracks(chain: Chain, rootFolder: string = "./data/", knexConfig?: Knex.Config, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
+    chain: Chain;
+    maxPerFile: number;
+    fetch: ChaintracksFetchApi;
+    storage: ChaintracksStorageKnex;
+    chaintracks: Chaintracks;
+    available: Promise<void>;
+}> 
 ```
 
-See also: [Chain](./client.md#type-chain), [ChaintracksOptions](./services.md#interface-chaintracksoptions)
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksStorageKnex](./services.md#class-chaintracksstorageknex)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: createNoDbChaintracks
+
+```ts
+export async function createNoDbChaintracks(chain: Chain, whatsonchainApiKey: string = "", maxPerFile: number = 100000, maxRetained: number = 2, fetch?: ChaintracksFetchApi, cdnUrl: string = "https://cdn.projectbabbage.com/blockheaders/", liveHeightThreshold: number = 2000, reorgHeightThreshold: number = 400, bulkMigrationChunkSize: number = 500, batchInsertLimit: number = 400, addLiveRecursionLimit: number = 36): Promise<{
+    chain: Chain;
+    maxPerFile: number;
+    fetch: ChaintracksFetchApi;
+    storage: ChaintracksStorageNoDb;
+    chaintracks: Chaintracks;
+    available: Promise<void>;
+}> 
+```
+
+See also: [Chain](./client.md#type-chain), [Chaintracks](./services.md#class-chaintracks), [ChaintracksFetchApi](./services.md#interface-chaintracksfetchapi), [ChaintracksStorageNoDb](./services.md#class-chaintracksstoragenodb)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -5879,6 +5927,7 @@ export type InsertHeaderResult = {
     isActiveTip: boolean;
     reorgDepth: number;
     priorTip: LiveBlockHeader | undefined;
+    deactivatedHeaders: LiveBlockHeader[];
     noPrev: boolean;
     badPrev: boolean;
     noActiveAncestor: boolean;
@@ -5894,7 +5943,7 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Type: ReorgListener
 
 ```ts
-export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader) => void
+export type ReorgListener = (depth: number, oldTip: BlockHeader, newTip: BlockHeader, deactivatedHeaders?: BlockHeader[]) => void
 ```
 
 See also: [BlockHeader](./client.md#interface-blockheader)
