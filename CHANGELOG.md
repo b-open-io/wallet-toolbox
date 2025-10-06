@@ -4,6 +4,17 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.24
+
+- Add Monitor TaskReorg to handle Chaintracks reorg events, updating ProvenTxs with new merkle proofs.
+- Add deactivatedHeaders as optional 4th param to `ReorgListener` in `ChaintracksClientApi`
+- Add `ChaintracksStorageApi` `InsertHeaderResult` now includes deactivatedHeaders
+- Add `createKnexChaintracks` exported function.
+- Add `createNoDbChaintracks` exported function.
+- Add `index.mobile.ts` to Chaintracks
+
+- Change `validBulkHeaderFilesByFileHash` updated for 2025-10-06 Babbage CDN update.
+
 ## wallet-toolbox 1.6.22
 
 - Change verifyTruthy => validateSatoshis during input validation for createAction.
