@@ -658,7 +658,6 @@ export class WalletPermissionsManager implements WalletInterface {
       )
     }
     for (const p of params.granted.protocolPermissions || []) {
-      console.log('Granting protocol permission:', p)
       const token = await this.findProtocolToken(
         originator,
         false, // No privileged protocols allowed in groups for added security.
