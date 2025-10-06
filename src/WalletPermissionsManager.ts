@@ -1693,9 +1693,8 @@ export class WalletPermissionsManager implements WalletInterface {
       {
         description: opts?.description ?? `Coalesce ${oldTokens.length} permission tokens`,
         inputs: oldTokens.map((t, i) => ({
-          // Keep the dot (.) outpoint format, as used elsewhere in your code
           outpoint: `${t.txid}.${t.outputIndex}`,
-          unlockingScriptLength: 74, // matches the PushDrop spend in your example
+          unlockingScriptLength: 74,
           inputDescription: `Consume permission token #${i + 1}`
         })),
         outputs: [
@@ -1720,7 +1719,7 @@ export class WalletPermissionsManager implements WalletInterface {
       throw new Error('Failed to create signable transaction')
     }
 
-    // 2) Sign each input using PushDrop.unlock with the same tuple you used to lock
+    // 2) Sign each input
     const partialTx = Transaction.fromAtomicBEEF(signableTransaction.tx)
     const pushdrop = new PushDrop(this.underlying)
     const unlocker = pushdrop.unlock(WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL, '1', 'self')
