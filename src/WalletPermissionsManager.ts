@@ -7,7 +7,9 @@ import {
   WalletProtocol,
   Base64String,
   PubKeyHex,
-  SecurityLevels
+  SecurityLevels,
+  CreateActionInput,
+  Beef
 } from '@bsv/sdk'
 import { validateCreateActionArgs } from './sdk'
 
@@ -656,17 +658,39 @@ export class WalletPermissionsManager implements WalletInterface {
       )
     }
     for (const p of params.granted.protocolPermissions || []) {
-      await this.createPermissionOnChain(
-        {
-          type: 'protocol',
-          originator,
-          privileged: false, // No privileged protocols allowed in groups for added security.
-          protocolID: p.protocolID,
-          counterparty: p.counterparty || 'self',
-          reason: p.description
-        },
-        expiry
+      const token = await this.findProtocolToken(
+        originator,
+        false, // No privileged protocols allowed in groups for added security.
+        p.protocolID,
+        p.counterparty || 'self',
+        true
       )
+      if (token) {
+        await this.renewPermissionOnChain(
+          token,
+          {
+            type: 'protocol',
+            originator,
+            privileged: false, // No privileged protocols allowed in groups for added security.
+            protocolID: p.protocolID,
+            counterparty: p.counterparty || 'self',
+            reason: p.description
+          },
+          expiry
+        )
+      } else {
+        await this.createPermissionOnChain(
+          {
+            type: 'protocol',
+            originator,
+            privileged: false, // No privileged protocols allowed in groups for added security.
+            protocolID: p.protocolID,
+            counterparty: p.counterparty || 'self',
+            reason: p.description
+          },
+          expiry
+        )
+      }
     }
     for (const b of params.granted.basketAccess || []) {
       await this.createPermissionOnChain(
@@ -1335,6 +1359,89 @@ export class WalletPermissionsManager implements WalletInterface {
     return undefined
   }
 
+  /** Finds ALL DPACP permission tokens matching origin/domain, privileged, protocol, cpty. Never filters by expiry. */
+  private async findAllProtocolTokens(
+    originator: string,
+    privileged: boolean,
+    protocolID: WalletProtocol,
+    counterparty: string
+  ): Promise<PermissionToken[]> {
+    const [secLevel, protoName] = protocolID
+    const tags = [
+      `originator ${originator}`,
+      `privileged ${!!privileged}`,
+      `protocolName ${protoName}`,
+      `protocolSecurityLevel ${secLevel}`
+    ]
+    if (secLevel === 2) {
+      tags.push(`counterparty ${counterparty}`)
+    }
+
+    const result = await this.underlying.listOutputs(
+      {
+        basket: BASKET_MAP.protocol,
+        tags,
+        tagQueryMode: 'all',
+        include: 'entire transactions'
+      },
+      this.adminOriginator
+    )
+
+    const matches: PermissionToken[] = []
+
+    for (const out of result.outputs) {
+      const [txid, outputIndexStr] = out.outpoint.split('.')
+      const tx = Transaction.fromBEEF(result.BEEF!, txid)
+      const vout = Number(outputIndexStr)
+      const dec = PushDrop.decode(tx.outputs[vout].lockingScript)
+      if (!dec || !dec.fields || dec.fields.length < 6) continue
+
+      const domainRaw = dec.fields[0]
+      const expiryRaw = dec.fields[1]
+      const privRaw = dec.fields[2]
+      const secLevelRaw = dec.fields[3]
+      const protoNameRaw = dec.fields[4]
+      const counterpartyRaw = dec.fields[5]
+
+      // Decrypt all fields
+      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+      const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as
+        | 0
+        | 1
+        | 2
+      const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
+      const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
+
+      // Strict attribute match; NO expiry filtering
+      if (
+        domainDecoded !== originator ||
+        privDecoded !== !!privileged ||
+        secLevelDecoded !== secLevel ||
+        protoNameDecoded !== protoName ||
+        (secLevelDecoded === 2 && cptyDecoded !== counterparty)
+      ) {
+        continue
+      }
+
+      matches.push({
+        tx: tx.toBEEF(),
+        txid,
+        outputIndex: vout,
+        outputScript: tx.outputs[vout].lockingScript.toHex(),
+        satoshis: out.satoshis,
+        originator,
+        privileged,
+        protocol: protoName,
+        securityLevel: secLevel,
+        expiry: expiryDecoded,
+        counterparty: cptyDecoded
+      })
+    }
+
+    return matches
+  }
   /** Looks for a DBAP token matching (originator, basket). */
   private async findBasketToken(
     originator: string,
@@ -1569,6 +1676,70 @@ export class WalletPermissionsManager implements WalletInterface {
     )
   }
 
+  private async coalescePermissionTokens(
+    oldTokens: PermissionToken[],
+    newScript: LockingScript,
+    opts?: {
+      tags?: string[]
+      basket?: string
+      description?: string
+    }
+  ): Promise<string> {
+    if (!oldTokens?.length) throw new Error('No permission tokens to coalesce')
+    if (oldTokens.length < 2) throw new Error('Need at least 2 tokens to coalesce')
+
+    // 1) Create a signable action with N inputs and a single renewed output
+    const { signableTransaction } = await this.createAction(
+      {
+        description: opts?.description ?? `Coalesce ${oldTokens.length} permission tokens`,
+        inputs: oldTokens.map((t, i) => ({
+          outpoint: `${t.txid}.${t.outputIndex}`,
+          unlockingScriptLength: 74,
+          inputDescription: `Consume permission token #${i + 1}`
+        })),
+        outputs: [
+          {
+            lockingScript: newScript.toHex(),
+            satoshis: 1,
+            outputDescription: 'Renewed permission token',
+            ...(opts?.basket ? { basket: opts.basket } : {}),
+            ...(opts?.tags ? { tags: opts.tags } : {})
+          }
+        ],
+        options: {
+          acceptDelayedBroadcast: false,
+          randomizeOutputs: false,
+          signAndProcess: false
+        }
+      },
+      this.adminOriginator
+    )
+
+    if (!signableTransaction?.reference || !signableTransaction.tx) {
+      throw new Error('Failed to create signable transaction')
+    }
+
+    // 2) Sign each input
+    const partialTx = Transaction.fromAtomicBEEF(signableTransaction.tx)
+    const pushdrop = new PushDrop(this.underlying)
+    const unlocker = pushdrop.unlock(WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL, '1', 'self')
+
+    const spends: Record<number, { unlockingScript: string }> = {}
+    for (let i = 0; i < oldTokens.length; i++) {
+      // The signable transaction already contains the necessary prevout context
+      const unlockingScript = await unlocker.sign(partialTx, i)
+      spends[i] = { unlockingScript: unlockingScript.toHex() }
+    }
+
+    // 3) Finalize the action
+    const { txid } = await this.underlying.signAction({
+      reference: signableTransaction.reference,
+      spends
+    })
+
+    if (!txid) throw new Error('Failed to finalize coalescing transaction')
+    return txid
+  }
   /**
    * Renews a permission token by spending the old token as input and creating a new token output.
    * This invalidates the old token and replaces it with a new one.
@@ -1596,57 +1767,74 @@ export class WalletPermissionsManager implements WalletInterface {
       true,
       true
     )
-
     const tags = this.buildTagsForRequest(r)
+    // Check if there are multiple old tokens for the same parameters (shouldn't usually happen)
+    const oldTokens = await this.findAllProtocolTokens(
+      oldToken.originator,
+      oldToken.privileged!,
+      [oldToken.securityLevel!, oldToken.protocol!],
+      oldToken.counterparty!
+    )
 
-    // 3) For BRC-100, we do a "createAction" with a partial input referencing oldToken
-    //    plus a single new output. We'll hydrate the template, then signAction for the wallet to finalize.
-    const oldOutpoint = `${oldToken.txid}.${oldToken.outputIndex}`
-    const { signableTransaction } = await this.createAction(
-      {
-        description: `Renew ${r.type} permission`,
-        inputBEEF: oldToken.tx,
-        inputs: [
-          {
-            outpoint: oldOutpoint,
-            unlockingScriptLength: 73, // length of signature
-            inputDescription: `Consume old ${r.type} token`
+    // If so, coalesce them into a single token first, to avoid bloat
+    if (oldTokens.length > 1) {
+      const txid = await this.coalescePermissionTokens(oldTokens, newScript, {
+        tags,
+        basket: BASKET_MAP[r.type],
+        description: `Coalesce ${r.type} permission tokens`
+      })
+      console.log('Coalesced permission tokens:', txid)
+    } else {
+      // Otherwise, just proceed with the single-token renewal
+      // 3) For BRC-100, we do a "createAction" with a partial input referencing oldToken
+      //    plus a single new output. We'll hydrate the template, then signAction for the wallet to finalize.
+      const oldOutpoint = `${oldToken.txid}.${oldToken.outputIndex}`
+      const { signableTransaction } = await this.createAction(
+        {
+          description: `Renew ${r.type} permission`,
+          inputBEEF: oldToken.tx,
+          inputs: [
+            {
+              outpoint: oldOutpoint,
+              unlockingScriptLength: 73, // length of signature
+              inputDescription: `Consume old ${r.type} token`
+            }
+          ],
+          outputs: [
+            {
+              lockingScript: newScript.toHex(),
+              satoshis: 1,
+              outputDescription: `Renewed ${r.type} permission token`,
+              basket: BASKET_MAP[r.type],
+              tags
+            }
+          ],
+          options: {
+            acceptDelayedBroadcast: false
           }
-        ],
-        outputs: [
-          {
-            lockingScript: newScript.toHex(),
-            satoshis: 1,
-            outputDescription: `Renewed ${r.type} permission token`,
-            basket: BASKET_MAP[r.type],
-            tags
+        },
+        this.adminOriginator
+      )
+      const tx = Transaction.fromBEEF(signableTransaction!.tx)
+      const unlocker = new PushDrop(this.underlying).unlock(
+        WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL,
+        '1',
+        'self',
+        'all',
+        false,
+        1,
+        LockingScript.fromHex(oldToken.outputScript)
+      )
+      const unlockingScript = await unlocker.sign(tx, 0)
+      await this.underlying.signAction({
+        reference: signableTransaction!.reference,
+        spends: {
+          0: {
+            unlockingScript: unlockingScript.toHex()
           }
-        ],
-        options: {
-          acceptDelayedBroadcast: false
         }
-      },
-      this.adminOriginator
-    )
-    const tx = Transaction.fromBEEF(signableTransaction!.tx)
-    const unlocker = new PushDrop(this.underlying).unlock(
-      WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL,
-      '1',
-      'self',
-      'all',
-      false,
-      1,
-      LockingScript.fromHex(oldToken.outputScript)
-    )
-    const unlockingScript = await unlocker.sign(tx, 0)
-    await this.underlying.signAction({
-      reference: signableTransaction!.reference,
-      spends: {
-        0: {
-          unlockingScript: unlockingScript.toHex()
-        }
-      }
-    })
+      })
+    }
   }
 
   /**
