@@ -520,10 +520,11 @@ export class WalletStorageManager implements sdk.WalletStorage {
     })
   }
 
-  async reproveHeader(header: BlockHeader): Promise<TableProvenTxReq[]> {
-    return await this.runAsReader(async reader => {
-      return await reader.findProvenTxReqs(args)
-    })
+  async reproveHeader(header: sdk.BlockHeader): Promise<TableProvenTxReq[]> {
+    throw new sdk.WERR_NOT_IMPLEMENTED()
+    //return await this.runAsReader(async reader => {
+    //  return await reader.findProvenTxReqs(args)
+    //})
   }
 
   async syncFromReader(
