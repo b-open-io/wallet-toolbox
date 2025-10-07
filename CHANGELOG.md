@@ -4,6 +4,14 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.26
+
+- Update to @bsv/sdk 1.8.2
+
+## wallet-toolbox 1.6.25
+
+- Change `WalletPermissionsManager` coalescePermissionTokens logic
+
 ## wallet-toolbox 1.6.24
 
 - Add Monitor TaskReorg to handle Chaintracks reorg events, updating ProvenTxs with new merkle proofs.
@@ -44,7 +52,7 @@ attention to changes that materially alter behavior or extend functionality.
 ## wallet-toolbox 1.6.2
 
 - Change defaul chaintracksUrl from npm-registry.babbage.systems to ${chain}net-chaintracks.babbage.systems
- 
+
 ## wallet-toolbox 1.6.1
 
 - Add initial port/re-implementation of Chaintracks
