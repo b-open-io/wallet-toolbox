@@ -330,12 +330,13 @@ class InternalizeActionContext {
     // Check if the transaction has a merkle path proof (BUMP)
     const btx = this.ab.findTxid(this.txid)
     const hasProof = btx?.hasProof || false
+    const bump = this.ab.findBump(this.txid)
 
     let mined = false
-    if (hasProof && btx?.bumpIndex) {
+    if (bump) {
       // Verifying independently whether the transaction is really mined.
       const chainTracker = await this.storage.getServices().getChainTracker()
-      mined = await this.ab.bumps[btx.bumpIndex].verify(this.txid, chainTracker)
+      mined = await bump.verify(this.txid, chainTracker)
     }
 
     // If transaction is verified as mined, mark it as 'completed', otherwise 'unproven'
@@ -368,7 +369,6 @@ class InternalizeActionContext {
     } else if (pr.isNew && mined) {
       // Transaction has a merkle path proof - need to store it as a ProvenTx
       // Extract merkle path from BEEF and create ProvenTx
-      const bump = this.ab.findBump(this.txid)
       if (bump) {
         const now = new Date()
         const merkleRoot = bump.computeRoot(this.txid)
