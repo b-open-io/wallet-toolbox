@@ -345,8 +345,9 @@ class InternalizeActionContext {
 
     const transactionId = this.etx!.transactionId!
 
-    // transaction record for user is new, but the txid may not be new to storage
-    // make sure storage pursues getting a proof for it.
+    // Transaction record for user is new, but the txid may not be new to storage.
+    // If the transaction is not mined, make sure storage pursues getting a proof for it.
+    // If the transaction is mined, skip proof pursuit and store it as a ProvenTx.
     const newReq = EntityProvenTxReq.fromTxid(this.txid, this.tx.toBinary(), this.args.tx)
     // this status is only relevant if the transaction is new to storage.
     newReq.status = mined ? 'completed' : 'unsent'
