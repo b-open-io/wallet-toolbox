@@ -338,8 +338,8 @@ class InternalizeActionContext {
       mined = await this.ab.bumps[btx.bumpIndex].verify(this.txid, chainTracker)
     }
 
-    // If transaction has a merkle path, mark it as 'completed', otherwise 'unproven'
-    const txStatus: TransactionStatus = hasProof ? 'completed' : 'unproven'
+    // If transaction is verified as mined, mark it as 'completed', otherwise 'unproven'
+    const txStatus: TransactionStatus = mined ? 'completed' : 'unproven'
     this.etx = await this.findOrInsertTargetTransaction(this.satoshis, txStatus)
 
     const transactionId = this.etx!.transactionId!
