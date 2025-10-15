@@ -374,7 +374,7 @@ class InternalizeActionContext {
         const merkleRoot = bump.computeRoot(this.txid)
         const indexEntry = bump.path[0].find(p => p.hash === this.txid);
         if (!indexEntry) {
-          throw new Error(`Could not determine transaction index for txid ${this.txid} in bump path`);
+          throw new Error(`Could not determine transaction index for txid ${this.txid} in bump path. Expected to find txid in bump.path[0]: ${JSON.stringify(bump.path[0])}`);
         }
         const index = indexEntry.offset;
         const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
