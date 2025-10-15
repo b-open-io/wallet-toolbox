@@ -372,7 +372,11 @@ class InternalizeActionContext {
       if (bump) {
         const now = new Date()
         const merkleRoot = bump.computeRoot(this.txid)
-        const index = bump.path[0].find(p => p.hash === this.txid)?.offset!
+        const indexEntry = bump.path[0].find(p => p.hash === this.txid);
+        if (!indexEntry) {
+          throw new Error(`Could not determine transaction index for txid ${this.txid} in bump path`);
+        }
+        const index = indexEntry.offset;
         const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
         const hash = blockHash(header)
         await this.storage.insertProvenTx({
