@@ -378,6 +378,9 @@ class InternalizeActionContext {
         }
         const index = indexEntry.offset;
         const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
+        if (!header) {
+          throw new Error(`Block header not found for height ${bump.blockHeight}`);
+        }
         const hash = blockHash(header)
         await this.storage.insertProvenTx({
           created_at: now,
