@@ -17,6 +17,7 @@ import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { randomBytesBase64, verifyId, verifyOne, verifyOneOrNone } from '../../utility/utilityHelpers'
 import { TransactionStatus } from '../../sdk/types'
 import { EntityProvenTxReq } from '../schema/entities/EntityProvenTxReq'
+import { blockHash } from '../../services/chaintracker/chaintracks/util/blockHeaderUtilities'
 
 /**
  * Internalize Action allows a wallet to take ownership of outputs in a pre-existing transaction.
@@ -326,7 +327,20 @@ class InternalizeActionContext {
   }
 
   async newInternalize() {
-    this.etx = await this.findOrInsertTargetTransaction(this.satoshis, 'unproven')
+    // Check if the transaction has a merkle path proof (BUMP)
+    const btx = this.ab.findTxid(this.txid)
+    const hasProof = btx?.hasProof || false
+
+    let mined = false
+    if (hasProof && btx?.bumpIndex) {
+      // Verifying independently whether the transaction is really mined.
+      const chainTracker = await this.storage.getServices().getChainTracker()
+      mined = await this.ab.bumps[btx.bumpIndex].verify(this.txid, chainTracker)
+    }
+
+    // If transaction has a merkle path, mark it as 'completed', otherwise 'unproven'
+    const txStatus: TransactionStatus = hasProof ? 'completed' : 'unproven'
+    this.etx = await this.findOrInsertTargetTransaction(this.satoshis, txStatus)
 
     const transactionId = this.etx!.transactionId!
 
@@ -334,18 +348,14 @@ class InternalizeActionContext {
     // make sure storage pursues getting a proof for it.
     const newReq = EntityProvenTxReq.fromTxid(this.txid, this.tx.toBinary(), this.args.tx)
     // this status is only relevant if the transaction is new to storage.
-    newReq.status = 'unsent'
+    newReq.status = mined ? 'completed' : 'unsent'
     // this history and notify will be merged into an existing req if it exists.
     newReq.addHistoryNote({ what: 'internalizeAction', userId: this.userId })
     newReq.addNotifyTransactionId(transactionId)
     const pr = await this.storage.getProvenOrReq(this.txid, newReq.toApi())
 
-    if (pr.isNew) {
-      // This storage doesn't know about this txid yet.
-
-      // TODO Can we immediately prove this txid?
-      // TODO Do full validation on the transaction?
-
+    if (pr.isNew && !mined) {
+      // This storage doesn't know about this txid yet and it doesn't have a proof.
       // Attempt to broadcast it to the network, throwing an error if it fails.
 
       const { swr, ndr } = await shareReqsWithWorld(this.storage, this.userId, [this.txid], false)
@@ -354,6 +364,29 @@ class InternalizeActionContext {
         this.r.notDelayedResults = ndr
         // abort the internalize action, WERR_REVIEW_ACTIONS exception will be thrown
         return
+      }
+    } else if (pr.isNew && mined) {
+      // Transaction has a merkle path proof - need to store it as a ProvenTx
+      // Extract merkle path from BEEF and create ProvenTx
+      const bump = this.ab.findBump(this.txid)
+      if (bump) {
+        const now = new Date()
+        const merkleRoot = bump.computeRoot(this.txid)
+        const index = bump.path[0].find(p => p.hash === this.txid)?.offset!
+        const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
+        const hash = blockHash(header)
+        await this.storage.insertProvenTx({
+          created_at: now,
+          updated_at: now,
+          provenTxId: 0,
+          txid: this.txid,
+          height: bump.blockHeight,
+          index,
+          merklePath: bump.toBinary(),
+          rawTx: this.tx.toBinary(),
+          blockHash: hash,
+          merkleRoot: merkleRoot
+        })
       }
     }
 
