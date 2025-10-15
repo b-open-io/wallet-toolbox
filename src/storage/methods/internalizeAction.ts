@@ -329,7 +329,6 @@ class InternalizeActionContext {
   async newInternalize() {
     // Check if the transaction has a merkle path proof (BUMP)
     const btx = this.ab.findTxid(this.txid)
-    const hasProof = btx?.hasProof || false
     const bump = this.ab.findBump(this.txid)
 
     let mined = false
