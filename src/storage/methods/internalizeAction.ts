@@ -372,14 +372,16 @@ class InternalizeActionContext {
       if (bump) {
         const now = new Date()
         const merkleRoot = bump.computeRoot(this.txid)
-        const indexEntry = bump.path[0].find(p => p.hash === this.txid);
+        const indexEntry = bump.path[0].find(p => p.hash === this.txid)
         if (!indexEntry) {
-          throw new Error(`Could not determine transaction index for txid ${this.txid} in bump path. Expected to find txid in bump.path[0]: ${JSON.stringify(bump.path[0])}`);
+          throw new Error(
+            `Could not determine transaction index for txid ${this.txid} in bump path. Expected to find txid in bump.path[0]: ${JSON.stringify(bump.path[0])}`
+          )
         }
-        const index = indexEntry.offset;
+        const index = indexEntry.offset
         const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
         if (!header) {
-          throw new Error(`Block header not found for height ${bump.blockHeight}`);
+          throw new Error(`Block header not found for height ${bump.blockHeight}`)
         }
         const hash = blockHash(header)
         await this.storage.insertProvenTx({
