@@ -252,6 +252,21 @@ class InternalizeActionContext {
     }
   }
 
+  /**
+   * This is the second time the atomic beef is validated against a chaintracker.
+   * The first validation used the originating wallet's configured chaintracker.
+   * Now the chaintracker configured for this storage is used.
+   * These may be the same, or different.
+   * 
+   * THIS DOES NOT GUARANTEE:
+   * 1. That the transaction has been broadcast. (Is known to the network).
+   * 2. That the proof(s) are for the same block as recorded in this storage in the event of a reorg.
+   * 
+   * In the event of a reorg, we CAN assume that the proof contained in this beef should replace the proof in storage.
+   *
+   * @param atomicBeef 
+   * @returns 
+   */
   async validateAtomicBeef(atomicBeef: number[]) {
     const ab = Beef.fromBinary(atomicBeef)
     const txValid = await ab.verify(await this.storage.getServices().getChainTracker(), false)
