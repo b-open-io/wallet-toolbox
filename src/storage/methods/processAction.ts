@@ -112,15 +112,16 @@ export async function shareReqsWithWorld(
   storage: StorageProvider,
   userId: number,
   txids: string[],
-  isDelayed: boolean
+  isDelayed: boolean,
+  r?: GetReqsAndBeefResult
 ): Promise<{ swr: SendWithResult[]; ndr: ReviewActionResult[] | undefined }> {
   let swr: SendWithResult[] = []
   let ndr: ReviewActionResult[] | undefined = undefined
 
-  if (txids.length < 1) return { swr, ndr }
+  if (!r && txids.length < 1) return { swr, ndr }
 
   // Collect what we know about these sendWith transaction txids from storage.
-  const r = await storage.getReqsAndBeefToShareWithWorld(txids, [])
+  r ||= await storage.getReqsAndBeefToShareWithWorld(txids, [])
 
   const readyToSendReqs: EntityProvenTxReq[] = []
   for (const getReq of r.details) {
