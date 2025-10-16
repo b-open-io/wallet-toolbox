@@ -14,7 +14,7 @@ import { WalletMonitorTask } from './WalletMonitorTask'
  * The current implementation ages deactivation notifications by 10 minutes with each retry.
  * If a successful proof update confirms original proof data after 3 retries, the original is retained.
  *
- * In normal operation there should never be any work for this task to perform.
+ * In normal operation there should rarely be any work for this task to perform.
  * The most common result is that there are no matching proven_txs records because
  * generating new proven_txs records intentionally lags new block generation to
  * minimize this disruption.
@@ -24,17 +24,8 @@ import { WalletMonitorTask } from './WalletMonitorTask'
  * - Generated beefs are impacted.
  * - Updated proof data may be unavailable at the time a reorg is first reported.
  *
- * Instead of reorg notification derived from new header notification, reorg repair to
- * the proven_txs table is more effectively driven by noticing that a beef generated for a new
- * createAction fails to verify against the chaintracker.
- *
- * An alternate approach to processing these events is to revert the proven_txs record to a proven_tx_reqs record.
- * Pros:
- * - The same multiple attempt logic that already exists is reused.
- * - Failing to obtain a new proof already has transaction failure handling in place.
- * - Generated beefs automatically become one generation deeper, potentially allowing transaction outputs to be spent.
- * Cons:
- * - Transactions must revert to un-proven / un-mined.
+ * Proper reorg handling also requires repairing invalid beefs for new transactions when
+ * createAction fails to verify a generated beef against the chaintracker.
  */
 export class TaskReorg extends WalletMonitorTask {
   static taskName = 'Reorg'
@@ -49,6 +40,11 @@ export class TaskReorg extends WalletMonitorTask {
     super(monitor, TaskReorg.taskName)
   }
 
+  /**
+   * Shift aged deactivated headers onto `process` array.
+   * @param nowMsecsSinceEpoch current time in milliseconds since epoch.
+   * @returns `run` true iff there are aged deactivated headers to process.
+   */
   trigger(nowMsecsSinceEpoch: number): { run: boolean } {
     const cutoff = nowMsecsSinceEpoch - this.agedMsecs
     const q = this.monitor.deactivatedHeaders
@@ -68,6 +64,8 @@ export class TaskReorg extends WalletMonitorTask {
     for (;;) {
       const header = this.process.shift()
       if (!header) break
+
+      const rpr = await this.storage.reproveHeader(header.header)
 
       let ptxs: TableProvenTx[] = []
 

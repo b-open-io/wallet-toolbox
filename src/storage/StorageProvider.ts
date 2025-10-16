@@ -230,7 +230,11 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
     for (const txid of txids) {
       const d: GetReqsAndBeefDetail = {
         txid,
+        // status: 'readyToSend' | 'alreadySent' | 'error' | 'unknown'
         status: 'unknown'
+        // req?: TableProvenTxReq
+        // proven?: TableProvenTx
+        // error?: string
       }
       r.details.push(d)
       try {
