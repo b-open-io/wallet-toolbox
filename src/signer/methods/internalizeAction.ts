@@ -79,10 +79,18 @@ export async function internalizeAction(
     */
   }
 
+  /**
+   * Verifies that the `tx` argument passed to internalizeAction is a valid AtomicBEEF,
+   * and the proofs are valid according to the wallet's configured chainTracker.
+   * THIS DOES NOT GUARANTEE:
+   * 1. That the transaction has been broadcast. (Is known to the network).
+   * 2. That the proofs are for the same block as recorded in the wallet's configured storage in the event of a reorg.
+   */
   async function validateAtomicBeef() {
     const ab = Beef.fromBinary(vargs.tx)
 
-    // TODO: Add support for known txids...
+    // TODO: Add support for known txids...which would speed up processing by avoiding a network call,
+    // unless a local chaintracker is used.
 
     const txValid = await ab.verify(await wallet.getServices().getChainTracker(), false)
     if (!txValid || !ab.atomicTxid) {

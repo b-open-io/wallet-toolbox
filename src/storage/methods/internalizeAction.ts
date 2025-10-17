@@ -6,9 +6,9 @@ import {
   TransactionOutput,
   Beef
 } from '@bsv/sdk'
-import { shareReqsWithWorld } from './processAction'
+import { GetReqsAndBeefResult, shareReqsWithWorld } from './processAction'
 import { StorageProvider } from '../StorageProvider'
-import { AuthId, StorageInternalizeActionResult } from '../../sdk/WalletStorage.interfaces'
+import { AuthId, StorageInternalizeActionResult, StorageProvenOrReq } from '../../sdk/WalletStorage.interfaces'
 import { TableOutput } from '../schema/tables/TableOutput'
 import { TableOutputBasket } from '../schema/tables/TableOutputBasket'
 import { TableTransaction } from '../schema/tables/TableTransaction'
@@ -17,6 +17,8 @@ import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { randomBytesBase64, verifyId, verifyOne, verifyOneOrNone } from '../../utility/utilityHelpers'
 import { TransactionStatus } from '../../sdk/types'
 import { EntityProvenTxReq } from '../schema/entities/EntityProvenTxReq'
+import { blockHash } from '../../services/chaintracker/chaintracks/util/blockHeaderUtilities'
+import { TableProvenTx } from '../index.client'
 
 /**
  * Internalize Action allows a wallet to take ownership of outputs in a pre-existing transaction.
@@ -252,6 +254,21 @@ class InternalizeActionContext {
     }
   }
 
+  /**
+   * This is the second time the atomic beef is validated against a chaintracker.
+   * The first validation used the originating wallet's configured chaintracker.
+   * Now the chaintracker configured for this storage is used.
+   * These may be the same, or different.
+   *
+   * THIS DOES NOT GUARANTEE:
+   * 1. That the transaction has been broadcast. (Is known to the network).
+   * 2. That the proof(s) are for the same block as recorded in this storage in the event of a reorg.
+   *
+   * In the event of a reorg, we CAN assume that the proof contained in this beef should replace the proof in storage.
+   *
+   * @param atomicBeef
+   * @returns
+   */
   async validateAtomicBeef(atomicBeef: number[]) {
     const ab = Beef.fromBinary(atomicBeef)
     const txValid = await ab.verify(await this.storage.getServices().getChainTracker(), false)
@@ -277,14 +294,18 @@ class InternalizeActionContext {
     return { ab, tx, txid }
   }
 
-  async findOrInsertTargetTransaction(satoshis: number, status: TransactionStatus): Promise<TableTransaction> {
+  async findOrInsertTargetTransaction(satoshis: number, provenTx?: TableProvenTx): Promise<TableTransaction> {
     const now = new Date()
+    const provenTxId = provenTx?.provenTxId
+    const status: TransactionStatus = provenTx ? 'completed' : 'unproven'
     const newTx: TableTransaction = {
       created_at: now,
       updated_at: now,
       transactionId: 0,
 
+      provenTxId,
       status,
+
       satoshis,
 
       version: this.tx.version,
@@ -301,10 +322,14 @@ class InternalizeActionContext {
     const tr = await this.storage.findOrInsertTransaction(newTx)
     if (!tr.isNew) {
       if (!this.isMerge)
+        // For now, only allow transaction record to pre-exist if it was there at the start.
         throw new WERR_INVALID_PARAMETER('tx', `target transaction of internalizeAction is undergoing active changes.`)
-      await this.storage.updateTransaction(tr.tx.transactionId!, {
-        satoshis: tr.tx.satoshis + satoshis
-      })
+      const update: Partial<TableTransaction> = { satoshis: tr.tx.satoshis + satoshis }
+      if (provenTx) {
+        update.provenTxId = provenTxId
+        update.status = status
+      }
+      await this.storage.updateTransaction(tr.tx.transactionId!, update)
     }
     return tr.tx
   }
@@ -325,30 +350,83 @@ class InternalizeActionContext {
     }
   }
 
+  /**
+   * internalize output(s) from a transaction with txid unknown to storage.
+   */
   async newInternalize() {
-    this.etx = await this.findOrInsertTargetTransaction(this.satoshis, 'unproven')
+    // Check if the transaction has a merkle path proof (BUMP)
+    const btx = this.ab.findTxid(this.txid)
+    if (!btx) throw new WERR_INTERNAL(`Could not find transaction ${this.txid} in AtomicBEEF`)
+    const bump = this.ab.findBump(this.txid)
+
+    let pr: StorageProvenOrReq = { isNew: false, proven: undefined, req: undefined }
+
+    if (bump) {
+      // The presence bump indicates the transaction has already been mined.
+      // Verify a provenTx record exist before creating a new transaction with completed status...
+      // Which normally means creating a new provenTx record.
+      const now = new Date()
+      const merkleRoot = bump.computeRoot(this.txid)
+      const indexEntry = bump.path[0].find(p => p.hash === this.txid)
+      if (!indexEntry) {
+        throw new WERR_INTERNAL(
+          `Could not determine transaction index for txid ${this.txid} in bump path. Expected to find txid in bump.path[0]: ${JSON.stringify(bump.path[0])}`
+        )
+      }
+      const index = indexEntry.offset
+      const header = await this.storage.getServices().getHeaderForHeight(bump.blockHeight)
+      if (!header) {
+        throw new WERR_INTERNAL(`Block header not found for height ${bump.blockHeight}`)
+      }
+      const hash = blockHash(header)
+      const provenTxR = await this.storage.findOrInsertProvenTx({
+        created_at: now,
+        updated_at: now,
+        provenTxId: 0,
+        txid: this.txid,
+        height: bump.blockHeight,
+        index,
+        merklePath: bump.toBinary(),
+        rawTx: btx.rawTx!,
+        blockHash: hash,
+        merkleRoot: merkleRoot
+      })
+      pr.proven = provenTxR.proven
+    }
+
+    this.etx = await this.findOrInsertTargetTransaction(this.satoshis, pr.proven)
 
     const transactionId = this.etx!.transactionId!
 
-    // transaction record for user is new, but the txid may not be new to storage
-    // make sure storage pursues getting a proof for it.
-    const newReq = EntityProvenTxReq.fromTxid(this.txid, this.tx.toBinary(), this.args.tx)
-    // this status is only relevant if the transaction is new to storage.
-    newReq.status = 'unsent'
-    // this history and notify will be merged into an existing req if it exists.
-    newReq.addHistoryNote({ what: 'internalizeAction', userId: this.userId })
-    newReq.addNotifyTransactionId(transactionId)
-    const pr = await this.storage.getProvenOrReq(this.txid, newReq.toApi())
+    if (!pr.proven) {
+      // beef doesn't include proof of mining for the transaction (etx).
+      // the new transaction record has been added to storage, but (baring race conditions)
+      // there should be no provenTx or provenTxReq records for this txid.
+      //
+      // Attempt to create a provenTxReq record for the txid to obtain a proof,
+      // while allowing for possible race conditions...
+      const newReq = EntityProvenTxReq.fromTxid(this.txid, this.tx.toBinary(), this.args.tx)
+      newReq.status = 'unsent'
+      // this history and notify will be merged into an existing req if it exists.
+      newReq.addHistoryNote({ what: 'internalizeAction', userId: this.userId })
+      newReq.addNotifyTransactionId(transactionId)
+      pr = await this.storage.getProvenOrReq(this.txid, newReq.toApi())
+    }
 
     if (pr.isNew) {
-      // This storage doesn't know about this txid yet.
-
-      // TODO Can we immediately prove this txid?
-      // TODO Do full validation on the transaction?
-
+      // This storage didn't know about this txid and the beef didn't include a mining proof.
+      // Assume the transaction has never been broadcast.
       // Attempt to broadcast it to the network, throwing an error if it fails.
 
-      const { swr, ndr } = await shareReqsWithWorld(this.storage, this.userId, [this.txid], false)
+      // Skip looking up txids and building an aggregate beef,
+      // just this one txid and the already validated atomic beef.
+      // The beef may contain additional unbroadcast transactions which
+      // we don't care about.
+      const r: GetReqsAndBeefResult = {
+        beef: Beef.fromBinary(this.args.tx),
+        details: [{ txid: this.txid, status: 'readyToSend', req: pr.req }]
+      }
+      const { swr, ndr } = await shareReqsWithWorld(this.storage, this.userId, [], false, r)
       if (ndr![0].status !== 'success') {
         this.r.sendWithResults = swr
         this.r.notDelayedResults = ndr

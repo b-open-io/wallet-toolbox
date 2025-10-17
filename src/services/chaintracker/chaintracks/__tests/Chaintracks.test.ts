@@ -5,6 +5,7 @@ import { Chain } from '../../../../sdk'
 import { createDefaultNoDbChaintracksOptions } from '../createDefaultNoDbChaintracksOptions'
 import { ChaintracksFs } from '../util/ChaintracksFs'
 import { LocalCdnServer } from './LocalCdnServer'
+import { _tu } from '../../../../../test/utils/TestUtilsWalletStorage'
 
 const rootFolder = './src/services/chaintracker/chaintracks/__tests/data'
 
@@ -25,10 +26,12 @@ describe('Chaintracks tests', () => {
   })
 
   test('1 NoDb mainnet', async () => {
+    if (_tu.noEnv('main')) return
     await NoDbBody('main')
   })
 
   test('2 NoDb testnet', async () => {
+    if (_tu.noEnv('main')) return
     await NoDbBody('test')
   })
 
