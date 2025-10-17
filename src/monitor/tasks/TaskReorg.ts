@@ -65,7 +65,7 @@ export class TaskReorg extends WalletMonitorTask {
       const header = this.process.shift()
       if (!header) break
 
-      const rpr = await this.storage.reproveHeader(header.header)
+      //const rpr = await this.storage.reproveHeader(header.header)
 
       let ptxs: TableProvenTx[] = []
 
