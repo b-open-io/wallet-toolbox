@@ -107,6 +107,7 @@ export interface PostBeefResultForTxidApi {
  * @param userId
  * @param txids
  * @param isDelayed
+ * @param r Optional. Ignores txids and allows ProvenTxReqs and merged beef to be passed in.
  */
 export async function shareReqsWithWorld(
   storage: StorageProvider,

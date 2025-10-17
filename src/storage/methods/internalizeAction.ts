@@ -321,6 +321,9 @@ class InternalizeActionContext {
     }
     const tr = await this.storage.findOrInsertTransaction(newTx)
     if (!tr.isNew) {
+      if (!this.isMerge)
+        // For now, only allow transaction record to pre-exist if it was there at the start.
+        throw new WERR_INVALID_PARAMETER('tx', `target transaction of internalizeAction is undergoing active changes.`)
       const update: Partial<TableTransaction> = { satoshis: tr.tx.satoshis + satoshis }
       if (provenTx) {
         update.provenTxId = provenTxId
