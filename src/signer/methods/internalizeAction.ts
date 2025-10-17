@@ -80,7 +80,7 @@ export async function internalizeAction(
   }
 
   /**
-   * Verifies that the `tx` argument passed to initernalizeAction is a valid AtomicBEEF,
+   * Verifies that the `tx` argument passed to internalizeAction is a valid AtomicBEEF,
    * and the proofs are valid according to the wallet's configured chainTracker.
    * THIS DOES NOT GUARANTEE:
    * 1. That the transaction has been broadcast. (Is known to the network).
