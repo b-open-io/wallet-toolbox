@@ -17507,13 +17507,18 @@ Assigns a batch identifier and updates all the provenTxReqs.
 If not isDelayed, triggers an initial attempt to broadcast the batch and returns the results.
 
 ```ts
-export async function shareReqsWithWorld(storage: StorageProvider, userId: number, txids: string[], isDelayed: boolean): Promise<{
+export async function shareReqsWithWorld(storage: StorageProvider, userId: number, txids: string[], isDelayed: boolean, r?: GetReqsAndBeefResult): Promise<{
     swr: SendWithResult[];
     ndr: ReviewActionResult[] | undefined;
 }> 
 ```
 
-See also: [ReviewActionResult](./client.md#interface-reviewactionresult), [StorageProvider](./storage.md#class-storageprovider)
+See also: [GetReqsAndBeefResult](./storage.md#interface-getreqsandbeefresult), [ReviewActionResult](./client.md#interface-reviewactionresult), [StorageProvider](./storage.md#class-storageprovider)
+
+Argument Details
+
++ **r**
+  + Optional. Ignores txids and allows ProvenTxReqs and merged beef to be passed in.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
