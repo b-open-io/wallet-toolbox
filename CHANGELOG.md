@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.29
+
+- Add txid index to transactions table in storage knex schema
+
 ## wallet-toolbox 1.6.28
 
 - Fix The method `Services`.`getHeaderForHeight` must serialize four byte values LE
@@ -48,7 +52,7 @@ attention to changes that materially alter behavior or extend functionality.
 - Add ChaintracksStorageIdb to support in browser header storage.
 - Cleanup createDefaultWalletServicesOptions, add comments.
 - Some breaking API changes to Chaintracks storage and ingestors.
-
+jj
 ## wallet-toolbox 1.6.4
 
 - Resolve client dependencies for metanet-desktop, exclude ChaintracksService and Ws ingestors.
