@@ -61,7 +61,8 @@ describe('KnexMigrations tests', () => {
       const latest = await KnexMigrations.latestMigration()
       await knex.migrate.latest(config)
       const version = await knex.migrate.currentVersion(config)
-      expect(version).toBe(latest)
+
+      expect(version).toBe(latest.split('_')[0])
     }
     done1 = true
   })
