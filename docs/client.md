@@ -17622,18 +17622,18 @@ the block hash for the header.
 ```ts
 export function toBinaryBaseBlockHeader(header: BaseBlockHeader): number[] {
     const writer = new Utils.Writer();
-    writer.writeUInt32BE(header.version);
+    writer.writeUInt32LE(header.version);
     writer.writeReverse(asArray(header.previousHash));
     writer.writeReverse(asArray(header.merkleRoot));
-    writer.writeUInt32BE(header.time);
-    writer.writeUInt32BE(header.bits);
-    writer.writeUInt32BE(header.nonce);
+    writer.writeUInt32LE(header.time);
+    writer.writeUInt32LE(header.bits);
+    writer.writeUInt32LE(header.nonce);
     const r = writer.toArray();
     return r;
 }
 ```
 
-See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [asArray](./client.md#function-asarray), [writeUInt32BE](./services.md#function-writeuint32be)
+See also: [BaseBlockHeader](./client.md#interface-baseblockheader), [asArray](./client.md#function-asarray), [writeUInt32LE](./services.md#function-writeuint32le)
 
 Returns
 

@@ -1,5 +1,8 @@
 import { Utils } from '@bsv/sdk'
-import { blockHash, deserializeBaseBlockHeader } from '../../../src/services/chaintracker/chaintracks/util/blockHeaderUtilities'
+import {
+  blockHash,
+  deserializeBaseBlockHeader
+} from '../../../src/services/chaintracker/chaintracks/util/blockHeaderUtilities'
 import { _tu, TestWalletNoSetup } from '../../utils/TestUtilsWalletStorage'
 
 const includeTestChaintracks = true
@@ -42,9 +45,9 @@ describe('getHeaderForHeight tests', () => {
       const result = await wallet.getHeaderForHeight({ height })
       const headerHex = result.header
       const headerA = Utils.toArray(headerHex, 'hex')
-      const hash = blockHash(headerA) 
+      const hash = blockHash(headerA)
       expect(hash).toBe('00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206')
-      const header = deserializeBaseBlockHeader(headerA)  
+      const header = deserializeBaseBlockHeader(headerA)
 
       expect(result).toHaveProperty('header')
       expect(typeof result.header).toBe('string')
