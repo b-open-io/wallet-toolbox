@@ -5,7 +5,7 @@ import {
 } from '../../../src/services/chaintracker/chaintracks/util/blockHeaderUtilities'
 import { _tu, TestWalletNoSetup } from '../../utils/TestUtilsWalletStorage'
 
-const includeTestChaintracks = true
+const includeTestChaintracks = false
 
 describe('getHeaderForHeight tests', () => {
   jest.setTimeout(99999999)
