@@ -46,7 +46,7 @@ export class ChaintracksFetch implements ChaintracksFetchApi {
         throw new Error(`Failed to fetch JSON from ${url}: ${response.statusText}`)
       }
       json = (await response.json()) as R
-      break;
+      break
     }
     return json
   }
