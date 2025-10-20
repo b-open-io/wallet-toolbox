@@ -62,73 +62,21 @@ export class TaskReorg extends WalletMonitorTask {
     let log = ''
 
     for (;;) {
+      // Loop over deactivated headers to process
       const header = this.process.shift()
       if (!header) break
 
-      //const rpr = await this.storage.reproveHeader(header.header)
+      const r = await this.storage.reproveHeader(header.header)
 
-      let ptxs: TableProvenTx[] = []
+      log += r.log
 
-      await this.storage.runAsStorageProvider(async sp => {
-        // Lookup all the proven_txs records matching the deactivated headers
-        ptxs = await sp.findProvenTxs({ partial: { blockHash: header.header.hash } })
-      })
-
-      log += `  block ${header.header.hash} orphaned with ${ptxs.length} impacted transactions\n`
-
-      let retry = false
-      for (const ptx of ptxs) {
-        const mpr = await this.monitor.services.getMerklePath(ptx.txid)
-        if (mpr.merklePath && mpr.header) {
-          const mp = mpr.merklePath
-          const h = mpr.header
-          const leaf = mp.path[0].find(leaf => leaf.txid === true && leaf.hash === ptx.txid)
-          if (leaf) {
-            const update: Partial<TableProvenTx> = {
-              height: mp.blockHeight,
-              index: leaf.offset,
-              merklePath: mp.toBinary(),
-              merkleRoot: h.merkleRoot,
-              blockHash: h.hash
-            }
-            if (update.blockHash === ptx.blockHash) {
-              log += `    txid ${ptx.txid} merkle path update still based on deactivated header ${ptx.blockHash}\n`
-              if (header.tries + 1 >= this.maxRetries) {
-                log += `      maximum retries ${this.maxRetries} exceeded\n`
-              } else {
-                retry = true
-              }
-            } else {
-              // Verify the new proof's validity.
-              const merkleRoot = mp.computeRoot(ptx.txid)
-              const chaintracker = await this.monitor.services.getChainTracker()
-              const isValid = await chaintracker.isValidRootForHeight(merkleRoot, update.height!)
-              const logUpdate = `      height ${ptx.height} ${ptx.height === update.height ? 'unchanged' : `-> ${update.height}`}\n`
-              log += `      blockHash ${ptx.blockHash} -> ${update.blockHash}\n`
-              log += `      merkleRoot ${ptx.merkleRoot} -> ${update.merkleRoot}\n`
-              log += `      index ${ptx.index} -> ${update.index}\n`
-              if (!isValid) {
-                log +=
-                  `    txid ${ptx.txid} chaintracker fails to confirm updated merkle path update invalid\n` + logUpdate
-              } else {
-                await this.storage.runAsStorageProvider(async sp => {
-                  await sp.updateProvenTx(ptx.provenTxId, update)
-                })
-                log += `    txid ${ptx.txid} proof data updated\n` + logUpdate
-              }
-            }
-          } else {
-            log += `    txid ${ptx.txid} merkle path update doesn't include txid\n`
-            retry = true
-          }
+      if (r.unavailable.length > 0 || r.unchanged.length > 0) {
+        if (header.tries + 1 >= this.maxRetries) {
+          log += `      maximum retries ${this.maxRetries} exceeded\n`
         } else {
-          log += `    txid ${ptx.txid} merkle path update unavailable\n`
-          retry = true
+          log += `    retrying...\n`
+          this.monitor.deactivatedHeaders.push({ header: header.header, whenMsecs: Date.now(), tries: header.tries + 1 })
         }
-      }
-      if (retry) {
-        log += `    retrying...\n`
-        this.monitor.deactivatedHeaders.push({ header: header.header, whenMsecs: Date.now(), tries: header.tries + 1 })
       }
     }
 
