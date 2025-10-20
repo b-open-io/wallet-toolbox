@@ -1,5 +1,6 @@
 import { defaultHttpClient, HttpClient } from '@bsv/sdk'
 import { ChaintracksFetchApi } from '../Api/ChaintracksFetchApi'
+import { wait } from '../../../../utility/utilityHelpers'
 
 /**
  * This class implements the ChaintracksFetchApi
@@ -34,11 +35,19 @@ export class ChaintracksFetch implements ChaintracksFetchApi {
         Accept: 'application/json'
       }
     }
-    const response = await fetch(url, requestJsonOptions)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch JSON from ${url}: ${response.statusText}`)
+    let json: R
+    for (let retry = 0; ; retry++) {
+      const response = await fetch(url, requestJsonOptions)
+      if (!response.ok) {
+        if (response.statusText === 'Too Many Requests' && retry < 3) {
+          await wait(1000 * (retry + 1))
+          continue
+        }
+        throw new Error(`Failed to fetch JSON from ${url}: ${response.statusText}`)
+      }
+      json = (await response.json()) as R
+      break;
     }
-    const json = (await response.json()) as R
     return json
   }
 

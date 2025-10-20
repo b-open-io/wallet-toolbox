@@ -73,6 +73,32 @@ export class KnexMigrations implements MigrationSource<string> {
       }
     }
 
+    migrations['2025-10-18-002 add proven_tx_reqs txid index'] = {
+      async up(knex) {
+        await knex.schema.alterTable('proven_tx_reqs', table => {
+          table.index('txid')
+        })
+      },
+      async down(knex) {
+        await knex.schema.alterTable('proven_tx_reqs', table => {
+          table.dropIndex('txid')
+        })
+      }
+    }
+
+    migrations['2025-10-18-001 add transactions txid index'] = {
+      async up(knex) {
+        await knex.schema.alterTable('transactions', table => {
+          table.index('txid')
+        })
+      },
+      async down(knex) {
+        await knex.schema.alterTable('transactions', table => {
+          table.dropIndex('txid')
+        })
+      }
+    }
+
     migrations['2025-09-06-001 add proven txs blockHash index'] = {
       async up(knex) {
         await knex.schema.alterTable('proven_txs', table => {
