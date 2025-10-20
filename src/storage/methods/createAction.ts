@@ -8,8 +8,10 @@ import {
   PubKeyHex,
   PublicKey,
   Random,
+  ReviewActionResult,
   Script,
-  Utils
+  Utils,
+  WERR_REVIEW_ACTIONS
 } from '@bsv/sdk'
 import {
   generateChangeSdk,
@@ -224,11 +226,25 @@ async function createNewInputs(
     if (o) {
       await storage.transaction(async trx => {
         const o2 = verifyOne(await storage.findOutputs({ partial: { outputId: o.outputId }, trx }))
-        if (o2.spendable != true || o2.spentBy !== undefined)
+        if (o2.spentBy !== undefined) {
+          const spendingTx = await storage.findTransactionById(verifyId(o2.spentBy), trx)
+          if (spendingTx && spendingTx.txid) {
+            const beef = await storage.getBeefForTransaction(spendingTx.txid, {})
+            const rar: ReviewActionResult = {
+              txid: '',
+              status: 'doubleSpend',
+              competingTxs: [spendingTx.txid!],
+              competingBeef: beef.toBinary()
+            }
+            throw new WERR_REVIEW_ACTIONS([rar], [])
+          }
+        }
+        if (o2.spendable != true) {
           throw new WERR_INVALID_PARAMETER(
             `inputs[${i.vin}]`,
             `spendable output. output ${o.txid}:${o.vout} appears to have been spent.`
           )
+        }
         await storage.updateOutput(
           o.outputId!,
           {
