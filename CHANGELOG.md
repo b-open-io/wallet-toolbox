@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.31
+
+- Change throw WERR_REVIEW_ACTIONS if an input's spentBy is valid
+
 ## wallet-toolbox 1.6.30
 
 - Add txid index to proven_tx_reqs table in storage knex schema
