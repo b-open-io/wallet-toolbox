@@ -560,3 +560,47 @@ export interface ProcessSyncChunkResult {
   inserts: number
   error?: WalletError
 }
+
+/**
+ * Returned results from WalletStorageManager reproveHeader method.
+ */
+export interface ReproveHeaderResult {
+  /**
+   * Human readable log of the reproveHeader process.
+   */
+  log: string
+  /**
+   * List of proven_txs records that were updated with new proof data.
+   */
+  updated: { was: TableProvenTx; update: Partial<TableProvenTx>, logUpdate: string }[]
+  /**
+   * List of proven_txs records that were checked but currently available proof is unchanged.
+   */
+  unchanged: TableProvenTx[]
+  /**
+   * List of proven_txs records that were checked but currently proof data is unavailable.
+   */
+  unavailable: TableProvenTx[]
+}
+
+/**
+ * Returned results from WalletStorageManager reproveProven method.
+ */
+export interface ReproveProvenResult {
+  /**
+   * Human readable log of the reproveProven process.
+   */
+  log: string
+  /**
+   * Valid if proof data for proven_txs record is available and has changed.
+   */
+  updated?: { update: Partial<TableProvenTx>, logUpdate: string }
+  /**
+   * True if proof data for proven_txs record was found to be unchanged.
+   */
+  unchanged: boolean
+  /**
+   * True if proof data for proven_txs record is currently unavailable.
+   */
+  unavailable: boolean
+}

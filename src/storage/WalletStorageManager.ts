@@ -1,6 +1,7 @@
 import {
   AbortActionArgs,
   AbortActionResult,
+  Beef,
   InternalizeActionArgs,
   InternalizeActionResult,
   ListActionsResult,
@@ -16,6 +17,7 @@ import {
   TableCertificateX,
   TableOutput,
   TableOutputBasket,
+  TableProvenTx,
   TableProvenTxReq,
   TableSettings,
   TableUser
@@ -517,6 +519,165 @@ export class WalletStorageManager implements sdk.WalletStorage {
     return await this.runAsReader(async reader => {
       return await reader.findProvenTxReqs(args)
     })
+  }
+
+  /**
+   * For each proven_txs record currently sourcing its transaction merkle proof from the given deactivated header,
+   * attempt to reprove the transaction against the current chain,
+   * updating the proven_txs record if a new valid proof is found.
+   * 
+   * @param deactivatedHash An orphaned header than may have served as a proof source for proven_txs records.
+   * @returns 
+   */
+  async reproveHeader(deactivatedHash: string): Promise<sdk.ReproveHeaderResult> {
+    const r: sdk.ReproveHeaderResult = { log: '', updated: [], unchanged: [], unavailable: [] }
+    const services = this.getServices()
+    const chaintracker = await services.getChainTracker()
+
+    // Lookup all the proven_txs records matching the deactivated headers
+    let ptxs: TableProvenTx[] = []
+    await this.runAsStorageProvider(async sp => {
+      ptxs = await sp.findProvenTxs({ partial: { blockHash: deactivatedHash } })
+    })
+
+    r.log += `  block ${deactivatedHash} orphaned with ${ptxs.length} impacted transactions\n`
+
+    for (const ptx of ptxs) {
+      // Loop over proven_txs records matching the deactivated header
+      const rp = await this.reproveProven(ptx, true)
+
+      r.log += rp.log
+      if (rp.unavailable) r.unavailable.push(ptx);
+      if (rp.unchanged) r.unchanged.push(ptx);
+      if (rp.updated) r.updated.push({ was: ptx, update: rp.updated.update, logUpdate: rp.updated.logUpdate })
+    }
+
+    if (r.updated.length > 0) {
+      await this.runAsStorageProvider(async sp => {
+        for (const u of r.updated) {
+          await sp.updateProvenTx(u.was.provenTxId, u.update)
+          r.log += `    txid ${u.was.txid} proof data updated\n` + u.logUpdate
+        }
+      })
+    }
+
+    return r
+  }
+
+  /**
+   * Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg.
+   * 
+   * Any merkle root that fails `isValidRootForHeight` triggers a reprove attempt for that block header.
+   * This results in proven_txs with invalid proofs being updated with new valid proofs where possible.
+   * Finally, a new beef is generated and verified against the chaintracker.
+   * 
+   * @param beef 
+   * @param allowTxidOnly 
+   * @returns 
+   */
+  async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<boolean> {
+    throw new sdk.WERR_NOT_IMPLEMENTED()
+
+    const services = this.getServices()
+    const chaintracker = await services.getChainTracker()
+    const verified = await beef.verify(chaintracker)
+
+    const r = beef.verifyValid(allowTxidOnly)
+    if (!r.valid) return false
+
+    const invalidRoots: Record<number, string> = {}
+    for (const height of Object.keys(r.roots)) {
+      const isValid = await chaintracker.isValidRootForHeight(
+        r.roots[height],
+        Number(height)
+      )
+      if (!isValid) {
+        invalidRoots[height] = r.roots[height]
+      }
+    }
+
+    if (Object.keys(invalidRoots).length === 0) {
+      // There are no invalid merkle roots and the beef is structurally valid,
+      // the beef is fully verified.
+      return true
+    }
+
+    for (const heightStr of Object.keys(invalidRoots)) {
+      const hash = invalidRoots[Number(heightStr)]
+      const r = await this.reproveHeader(hash)
+    }
+
+    // All invalid BUMPs must be removed from the beef
+    // and all txid's that were proven by those BUMPs need
+    // new beefs merged into the beef.
+    // In most cases, this will be a replacement BUMP,
+    // but it may also require a deeper proof.
+  }
+
+  /**
+   * Attempt to reprove the transaction against the current chain,
+   * If a new valid proof is found and noUpdate is not true,
+   * update the proven_txs record with new block and merkle proof data.
+   * If noUpdate is true, the update to be applied is available in the returned result.
+   * 
+   * @param ptx proven_txs record to reprove
+   * @param noUpdate 
+   * @returns 
+   */
+  async reproveProven(ptx: TableProvenTx, noUpdate?: boolean): Promise<sdk.ReproveProvenResult> {
+    const r: sdk.ReproveProvenResult = { log: '', updated: undefined, unchanged: false, unavailable: false }
+    const services = this.getServices()
+    const chaintracker = await services.getChainTracker()
+
+    const mpr = await services.getMerklePath(ptx.txid)
+    if (mpr.merklePath && mpr.header) {
+      const mp = mpr.merklePath
+      const h = mpr.header
+      const leaf = mp.path[0].find(leaf => leaf.txid === true && leaf.hash === ptx.txid)
+      if (leaf) {
+        const update: Partial<TableProvenTx> = {
+          height: mp.blockHeight,
+          index: leaf.offset,
+          merklePath: mp.toBinary(),
+          merkleRoot: h.merkleRoot,
+          blockHash: h.hash
+        }
+        if (update.blockHash === ptx.blockHash) {
+          r.log += `    txid ${ptx.txid} merkle path update still based on deactivated header ${ptx.blockHash}\n`
+          r.unchanged = true
+        } else {
+          // Verify the new proof's validity.
+          const merkleRoot = mp.computeRoot(ptx.txid)
+          const isValid = await chaintracker.isValidRootForHeight(merkleRoot, update.height!)
+          const logUpdate = `      height ${ptx.height} ${ptx.height === update.height ? 'unchanged' : `-> ${update.height}`}\n`
+          r.log += `      blockHash ${ptx.blockHash} -> ${update.blockHash}\n`
+          r.log += `      merkleRoot ${ptx.merkleRoot} -> ${update.merkleRoot}\n`
+          r.log += `      index ${ptx.index} -> ${update.index}\n`
+          if (isValid) {
+            r.updated = { update, logUpdate }
+          } else {
+            r.log +=
+              `    txid ${ptx.txid} chaintracker fails to confirm updated merkle path update invalid\n` + logUpdate
+            r.unavailable = true
+          }
+        }
+      } else {
+        r.log += `    txid ${ptx.txid} merkle path update doesn't include txid\n`
+        r.unavailable = true
+      }
+    } else {
+      r.log += `    txid ${ptx.txid} merkle path update unavailable\n`
+      r.unavailable = true
+    }
+
+    if (r.updated && !noUpdate) {
+      await this.runAsStorageProvider(async sp => {
+          await sp.updateProvenTx(ptx.provenTxId, r.updated!.update)
+          r.log += `    txid ${ptx.txid} proof data updated\n` + r.updated!.logUpdate
+      })
+    }
+
+    return r
   }
 
   async syncFromReader(

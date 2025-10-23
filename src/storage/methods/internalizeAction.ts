@@ -18,7 +18,7 @@ import { randomBytesBase64, verifyId, verifyOne, verifyOneOrNone } from '../../u
 import { TransactionStatus } from '../../sdk/types'
 import { EntityProvenTxReq } from '../schema/entities/EntityProvenTxReq'
 import { blockHash } from '../../services/chaintracker/chaintracks/util/blockHeaderUtilities'
-import { TableProvenTx } from '../index.client'
+import { TableProvenTx } from '../schema/tables/TableProvenTx'
 
 /**
  * Internalize Action allows a wallet to take ownership of outputs in a pre-existing transaction.

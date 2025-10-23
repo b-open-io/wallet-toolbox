@@ -1,5 +1,4 @@
-import { Beef, ListActionsResult, ListOutputsResult } from '@bsv/sdk'
-import { WalletError } from '../../sdk/WalletError'
+import { Beef, ListActionsResult, ListOutputsResult, Utils } from '@bsv/sdk'
 import { StorageAdminStats, StorageProvider } from '../StorageProvider'
 import { Chain } from '../../sdk/types'
 import { Services } from '../../services/Services'
@@ -59,6 +58,16 @@ describe('getBeefForTransaction tests', () => {
       const beef = await ps.getBeefForTxid('53023657e79f446ca457040a0ab3b903000d7281a091397c7853f021726a560e')
       expect(beef.bumps.length > 0)
     }
+  })
+
+  test.skip('1 obtain atomic beef hex for txid', async () => {
+    const ps = new ProtoStorage('main')
+    const txid = '4cefbe79926d6ef2cc727d8faccac186d9bb141f170411dd75bc6329f428f5a4'
+    const beef = await ps.getBeefForTxid(txid)
+    expect(beef.bumps.length > 0)
+    console.log(beef.toLogString())
+    const hex = Utils.toHex(beef.toBinaryAtomic(txid))
+    console.log(hex)
   })
 })
 

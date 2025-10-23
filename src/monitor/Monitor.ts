@@ -383,6 +383,14 @@ export class Monitor {
     }
   }
 
+  /**
+   * Handler for new header events from Chaintracks.
+   *
+   * To minimize reorg processing, new headers are aged before processing via TaskNewHeader.
+   * Therefore this handler is intentionally a no-op.
+   *
+   * @param header
+   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   processHeader(header: BlockHeader): void {}
 }
