@@ -66,7 +66,7 @@ export class TaskReorg extends WalletMonitorTask {
       const header = this.process.shift()
       if (!header) break
 
-      const r = await this.storage.reproveHeader(header.header)
+      const r = await this.storage.reproveHeader(header.header.hash)
 
       log += r.log
 

@@ -526,10 +526,10 @@ export class WalletStorageManager implements sdk.WalletStorage {
    * attempt to reprove the transaction against the current chain,
    * updating the proven_txs record if a new valid proof is found.
    * 
-   * @param deactivatedHeader An orphaned header than may have served as a proof source for proven_txs records.
+   * @param deactivatedHash An orphaned header than may have served as a proof source for proven_txs records.
    * @returns 
    */
-  async reproveHeader(deactivatedHeader: sdk.BlockHeader): Promise<sdk.ReproveHeaderResult> {
+  async reproveHeader(deactivatedHash: string): Promise<sdk.ReproveHeaderResult> {
     const r: sdk.ReproveHeaderResult = { log: '', updated: [], unchanged: [], unavailable: [] }
     const services = this.getServices()
     const chaintracker = await services.getChainTracker()
@@ -537,10 +537,10 @@ export class WalletStorageManager implements sdk.WalletStorage {
     // Lookup all the proven_txs records matching the deactivated headers
     let ptxs: TableProvenTx[] = []
     await this.runAsStorageProvider(async sp => {
-      ptxs = await sp.findProvenTxs({ partial: { blockHash: deactivatedHeader.hash } })
+      ptxs = await sp.findProvenTxs({ partial: { blockHash: deactivatedHash } })
     })
 
-    r.log += `  block ${deactivatedHeader.hash} orphaned with ${ptxs.length} impacted transactions\n`
+    r.log += `  block ${deactivatedHash} orphaned with ${ptxs.length} impacted transactions\n`
 
     for (const ptx of ptxs) {
       // Loop over proven_txs records matching the deactivated header
@@ -564,7 +564,20 @@ export class WalletStorageManager implements sdk.WalletStorage {
     return r
   }
 
+  /**
+   * Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg.
+   * 
+   * Any merkle root that fails `isValidRootForHeight` triggers a reprove attempt for that block header.
+   * This results in proven_txs with invalid proofs being updated with new valid proofs where possible.
+   * Finally, a new beef is generated and verified against the chaintracker.
+   * 
+   * @param beef 
+   * @param allowTxidOnly 
+   * @returns 
+   */
   async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<boolean> {
+    throw new sdk.WERR_NOT_IMPLEMENTED()
+
     const services = this.getServices()
     const chaintracker = await services.getChainTracker()
     const verified = await beef.verify(chaintracker)
@@ -572,15 +585,33 @@ export class WalletStorageManager implements sdk.WalletStorage {
     const r = beef.verifyValid(allowTxidOnly)
     if (!r.valid) return false
 
+    const invalidRoots: Record<number, string> = {}
     for (const height of Object.keys(r.roots)) {
-      const isValid = await chainTracker.isValidRootForHeight(
+      const isValid = await chaintracker.isValidRootForHeight(
         r.roots[height],
         Number(height)
       )
       if (!isValid) {
-        return false
+        invalidRoots[height] = r.roots[height]
       }
     }
+
+    if (Object.keys(invalidRoots).length === 0) {
+      // There are no invalid merkle roots and the beef is structurally valid,
+      // the beef is fully verified.
+      return true
+    }
+
+    for (const heightStr of Object.keys(invalidRoots)) {
+      const hash = invalidRoots[Number(heightStr)]
+      const r = await this.reproveHeader(hash)
+    }
+
+    // All invalid BUMPs must be removed from the beef
+    // and all txid's that were proven by those BUMPs need
+    // new beefs merged into the beef.
+    // In most cases, this will be a replacement BUMP,
+    // but it may also require a deeper proof.
   }
 
   /**
