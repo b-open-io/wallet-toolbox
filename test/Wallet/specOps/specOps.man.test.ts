@@ -200,13 +200,15 @@ describe('specOps tests', () => {
 
 async function createSetup(chain: sdk.Chain): Promise<TestWalletNoSetup> {
   const env = _tu.getEnv(chain)
-  if (!env.testIdentityKey) throw new sdk.WERR_INVALID_PARAMETER('env.testIdentityKey', 'valid')
-  if (!env.testFilePath) throw new sdk.WERR_INVALID_PARAMETER('env.testFilePath', 'valid')
+  const identityKey = chain === 'test' ? env.testIdentityKey : env.identityKey
+  const filePath = chain === 'test' ? env.testFilePath : env.filePath
+  if (!identityKey) throw new sdk.WERR_INVALID_PARAMETER('identityKey', 'valid for chain ' + chain)
+  if (!filePath) throw new sdk.WERR_INVALID_PARAMETER('filePath', 'valid for chain ' + chain)
 
   const setup = await _tu.createTestWallet({
     chain,
-    rootKeyHex: env.devKeys[env.testIdentityKey],
-    filePath: env.testFilePath,
+    rootKeyHex: env.devKeys[identityKey],
+    filePath,
     setActiveClient: false,
     addLocalBackup: false,
     useMySQLConnectionForClient: false
