@@ -54,6 +54,11 @@ export class WERR_INVALID_PARAMETER extends WalletError {
   ) {
     super('WERR_INVALID_PARAMETER', `The ${parameter} parameter must be ${mustBe ?? 'valid.'}`)
   }
+  override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.parameter = this.parameter
+    return JSON.stringify(obj)
+  }
 }
 
 /**
@@ -64,6 +69,11 @@ export class WERR_INVALID_PARAMETER extends WalletError {
 export class WERR_MISSING_PARAMETER extends WalletError {
   constructor(public parameter: string) {
     super('WERR_MISSING_PARAMETER', `The required ${parameter} parameter is missing.`)
+  }
+  override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.parameter = this.parameter
+    return JSON.stringify(obj)
   }
 }
 
@@ -127,6 +137,12 @@ export class WERR_INSUFFICIENT_FUNDS extends WalletError {
       `Insufficient funds in the available inputs to cover the cost of the required outputs and the transaction fee (${moreSatoshisNeeded} more satoshis are needed, for a total of ${totalSatoshisNeeded}), plus whatever would be required in order to pay the fee to unlock and spend the outputs used to provide the additional satoshis.`
     )
   }
+  override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.totalSatoshisNeeded = this.totalSatoshisNeeded
+    obj.moreSatoshisNeeded = this.moreSatoshisNeeded
+    return JSON.stringify(obj)
+  }
 }
 
 export class WERR_INVALID_PUBLIC_KEY extends WalletError {
@@ -143,6 +159,11 @@ export class WERR_INVALID_PUBLIC_KEY extends WalletError {
         ? `The provided public key "${key}" is invalid or malformed.`
         : `The provided public key is invalid or malformed.`
     super('WERR_INVALID_PUBLIC_KEY', message)
+  }
+  protected override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.key = this.key
+    return JSON.stringify(obj)
   }
 }
 
@@ -166,4 +187,17 @@ export class WERR_REVIEW_ACTIONS extends WalletError {
   ) {
     super('WERR_REVIEW_ACTIONS', 'Undelayed createAction or signAction results require review.')
   }
+  override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.reviewActionResults = this.reviewActionResults
+    obj.sendWithResults = this.sendWithResults
+    obj.txid = this.txid
+    obj.tx = this.tx
+    obj.noSendChange = this.noSendChange
+    return JSON.stringify(obj)
+  }
 }
+
+/**
+ * IF YOU ADD NEW ERRORS, ALSO UPDATE THE WalletError.fromJson METHOD IN src/sdk/WalletError.ts
+ */

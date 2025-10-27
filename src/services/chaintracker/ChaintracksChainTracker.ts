@@ -20,7 +20,7 @@ export class ChaintracksChainTracker implements ChainTracker {
     chain ||= 'main'
     this.chaintracks =
       chaintracks ??
-      new ChaintracksServiceClient(chain, `https://npm-registry.babbage.systems:808${chain === 'main' ? '4' : '3'}`)
+      new ChaintracksServiceClient(chain, `https://${chain}net-chaintracks.babbage.systems`)
     this.cache = {}
     this.options = options || {}
   }

@@ -47,5 +47,4 @@ describe('verifyBeef tests', () => {
     logger(Utils.toHex(beef.txs[1].rawTx!))
     logger(beef.bumps[0].computeRoot('e47df21819ed320a78392e62e963ddd77143c3c52ad5255a07ff55ba507df71d'))
   })
-
 })

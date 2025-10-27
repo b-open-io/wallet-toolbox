@@ -75,7 +75,11 @@ export class TaskReorg extends WalletMonitorTask {
           log += `      maximum retries ${this.maxRetries} exceeded\n`
         } else {
           log += `    retrying...\n`
-          this.monitor.deactivatedHeaders.push({ header: header.header, whenMsecs: Date.now(), tries: header.tries + 1 })
+          this.monitor.deactivatedHeaders.push({
+            header: header.header,
+            whenMsecs: Date.now(),
+            tries: header.tries + 1
+          })
         }
       }
     }

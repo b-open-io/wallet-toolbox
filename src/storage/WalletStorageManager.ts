@@ -525,9 +525,9 @@ export class WalletStorageManager implements sdk.WalletStorage {
    * For each proven_txs record currently sourcing its transaction merkle proof from the given deactivated header,
    * attempt to reprove the transaction against the current chain,
    * updating the proven_txs record if a new valid proof is found.
-   * 
+   *
    * @param deactivatedHash An orphaned header than may have served as a proof source for proven_txs records.
-   * @returns 
+   * @returns
    */
   async reproveHeader(deactivatedHash: string): Promise<sdk.ReproveHeaderResult> {
     const r: sdk.ReproveHeaderResult = { log: '', updated: [], unchanged: [], unavailable: [] }
@@ -547,8 +547,8 @@ export class WalletStorageManager implements sdk.WalletStorage {
       const rp = await this.reproveProven(ptx, true)
 
       r.log += rp.log
-      if (rp.unavailable) r.unavailable.push(ptx);
-      if (rp.unchanged) r.unchanged.push(ptx);
+      if (rp.unavailable) r.unavailable.push(ptx)
+      if (rp.unchanged) r.unchanged.push(ptx)
       if (rp.updated) r.updated.push({ was: ptx, update: rp.updated.update, logUpdate: rp.updated.logUpdate })
     }
 
@@ -566,14 +566,14 @@ export class WalletStorageManager implements sdk.WalletStorage {
 
   /**
    * Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg.
-   * 
+   *
    * Any merkle root that fails `isValidRootForHeight` triggers a reprove attempt for that block header.
    * This results in proven_txs with invalid proofs being updated with new valid proofs where possible.
    * Finally, a new beef is generated and verified against the chaintracker.
-   * 
-   * @param beef 
-   * @param allowTxidOnly 
-   * @returns 
+   *
+   * @param beef
+   * @param allowTxidOnly
+   * @returns
    */
   async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<boolean> {
     throw new sdk.WERR_NOT_IMPLEMENTED()
@@ -587,10 +587,7 @@ export class WalletStorageManager implements sdk.WalletStorage {
 
     const invalidRoots: Record<number, string> = {}
     for (const height of Object.keys(r.roots)) {
-      const isValid = await chaintracker.isValidRootForHeight(
-        r.roots[height],
-        Number(height)
-      )
+      const isValid = await chaintracker.isValidRootForHeight(r.roots[height], Number(height))
       if (!isValid) {
         invalidRoots[height] = r.roots[height]
       }
@@ -619,10 +616,10 @@ export class WalletStorageManager implements sdk.WalletStorage {
    * If a new valid proof is found and noUpdate is not true,
    * update the proven_txs record with new block and merkle proof data.
    * If noUpdate is true, the update to be applied is available in the returned result.
-   * 
+   *
    * @param ptx proven_txs record to reprove
-   * @param noUpdate 
-   * @returns 
+   * @param noUpdate
+   * @returns
    */
   async reproveProven(ptx: TableProvenTx, noUpdate?: boolean): Promise<sdk.ReproveProvenResult> {
     const r: sdk.ReproveProvenResult = { log: '', updated: undefined, unchanged: false, unavailable: false }
@@ -672,8 +669,8 @@ export class WalletStorageManager implements sdk.WalletStorage {
 
     if (r.updated && !noUpdate) {
       await this.runAsStorageProvider(async sp => {
-          await sp.updateProvenTx(ptx.provenTxId, r.updated!.update)
-          r.log += `    txid ${ptx.txid} proof data updated\n` + r.updated!.logUpdate
+        await sp.updateProvenTx(ptx.provenTxId, r.updated!.update)
+        r.log += `    txid ${ptx.txid} proof data updated\n` + r.updated!.logUpdate
       })
     }
 

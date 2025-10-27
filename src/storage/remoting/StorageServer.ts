@@ -14,6 +14,7 @@ import { StorageProvider } from '../StorageProvider'
 import { WERR_UNAUTHORIZED } from '../../sdk/WERR_errors'
 import { SyncChunk } from '../../sdk/WalletStorage.interfaces'
 import { EntityTimeStamp } from '../../sdk/types'
+import { WalletError } from '../../sdk/WalletError'
 
 export interface WalletStorageServerOptions {
   port: number
@@ -165,19 +166,20 @@ export class StorageServer {
             id
           })
         }
-      } catch (error) {
-        // Catch any thrown errors from the local walletStorage method
-        const err = error as Error
+      } catch (error: unknown) {
+        /**
+         * Catch any thrown errors from the local walletStorage method.
+         *
+         * Convert errors to standard JSON object format that can be converted
+         * back to WalletError derived objects on the client side and re-thrown.
+         *
+         * Uses WalletError.fromJson(<error object>) on the client side to re-create
+         * an error object of the right class and properties.
+         */
+        const json = WalletError.unknownToJson(error)
         return res.status(200).json({
           jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: err.message,
-            data: {
-              name: err.name,
-              stack: err.stack
-            }
-          },
+          error: JSON.parse(json),
           id
         })
       }
