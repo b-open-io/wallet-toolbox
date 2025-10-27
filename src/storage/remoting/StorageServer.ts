@@ -169,10 +169,10 @@ export class StorageServer {
       } catch (error: unknown) {
         /**
          * Catch any thrown errors from the local walletStorage method.
-         * 
+         *
          * Convert errors to standard JSON object format that can be converted
          * back to WalletError derived objects on the client side and re-thrown.
-         * 
+         *
          * Uses WalletError.fromJson(<error object>) on the client side to re-create
          * an error object of the right class and properties.
          */

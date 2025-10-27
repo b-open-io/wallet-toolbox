@@ -1,8 +1,4 @@
-import {
-  ErrorCodeString10To40Bytes,
-  ErrorDescriptionString20To200Bytes,
-  WalletErrorObject
-} from '@bsv/sdk'
+import { ErrorCodeString10To40Bytes, ErrorDescriptionString20To200Bytes, WalletErrorObject } from '@bsv/sdk'
 
 /**
  * Derived class constructors should use the derived class name as the value for `name`,
@@ -60,7 +56,7 @@ export class WalletError extends Error implements WalletErrorObject {
   static fromUnknown(err: unknown): WalletError {
     if (err instanceof WalletError) return err
     let name = 'WERR_UNKNOWN'
-    let message = ''
+    let message = typeof err === 'string' ? err : typeof err === 'number' ? err.toString() : ''
     let stack: string | undefined
     const details: Record<string, string> = {}
     if (err !== null && typeof err === 'object') {
@@ -124,31 +120,34 @@ export class WalletError extends Error implements WalletErrorObject {
   /**
    * Base class default JSON serialization.
    * Captures just the name and message properties.
-   * 
+   *
    * Override this method to safely (avoid deep, large, circular issues) serialize
    * derived class properties.
-   * 
+   *
    * @returns stringified JSON representation of the WalletError.
    */
   protected toJson(): string {
-      const e = new WalletError(this.name, this.message)
-      const json = JSON.stringify(e)
-      return json
+    const e = new WalletError(this.name, this.message)
+    const json = JSON.stringify({
+      isError: true,
+      name: e.name,
+      message: e.message
+    })
+    return json
   }
 
   /**
    * Safely serializes a WalletError derived, WERR_REVIEW_ACTIONS (special case), Error or unknown error to JSON.
-   * 
+   *
    * Safely means avoiding deep, large, circular issues.
-   * 
-   * @param error 
+   *
+   * @param error
    * @returns stringified JSON representation of the error such that it can be desirialized to a WalletError.
    */
   static unknownToJson(error: unknown | WalletError): string {
     let json: string | undefined
     let e: WalletError | undefined
-    if (error instanceof WalletError
-      || (typeof error === 'object' && error?.constructor.name.startsWith('WERR_'))) {
+    if (error instanceof WalletError || (typeof error === 'object' && error?.constructor.name.startsWith('WERR_'))) {
       e = error as WalletError
     } else if (error instanceof Error) {
       e = new WalletError(error.name, error.message)
@@ -158,5 +157,4 @@ export class WalletError extends Error implements WalletErrorObject {
     json = e.toJson()
     return json
   }
-
 }

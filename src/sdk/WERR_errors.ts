@@ -1,10 +1,4 @@
-import {
-  AtomicBEEF,
-  OutpointString,
-  SendWithResult,
-  TXIDHexString,
-  WalletNetwork
-} from '@bsv/sdk'
+import { AtomicBEEF, OutpointString, SendWithResult, TXIDHexString, WalletNetwork } from '@bsv/sdk'
 import { WalletError } from './WalletError'
 import { ReviewActionResult } from './WalletStorage.interfaces'
 
