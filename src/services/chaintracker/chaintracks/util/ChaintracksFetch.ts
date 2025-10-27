@@ -12,20 +12,27 @@ export class ChaintracksFetch implements ChaintracksFetchApi {
   constructor() {}
 
   async download(url: string): Promise<Uint8Array> {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/octet-stream'
+    for (let retry = 0; ; retry++) {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        }
+      })
+
+      if (!response.ok) {
+        if (response.statusText === 'Too Many Requests' && retry < 3) {
+          // WhatsOnChain rate limits requests, so backoff and retry
+          await wait(1000 * (retry + 1))
+          continue
+        }
+        throw new Error(`Failed to download from ${url}: ${response.statusText}`)
       }
-    })
 
-    if (!response.ok) {
-      throw new Error(`Failed to download from ${url}: ${response.statusText}`)
+      const data = await response.arrayBuffer()
+
+      return new Uint8Array(data)
     }
-
-    const data = await response.arrayBuffer()
-
-    return new Uint8Array(data)
   }
 
   async fetchJson<R>(url: string): Promise<R> {
