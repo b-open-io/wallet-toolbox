@@ -1,4 +1,5 @@
 export * from './WalletError'
+export * from './WalletErrorFromJson'
 export * from './WalletSigner.interfaces'
 export * from './WalletStorage.interfaces'
 export * from './WERR_errors'

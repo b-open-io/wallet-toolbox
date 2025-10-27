@@ -44,6 +44,8 @@ import { TableOutputBasket } from '../schema/tables/TableOutputBasket'
 import { TableOutput } from '../schema/tables/TableOutput'
 import { TableProvenTxReq } from '../schema/tables/TableProvenTxReq'
 import { EntityTimeStamp } from '../../sdk/types'
+import { WalletError } from '../../sdk/WalletError'
+import { WalletErrorFromJson } from '../../sdk/WalletErrorFromJson'
 
 /**
  * `StorageClient` implements the `WalletStorageProvider` interface which allows it to
@@ -118,12 +120,8 @@ export class StorageClient implements WalletStorageProvider {
 
       const json = await response.json()
       if (json.error) {
-        const { code, message, data } = json.error
-        const err = new Error(`RPC Error: ${message}`)
-        // You could attach more info here if you like:
-        ;(err as any).code = code
-        ;(err as any).data = data
-        throw err
+        const werr = WalletErrorFromJson(json.error)
+        throw werr
       }
 
       return json.result
