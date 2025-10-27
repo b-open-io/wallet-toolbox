@@ -4,6 +4,13 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.34
+
+- Change StorageServer / StorageClient to rethrow WERR errors including WERR_REVIEW_ACTIONS
+- Change ChaintracksChainTracker to default to new public services.
+- Add WalletError.test.ts and resolve issues related to WERR_errors
+- Add retry support to ChaintracksFetch download method to handle WoC rate limits.
+
 ## wallet-toolbox 1.6.33
 
 - Add schema migration: outputs spendable index.
