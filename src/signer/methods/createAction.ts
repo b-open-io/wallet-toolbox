@@ -44,7 +44,7 @@ export async function createAction(
 
   let prior: PendingSignAction | undefined = undefined
 
-  if (vargs.isNewTx) {
+  if (vargs.isNewTx || vargs.isTestWerrReviewActions) {
     prior = await createNewTx(wallet, vargs)
 
     if (vargs.isSignAction) {

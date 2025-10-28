@@ -44,7 +44,7 @@ import {
   Utils,
   WalletPayment
 } from '@bsv/sdk'
-import { OutPoint } from './types'
+import { OutPoint, specOpThrowReviewActions } from './types'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from './WERR_errors'
 
 export function parseWalletOutpoint(outpoint: string): {
@@ -327,6 +327,8 @@ export interface ValidProcessActionArgs extends ValidWalletSignerArgs {
   isNoSend: boolean
   // true if options.acceptDelayedBroadcast is true
   isDelayed: boolean
+  // true if WERR_REVIEW_ACTIONS should be thrown to test review actions handling
+  isTestWerrReviewActions: boolean
 }
 
 export interface ValidCreateActionArgs extends ValidProcessActionArgs {
@@ -357,6 +359,13 @@ export interface ValidSignActionArgs extends ValidProcessActionArgs {
   options: ValidSignActionOptions
 }
 
+/**
+ * Validate the arguments for creating a new action.
+ * 
+ * @param args 
+ * @returns validated arguments
+ * @throws primarily WERR_INVALID_PARAMETER if args are invalid.
+ */
 export function validateCreateActionArgs(args: CreateActionArgs): ValidCreateActionArgs {
   const vargs: ValidCreateActionArgs = {
     description: validateStringLength(args.description, 'description', 5, 2000),
@@ -374,8 +383,10 @@ export function validateCreateActionArgs(args: CreateActionArgs): ValidCreateAct
     isRemixChange: false,
     isSignAction: false,
     randomVals: undefined,
-    includeAllSourceTransactions: false
+    includeAllSourceTransactions: false,
+    isTestWerrReviewActions: false
   }
+  vargs.isTestWerrReviewActions = vargs.labels.indexOf(specOpThrowReviewActions) >= 0
   vargs.isSendWith = vargs.options.sendWith.length > 0
   vargs.isRemixChange = !vargs.isSendWith && vargs.inputs.length === 0 && vargs.outputs.length === 0
   vargs.isNewTx = vargs.isRemixChange || vargs.inputs.length > 0 || vargs.outputs.length > 0
@@ -413,7 +424,8 @@ export function validateSignActionArgs(args: SignActionArgs): ValidSignActionArg
     isDelayed: false,
     isNoSend: false,
     isNewTx: true,
-    isRemixChange: false
+    isRemixChange: false,
+    isTestWerrReviewActions: false
   }
   vargs.isSendWith = vargs.options.sendWith.length > 0
   vargs.isDelayed = vargs.options.acceptDelayedBroadcast

@@ -52,6 +52,7 @@ import { asArray, asString } from '../../utility/utilityHelpers.noBuffer'
 import { TableOutputTag } from '../schema/tables/TableOutputTag'
 import { TableTransaction } from '../schema/tables/TableTransaction'
 import { EntityProvenTx } from '../schema/entities/EntityProvenTx'
+import { throwDummyReviewActions } from '../../Wallet'
 
 let disableDoubleSpendCheckForTest = true
 export function setDisableDoubleSpendCheckForTest(v: boolean) {
@@ -65,6 +66,8 @@ export async function createAction(
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<StorageCreateActionResult> {
   //stampLog(vargs, `start storage createTransactionSdk`)
+
+  if (vargs.isTestWerrReviewActions) throwDummyReviewActions()
 
   if (!vargs.isNewTx)
     // The purpose of this function is to create the initial storage records associated
