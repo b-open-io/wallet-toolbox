@@ -7302,6 +7302,7 @@ export interface ValidProcessActionArgs extends ValidWalletSignerArgs {
     isRemixChange: boolean;
     isNoSend: boolean;
     isDelayed: boolean;
+    isTestWerrReviewActions: boolean;
 }
 ```
 
@@ -16123,60 +16124,61 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [WalletErrorFromJson](#function-walleterrorfromjson) | [internalizeAction](#function-internalizeaction) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) |
-| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
-| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isBlockHeader](#function-isblockheader) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
-| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateBasketInsertion](#function-validatebasketinsertion) |
-| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isHexString](#function-ishexstring) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
-| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBulkFileData](#function-validatebulkfiledata) |
-| [addWork](#function-addwork) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
-| [arcDefaultUrl](#function-arcdefaulturl) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionInput](#function-validatecreateactioninput) |
-| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLive](#function-islive) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
-| [arraysEqual](#function-arraysequal) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
-| [asArray](#function-asarray) | [isMoreWork](#function-ismorework) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
-| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
-| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listCertificates](#function-listcertificates) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
-| [asBsvSdkScript](#function-asbsvsdkscript) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
-| [asBsvSdkTx](#function-asbsvsdktx) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenesisHeader](#function-validategenesisheader) |
-| [asString](#function-asstring) | [makeAtomicBeef](#function-makeatomicbeef) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
-| [asUint8Array](#function-asuint8array) | [makeChangeLock](#function-makechangelock) | [validateHeaderFormat](#function-validateheaderformat) |
-| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [maxDate](#function-maxdate) | [validateInteger](#function-validateinteger) |
-| [blockHash](#function-blockhash) | [offsetPubKey](#function-offsetpubkey) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
-| [buildSignableTransaction](#function-buildsignabletransaction) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
-| [completeSignedTransaction](#function-completesignedtransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateListActionsArgs](#function-validatelistactionsargs) |
-| [convertBitsToTarget](#function-convertbitstotarget) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
-| [convertBitsToWork](#function-convertbitstowork) | [processAction](#function-processaction) | [validateListOutputsArgs](#function-validatelistoutputsargs) |
-| [convertBufferToUint32](#function-convertbuffertouint32) | [processAction](#function-processaction) | [validateOptionalInteger](#function-validateoptionalinteger) |
-| [convertProofToMerklePath](#function-convertprooftomerklepath) | [proveCertificate](#function-provecertificate) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
-| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [purgeDataIdb](#function-purgedataidb) | [validateOriginator](#function-validateoriginator) |
-| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytes](#function-randombytes) | [validateOutpointString](#function-validateoutpointstring) |
-| [createAction](#function-createaction) | [randomBytesBase64](#function-randombytesbase64) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
+| [WalletErrorFromJson](#function-walleterrorfromjson) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
+| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBlockHeader](#function-isblockheader) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
+| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateBasketInsertion](#function-validatebasketinsertion) |
+| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isHexString](#function-ishexstring) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
+| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBulkFileData](#function-validatebulkfiledata) |
+| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
+| [addWork](#function-addwork) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionInput](#function-validatecreateactioninput) |
+| [arcDefaultUrl](#function-arcdefaulturl) | [isLive](#function-islive) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
+| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
+| [arraysEqual](#function-arraysequal) | [isMoreWork](#function-ismorework) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
+| [asArray](#function-asarray) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
+| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listCertificates](#function-listcertificates) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
+| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
+| [asBsvSdkScript](#function-asbsvsdkscript) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenesisHeader](#function-validategenesisheader) |
+| [asBsvSdkTx](#function-asbsvsdktx) | [makeAtomicBeef](#function-makeatomicbeef) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
+| [asString](#function-asstring) | [makeChangeLock](#function-makechangelock) | [validateHeaderFormat](#function-validateheaderformat) |
+| [asUint8Array](#function-asuint8array) | [maxDate](#function-maxdate) | [validateInteger](#function-validateinteger) |
+| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [offsetPubKey](#function-offsetpubkey) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
+| [blockHash](#function-blockhash) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
+| [buildSignableTransaction](#function-buildsignabletransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateListActionsArgs](#function-validatelistactionsargs) |
+| [completeSignedTransaction](#function-completesignedtransaction) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
+| [convertBitsToTarget](#function-convertbitstotarget) | [processAction](#function-processaction) | [validateListOutputsArgs](#function-validatelistoutputsargs) |
+| [convertBitsToWork](#function-convertbitstowork) | [processAction](#function-processaction) | [validateOptionalInteger](#function-validateoptionalinteger) |
+| [convertBufferToUint32](#function-convertbuffertouint32) | [proveCertificate](#function-provecertificate) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
+| [convertProofToMerklePath](#function-convertprooftomerklepath) | [purgeDataIdb](#function-purgedataidb) | [validateOriginator](#function-validateoriginator) |
+| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [randomBytes](#function-randombytes) | [validateOutpointString](#function-validateoutpointstring) |
+| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytesBase64](#function-randombytesbase64) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
 | [createAction](#function-createaction) | [randomBytesHex](#function-randombyteshex) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
-| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
-| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
-| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [reviewStatusIdb](#function-reviewstatusidb) | [validateSatoshis](#function-validatesatoshis) |
-| [createIdbChaintracks](#function-createidbchaintracks) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateScriptHash](#function-validatescripthash) |
-| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
-| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSignActionArgs](#function-validatesignactionargs) |
-| [createSyncMap](#function-createsyncmap) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionOptions](#function-validatesignactionoptions) |
-| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256Hash](#function-sha256hash) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
-| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStringLength](#function-validatestringlength) |
-| [deserializeBlockHeader](#function-deserializeblockheader) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateWalletPayment](#function-validatewalletpayment) |
-| [deserializeBlockHeaders](#function-deserializeblockheaders) | [signAction](#function-signaction) | [varUintSize](#function-varuintsize) |
-| [doubleSha256BE](#function-doublesha256be) | [stampLog](#function-stamplog) | [verifyHexString](#function-verifyhexstring) |
-| [doubleSha256LE](#function-doublesha256le) | [stampLogFormat](#function-stamplogformat) | [verifyId](#function-verifyid) |
-| [generateChangeSdk](#function-generatechangesdk) | [subWork](#function-subwork) | [verifyInteger](#function-verifyinteger) |
-| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [swapByteOrder](#function-swapbyteorder) | [verifyNumber](#function-verifynumber) |
-| [genesisBuffer](#function-genesisbuffer) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyOne](#function-verifyone) |
-| [genesisHeader](#function-genesisheader) | [toWalletNetwork](#function-towalletnetwork) | [verifyOneOrNone](#function-verifyoneornone) |
-| [getBeefForTransaction](#function-getbeeffortransaction) | [transactionInputSize](#function-transactioninputsize) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
-| [getBeefForTxid](#function-getbeeffortxid) | [transactionOutputSize](#function-transactionoutputsize) | [verifyTruthy](#function-verifytruthy) |
-| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionSize](#function-transactionsize) | [verifyUnlockScripts](#function-verifyunlockscripts) |
-| [getIdentityKey](#function-getidentitykey) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [wait](#function-wait) |
-| [getProofs](#function-getproofs) | [updateExchangeratesapi](#function-updateexchangeratesapi) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
-| [getSyncChunk](#function-getsyncchunk) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) | [workBNtoBuffer](#function-workbntobuffer) |
-| [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateAbortActionArgs](#function-validateabortactionargs) | [writeUInt32BE](#function-writeuint32be) |
-| [internalizeAction](#function-internalizeaction) | [validateAcquireCertificateArgs](#function-validateacquirecertificateargs) | [writeUInt32LE](#function-writeuint32le) |
+| [createAction](#function-createaction) | [readUInt32BE](#function-readuint32be) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
+| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
+| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [reviewStatusIdb](#function-reviewstatusidb) | [validateSatoshis](#function-validatesatoshis) |
+| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateScriptHash](#function-validatescripthash) |
+| [createIdbChaintracks](#function-createidbchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
+| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSignActionArgs](#function-validatesignactionargs) |
+| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionOptions](#function-validatesignactionoptions) |
+| [createSyncMap](#function-createsyncmap) | [sha256Hash](#function-sha256hash) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
+| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStringLength](#function-validatestringlength) |
+| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateWalletPayment](#function-validatewalletpayment) |
+| [deserializeBlockHeader](#function-deserializeblockheader) | [signAction](#function-signaction) | [varUintSize](#function-varuintsize) |
+| [deserializeBlockHeaders](#function-deserializeblockheaders) | [stampLog](#function-stamplog) | [verifyHexString](#function-verifyhexstring) |
+| [doubleSha256BE](#function-doublesha256be) | [stampLogFormat](#function-stamplogformat) | [verifyId](#function-verifyid) |
+| [doubleSha256LE](#function-doublesha256le) | [subWork](#function-subwork) | [verifyInteger](#function-verifyinteger) |
+| [generateChangeSdk](#function-generatechangesdk) | [swapByteOrder](#function-swapbyteorder) | [verifyNumber](#function-verifynumber) |
+| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [throwDummyReviewActions](#function-throwdummyreviewactions) | [verifyOne](#function-verifyone) |
+| [genesisBuffer](#function-genesisbuffer) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyOneOrNone](#function-verifyoneornone) |
+| [genesisHeader](#function-genesisheader) | [toWalletNetwork](#function-towalletnetwork) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
+| [getBeefForTransaction](#function-getbeeffortransaction) | [transactionInputSize](#function-transactioninputsize) | [verifyTruthy](#function-verifytruthy) |
+| [getBeefForTxid](#function-getbeeffortxid) | [transactionOutputSize](#function-transactionoutputsize) | [verifyUnlockScripts](#function-verifyunlockscripts) |
+| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionSize](#function-transactionsize) | [wait](#function-wait) |
+| [getIdentityKey](#function-getidentitykey) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
+| [getProofs](#function-getproofs) | [updateExchangeratesapi](#function-updateexchangeratesapi) | [workBNtoBuffer](#function-workbntobuffer) |
+| [getSyncChunk](#function-getsyncchunk) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) | [writeUInt32BE](#function-writeuint32be) |
+| [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateAbortActionArgs](#function-validateabortactionargs) | [writeUInt32LE](#function-writeuint32le) |
+| [internalizeAction](#function-internalizeaction) | [validateAcquireCertificateArgs](#function-validateacquirecertificateargs) |  |
+| [internalizeAction](#function-internalizeaction) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -16709,10 +16711,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Function: createAction
 
 ```ts
-export async function createAction(storage: StorageProvider, auth: AuthId, vargs: ValidCreateActionArgs, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<StorageCreateActionResult> 
+export async function createAction(wallet: Wallet, auth: AuthId, vargs: ValidCreateActionArgs): Promise<CreateActionResultX> 
 ```
 
-See also: [AuthId](./client.md#interface-authid), [StorageCreateActionResult](./client.md#interface-storagecreateactionresult), [StorageProvider](./storage.md#class-storageprovider), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs)
+See also: [AuthId](./client.md#interface-authid), [CreateActionResultX](./client.md#interface-createactionresultx), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs), [Wallet](./client.md#class-wallet)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -16720,10 +16722,10 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ##### Function: createAction
 
 ```ts
-export async function createAction(wallet: Wallet, auth: AuthId, vargs: ValidCreateActionArgs): Promise<CreateActionResultX> 
+export async function createAction(storage: StorageProvider, auth: AuthId, vargs: ValidCreateActionArgs, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<StorageCreateActionResult> 
 ```
 
-See also: [AuthId](./client.md#interface-authid), [CreateActionResultX](./client.md#interface-createactionresultx), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs), [Wallet](./client.md#class-wallet)
+See also: [AuthId](./client.md#interface-authid), [StorageCreateActionResult](./client.md#interface-storagecreateactionresult), [StorageProvider](./storage.md#class-storageprovider), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -17155,13 +17157,13 @@ When the transaction already exists, the description is updated. The isOutgoing 
 
 "wallet payment" Merge Rules:
 1. Targetting an existing change "default" basket output results in a no-op. No error. No alterations made.
-2. Targetting a previously "custom" non-change output converts it into a change output. This alters the transaction's `satoshis`, and the wallet balance.
+2. Targetting a previously "custom" non-change output converts it into a change output. This alters the transaction's `amount`, and the wallet balance.
 
 ```ts
-export async function internalizeAction(storage: StorageProvider, auth: AuthId, args: InternalizeActionArgs): Promise<StorageInternalizeActionResult> 
+export async function internalizeAction(wallet: Wallet, auth: AuthId, args: InternalizeActionArgs): Promise<StorageInternalizeActionResult> 
 ```
 
-See also: [AuthId](./client.md#interface-authid), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [StorageProvider](./storage.md#class-storageprovider)
+See also: [AuthId](./client.md#interface-authid), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [Wallet](./client.md#class-wallet)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -17191,13 +17193,13 @@ When the transaction already exists, the description is updated. The isOutgoing 
 
 "wallet payment" Merge Rules:
 1. Targetting an existing change "default" basket output results in a no-op. No error. No alterations made.
-2. Targetting a previously "custom" non-change output converts it into a change output. This alters the transaction's `amount`, and the wallet balance.
+2. Targetting a previously "custom" non-change output converts it into a change output. This alters the transaction's `satoshis`, and the wallet balance.
 
 ```ts
-export async function internalizeAction(wallet: Wallet, auth: AuthId, args: InternalizeActionArgs): Promise<StorageInternalizeActionResult> 
+export async function internalizeAction(storage: StorageProvider, auth: AuthId, args: InternalizeActionArgs): Promise<StorageInternalizeActionResult> 
 ```
 
-See also: [AuthId](./client.md#interface-authid), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [Wallet](./client.md#class-wallet)
+See also: [AuthId](./client.md#interface-authid), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [StorageProvider](./storage.md#class-storageprovider)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -17859,6 +17861,17 @@ new buffer with byte order reversed.
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Function: throwDummyReviewActions
+
+Throws a WERR_REVIEW_ACTIONS with a full set of properties to test data formats and propagation.
+
+```ts
+export function throwDummyReviewActions() 
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Function: toBinaryBaseBlockHeader
 
 Serializes a block header as an 80 byte array.
@@ -18132,11 +18145,21 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Function: validateCreateActionArgs
 
+Validate the arguments for creating a new action.
+
 ```ts
 export function validateCreateActionArgs(args: CreateActionArgs): ValidCreateActionArgs 
 ```
 
 See also: [ValidCreateActionArgs](./client.md#interface-validcreateactionargs)
+
+Returns
+
+validated arguments
+
+Throws
+
+primarily WERR_INVALID_PARAMETER if args are invalid.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 

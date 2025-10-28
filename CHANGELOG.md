@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.35
+
+- Change specOp WERR_REVIEW_ACTIONS throw to storage layer.
+
 ## wallet-toolbox 1.6.34
 
 - Change StorageServer / StorageClient to rethrow WERR errors including WERR_REVIEW_ACTIONS

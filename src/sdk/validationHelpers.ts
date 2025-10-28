@@ -361,8 +361,8 @@ export interface ValidSignActionArgs extends ValidProcessActionArgs {
 
 /**
  * Validate the arguments for creating a new action.
- * 
- * @param args 
+ *
+ * @param args
  * @returns validated arguments
  * @throws primarily WERR_INVALID_PARAMETER if args are invalid.
  */

@@ -19,8 +19,7 @@ export class ChaintracksChainTracker implements ChainTracker {
   constructor(chain?: Chain, chaintracks?: ChaintracksClientApi, options?: ChaintracksChainTrackerOptions) {
     chain ||= 'main'
     this.chaintracks =
-      chaintracks ??
-      new ChaintracksServiceClient(chain, `https://${chain}net-chaintracks.babbage.systems`)
+      chaintracks ?? new ChaintracksServiceClient(chain, `https://${chain}net-chaintracks.babbage.systems`)
     this.cache = {}
     this.options = options || {}
   }
