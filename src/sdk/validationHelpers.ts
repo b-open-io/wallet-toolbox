@@ -165,20 +165,66 @@ function validateOptionalBase64String(
   return validateBase64String(s, name, min, max)
 }
 
-function validateBase64String(s: string, name: string, min?: number, max?: number): string {
-  // Remove any whitespace and check if the string length is valid for Base64
+/**
+ * Validate a Base64 string (structure and decoded size).
+ *
+ * @param s - base64 string
+ * @param name - parameter name used in error messages
+ * @param min - optional minimum decoded byte length
+ * @param max - optional maximum decoded byte length
+ * @returns validated base64 string
+ * @throws WERR_INVALID_PARAMETER when invalid
+ */
+export function validateBase64String (s: string, name: string, min?: number, max?: number): string {
   s = s.trim()
-  const base64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
-  const paddingMatch = /=+$/.exec(s)
-  const paddingCount = paddingMatch ? paddingMatch[0].length : 0
-
-  if (paddingCount > 2 || (s.length % 4 !== 0 && paddingCount !== 0) || !base64Regex.test(s)) {
-    throw new WERR_INVALID_PARAMETER(name, `balid base64 string`)
+  if (s.length === 0) {
+    throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
   }
 
-  const bytes = Utils.toArray(s, 'base64').length
-  if (min !== undefined && bytes < min) throw new WERR_INVALID_PARAMETER(name, `at least ${min} length.`)
-  if (max !== undefined && bytes > max) throw new WERR_INVALID_PARAMETER(name, `no more than ${max} length.`)
+  let paddingCount = 0
+  let validCharCount = 0
+
+  for (let i = 0; i < s.length; i++) {
+    const char = s.charCodeAt(i)
+    if (char >= 65 && char <= 90) continue // A-Z
+    if (char >= 97 && char <= 122) continue // a-z
+    if (char >= 48 && char <= 57) continue // 0-9
+    if (char === 43) continue // +
+    if (char === 47) continue // /
+    if (char === 61) { // =
+      if (i < s.length - 2) {
+        throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
+      }
+      paddingCount++
+      continue
+    }
+    throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
+  }
+
+  // Padding rules
+  if (paddingCount > 2) {
+    throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
+  }
+  if (paddingCount > 0 && s.length % 4 !== 0) {
+    throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
+  }
+
+  // Length must be multiple of 4 if no padding, or valid with padding
+  const mod = s.length % 4
+  if (mod !== 0 && mod !== (4 - paddingCount)) {
+    throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
+  }
+
+  // Calculate decoded byte length: (valid chars * 6) / 8
+  const encodedLength = s.length - paddingCount
+  const bytes = Math.floor(encodedLength * 3 / 4)
+
+  if (min !== undefined && bytes < min) {
+    throw new WERR_INVALID_PARAMETER(name, `at least ${min} bytes`)
+  }
+  if (max !== undefined && bytes > max) {
+    throw new WERR_INVALID_PARAMETER(name, `no more than ${max} bytes`)
+  }
 
   return s
 }
@@ -513,6 +559,7 @@ export function validateOriginator(s?: string): string | undefined {
   for (const sp of sps) {
     validateStringLength(sp, 'originator part', 1, 63)
   }
+  return s
 }
 
 export function validateInternalizeActionArgs(args: InternalizeActionArgs): ValidInternalizeActionArgs {
