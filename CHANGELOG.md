@@ -4,6 +4,11 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.37
+
+- Change validationHelpers validateBase64String now polynomial time, sync changes on bsv/sdk
+- Change log throw of dummy WERR_REVIEW_ACTIONS.
+
 ## wallet-toolbox 1.6.35
 
 - Change specOp WERR_REVIEW_ACTIONS throw to storage layer.

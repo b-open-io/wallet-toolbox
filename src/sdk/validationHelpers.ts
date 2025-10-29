@@ -175,7 +175,7 @@ function validateOptionalBase64String(
  * @returns validated base64 string
  * @throws WERR_INVALID_PARAMETER when invalid
  */
-export function validateBase64String (s: string, name: string, min?: number, max?: number): string {
+export function validateBase64String(s: string, name: string, min?: number, max?: number): string {
   s = s.trim()
   if (s.length === 0) {
     throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
@@ -191,7 +191,8 @@ export function validateBase64String (s: string, name: string, min?: number, max
     if (char >= 48 && char <= 57) continue // 0-9
     if (char === 43) continue // +
     if (char === 47) continue // /
-    if (char === 61) { // =
+    if (char === 61) {
+      // =
       if (i < s.length - 2) {
         throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
       }
@@ -211,13 +212,13 @@ export function validateBase64String (s: string, name: string, min?: number, max
 
   // Length must be multiple of 4 if no padding, or valid with padding
   const mod = s.length % 4
-  if (mod !== 0 && mod !== (4 - paddingCount)) {
+  if (mod !== 0 && mod !== 4 - paddingCount) {
     throw new WERR_INVALID_PARAMETER(name, 'valid base64 string')
   }
 
   // Calculate decoded byte length: (valid chars * 6) / 8
   const encodedLength = s.length - paddingCount
-  const bytes = Math.floor(encodedLength * 3 / 4)
+  const bytes = Math.floor((encodedLength * 3) / 4)
 
   if (min !== undefined && bytes < min) {
     throw new WERR_INVALID_PARAMETER(name, `at least ${min} bytes`)
