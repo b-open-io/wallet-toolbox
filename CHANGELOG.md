@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.38
+
+- Update to @bsv/sdk 1.8.10
+
 ## wallet-toolbox 1.6.37
 
 - Change validationHelpers validateBase64String now polynomial time, sync changes on bsv/sdk
