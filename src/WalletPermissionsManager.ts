@@ -103,6 +103,7 @@ export type GroupedPermissionEventHandler = (request: GroupedPermissionRequest) 
 export interface PermissionRequest {
   type: 'protocol' | 'basket' | 'certificate' | 'spending'
   originator: string // The domain or FQDN of the requesting application
+  displayOriginator?: string // Optional raw/original originator string for UI purposes
   privileged?: boolean // For "protocol" or "certificate" usage, indicating privileged key usage
   protocolID?: WalletProtocol // For type='protocol': BRC-43 style (securityLevel, protocolName)
   counterparty?: string // For type='protocol': e.g. target public key or "self"/"anyone"
@@ -165,6 +166,13 @@ export interface PermissionToken {
 
   /** The originator domain or FQDN that is allowed to use this permission. */
   originator: string
+
+  /**
+   * The raw, unnormalized originator string captured at the time the permission
+   * token was created. This is preserved so we can continue to recognize legacy
+   * permissions that were stored with different casing or explicit default ports.
+   */
+  rawOriginator?: string
 
   /** The expiration time for this token in UNIX epoch seconds. (0 or omitted for spending authorizations, which are indefinite) */
   expiry: number
@@ -409,6 +417,12 @@ export class WalletPermissionsManager implements WalletInterface {
   /** How long a cached permission remains valid (5 minutes). */
   private static readonly CACHE_TTL_MS = 5 * 60 * 1000
 
+  /** Default ports used when normalizing originator values. */
+  private static readonly DEFAULT_PORTS: Record<string, string> = {
+    'http:': '80',
+    'https:': '443'
+  }
+
   /**
    * Configuration that determines whether to skip or apply various checks and encryption.
    */
@@ -423,7 +437,7 @@ export class WalletPermissionsManager implements WalletInterface {
    */
   constructor(underlyingWallet: WalletInterface, adminOriginator: string, config: PermissionsManagerConfig = {}) {
     this.underlying = underlyingWallet
-    this.adminOriginator = adminOriginator
+    this.adminOriginator = this.normalizeOriginator(adminOriginator) || adminOriginator
 
     // Default all config options to true unless specified
     this.config = {
@@ -616,8 +630,13 @@ export class WalletPermissionsManager implements WalletInterface {
       throw new Error('Request ID not found.')
     }
 
-    const originalRequest = matching.request as { originator: string; permissions: GroupedPermissions }
-    const { originator, permissions: requestedPermissions } = originalRequest
+    const originalRequest = matching.request as {
+      originator: string
+      permissions: GroupedPermissions
+      displayOriginator?: string
+    }
+    const { originator, permissions: requestedPermissions, displayOriginator } = originalRequest
+    const originLookupValues = this.buildOriginatorLookupValues(displayOriginator, originator)
 
     // --- Validation: Ensure granted permissions are a subset of what was requested ---
     if (
@@ -663,7 +682,8 @@ export class WalletPermissionsManager implements WalletInterface {
         false, // No privileged protocols allowed in groups for added security.
         p.protocolID,
         p.counterparty || 'self',
-        true
+        true,
+        originLookupValues
       )
       if (token) {
         await this.renewPermissionOnChain(
@@ -764,6 +784,8 @@ export class WalletPermissionsManager implements WalletInterface {
     seekPermission?: boolean
     usageType: 'signing' | 'encrypting' | 'hmac' | 'publicKey' | 'identityKey' | 'linkageRevelation' | 'generic'
   }): Promise<boolean> {
+    const { normalized: normalizedOriginator, lookupValues } = this.prepareOriginator(originator)
+    originator = normalizedOriginator
     // 1) adminOriginator can do anything
     if (this.isAdminOriginator(originator)) return true
 
@@ -816,7 +838,8 @@ export class WalletPermissionsManager implements WalletInterface {
       privileged,
       protocolID,
       counterparty,
-      /*includeExpired=*/ true
+      /*includeExpired=*/ true,
+      lookupValues
     )
     if (token) {
       if (!this.isTokenExpired(token.expiry)) {
@@ -874,6 +897,8 @@ export class WalletPermissionsManager implements WalletInterface {
     seekPermission?: boolean
     usageType: 'insertion' | 'removal' | 'listing'
   }): Promise<boolean> {
+    const { normalized: normalizedOriginator, lookupValues } = this.prepareOriginator(originator)
+    originator = normalizedOriginator
     if (this.isAdminOriginator(originator)) return true
     if (this.isAdminBasket(basket)) {
       throw new Error(`Basket “${basket}” is admin-only.`)
@@ -885,7 +910,7 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isPermissionCached(cacheKey)) {
       return true
     }
-    const token = await this.findBasketToken(originator, basket, true)
+    const token = await this.findBasketToken(originator, basket, true, lookupValues)
     if (token) {
       if (!this.isTokenExpired(token.expiry)) {
         this.cachePermission(cacheKey, token.expiry)
@@ -942,6 +967,8 @@ export class WalletPermissionsManager implements WalletInterface {
     seekPermission?: boolean
     usageType: 'disclosure'
   }): Promise<boolean> {
+    const { normalized: normalizedOriginator, lookupValues } = this.prepareOriginator(originator)
+    originator = normalizedOriginator
     if (this.isAdminOriginator(originator)) return true
     if (usageType === 'disclosure' && !this.config.seekCertificateDisclosurePermissions) {
       return true
@@ -964,7 +991,8 @@ export class WalletPermissionsManager implements WalletInterface {
       verifier,
       certType,
       fields,
-      /*includeExpired=*/ true
+      /*includeExpired=*/ true,
+      lookupValues
     )
     if (token) {
       if (!this.isTokenExpired(token.expiry)) {
@@ -1021,6 +1049,8 @@ export class WalletPermissionsManager implements WalletInterface {
     reason?: string
     seekPermission?: boolean
   }): Promise<boolean> {
+    const { normalized: normalizedOriginator, lookupValues } = this.prepareOriginator(originator)
+    originator = normalizedOriginator
     if (this.isAdminOriginator(originator)) return true
     if (!this.config.seekSpendingPermissions) {
       // We skip spending permission entirely
@@ -1030,7 +1060,7 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isPermissionCached(cacheKey)) {
       return true
     }
-    const token = await this.findSpendingToken(originator)
+    const token = await this.findSpendingToken(originator, lookupValues)
     if (token?.authorizedAmount) {
       // Check how much has been spent so far
       const spentSoFar = await this.querySpentSince(token)
@@ -1085,6 +1115,8 @@ export class WalletPermissionsManager implements WalletInterface {
     seekPermission?: boolean
     usageType: 'apply' | 'list'
   }): Promise<boolean> {
+    const { normalized: normalizedOriginator } = this.prepareOriginator(originator)
+    originator = normalizedOriginator
     // 1) adminOriginator can do anything
     if (this.isAdminOriginator(originator)) return true
 
@@ -1131,7 +1163,13 @@ export class WalletPermissionsManager implements WalletInterface {
    *   and return a promise that resolves once permission is granted or rejects if denied.
    */
   private async requestPermissionFlow(r: PermissionRequest): Promise<boolean> {
-    const key = this.buildRequestKey(r)
+    const normalizedOriginator = this.normalizeOriginator(r.originator) || r.originator
+    const preparedRequest: PermissionRequest = {
+      ...r,
+      originator: normalizedOriginator,
+      displayOriginator: r.displayOriginator ?? r.originator
+    }
+    const key = this.buildRequestKey(preparedRequest)
 
     // If there's already a queue for the same resource, we piggyback on it
     const existingQueue = this.activeRequests.get(key)
@@ -1145,33 +1183,33 @@ export class WalletPermissionsManager implements WalletInterface {
     // Return a promise that resolves or rejects once the user grants/denies
     return new Promise<boolean>(async (resolve, reject) => {
       this.activeRequests.set(key, {
-        request: r,
+        request: preparedRequest,
         pending: [{ resolve, reject }]
       })
 
       // Fire the relevant onXXXRequested event (which one depends on r.type)
-      switch (r.type) {
+      switch (preparedRequest.type) {
         case 'protocol':
           await this.callEvent('onProtocolPermissionRequested', {
-            ...r,
+            ...preparedRequest,
             requestID: key
           })
           break
         case 'basket':
           await this.callEvent('onBasketAccessRequested', {
-            ...r,
+            ...preparedRequest,
             requestID: key
           })
           break
         case 'certificate':
           await this.callEvent('onCertificateAccessRequested', {
-            ...r,
+            ...preparedRequest,
             requestID: key
           })
           break
         case 'spending':
           await this.callEvent('onSpendingAuthorizationRequested', {
-            ...r,
+            ...preparedRequest,
             requestID: key
           })
           break
@@ -1286,74 +1324,84 @@ export class WalletPermissionsManager implements WalletInterface {
     privileged: boolean,
     protocolID: WalletProtocol,
     counterparty: string,
-    includeExpired: boolean
+    includeExpired: boolean,
+    originatorLookupValues?: string[]
   ): Promise<PermissionToken | undefined> {
     const [secLevel, protoName] = protocolID
-    const tags = [
-      `originator ${originator}`,
-      `privileged ${!!privileged}`,
-      `protocolName ${protoName}`,
-      `protocolSecurityLevel ${secLevel}`
-    ]
-    if (secLevel === 2) {
-      tags.push(`counterparty ${counterparty}`)
-    }
-    const result = await this.underlying.listOutputs(
-      {
-        basket: BASKET_MAP.protocol,
-        tags,
-        tagQueryMode: 'all',
-        include: 'entire transactions'
-      },
-      this.adminOriginator
-    )
+    const originsToTry = originatorLookupValues?.length ? originatorLookupValues : [originator]
 
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec || !dec.fields || dec.fields.length < 6) continue
-      const domainRaw = dec.fields[0]
-      const expiryRaw = dec.fields[1]
-      const privRaw = dec.fields[2]
-      const secLevelRaw = dec.fields[3]
-      const protoNameRaw = dec.fields[4]
-      const counterpartyRaw = dec.fields[5]
-
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
-      const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as
-        | 0
-        | 1
-        | 2
-      const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
-      const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
-
-      if (
-        domainDecoded !== originator ||
-        privDecoded !== !!privileged ||
-        secLevelDecoded !== secLevel ||
-        protoNameDecoded !== protoName ||
-        (secLevelDecoded === 2 && cptyDecoded !== counterparty)
-      ) {
-        continue
+    for (const originTag of originsToTry) {
+      const tags = [
+        `originator ${originTag}`,
+        `privileged ${!!privileged}`,
+        `protocolName ${protoName}`,
+        `protocolSecurityLevel ${secLevel}`
+      ]
+      if (secLevel === 2) {
+        tags.push(`counterparty ${counterparty}`)
       }
-      if (!includeExpired && this.isTokenExpired(expiryDecoded)) {
-        continue
-      }
-      return {
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator,
-        privileged,
-        protocol: protoName,
-        securityLevel: secLevel,
-        expiry: expiryDecoded,
-        counterparty: cptyDecoded
+      const result = await this.underlying.listOutputs(
+        {
+          basket: BASKET_MAP.protocol,
+          tags,
+          tagQueryMode: 'all',
+          include: 'entire transactions'
+        },
+        this.adminOriginator
+      )
+
+      for (const out of result.outputs) {
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec || !dec.fields || dec.fields.length < 6) continue
+        const domainRaw = dec.fields[0]
+        const expiryRaw = dec.fields[1]
+        const privRaw = dec.fields[2]
+        const secLevelRaw = dec.fields[3]
+        const protoNameRaw = dec.fields[4]
+        const counterpartyRaw = dec.fields[5]
+
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (normalizedDomain !== originator) {
+          continue
+        }
+
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+        const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as
+          | 0
+          | 1
+          | 2
+        const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
+        const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
+
+        if (
+          privDecoded !== !!privileged ||
+          secLevelDecoded !== secLevel ||
+          protoNameDecoded !== protoName ||
+          (secLevelDecoded === 2 && cptyDecoded !== counterparty)
+        ) {
+          continue
+        }
+        if (!includeExpired && this.isTokenExpired(expiryDecoded)) {
+          continue
+        }
+        return {
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator,
+          rawOriginator: domainDecoded,
+          privileged,
+          protocol: protoName,
+          securityLevel: secLevel,
+          expiry: expiryDecoded,
+          counterparty: cptyDecoded
+        }
       }
     }
     return undefined
@@ -1364,80 +1412,90 @@ export class WalletPermissionsManager implements WalletInterface {
     originator: string,
     privileged: boolean,
     protocolID: WalletProtocol,
-    counterparty: string
+    counterparty: string,
+    originatorLookupValues?: string[]
   ): Promise<PermissionToken[]> {
     const [secLevel, protoName] = protocolID
-    const tags = [
-      `originator ${originator}`,
-      `privileged ${!!privileged}`,
-      `protocolName ${protoName}`,
-      `protocolSecurityLevel ${secLevel}`
-    ]
-    if (secLevel === 2) {
-      tags.push(`counterparty ${counterparty}`)
-    }
-
-    const result = await this.underlying.listOutputs(
-      {
-        basket: BASKET_MAP.protocol,
-        tags,
-        tagQueryMode: 'all',
-        include: 'entire transactions'
-      },
-      this.adminOriginator
-    )
-
+    const originsToTry = originatorLookupValues?.length ? originatorLookupValues : [originator]
     const matches: PermissionToken[] = []
+    const seen = new Set<string>()
 
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const vout = Number(outputIndexStr)
-      const dec = PushDrop.decode(tx.outputs[vout].lockingScript)
-      if (!dec || !dec.fields || dec.fields.length < 6) continue
-
-      const domainRaw = dec.fields[0]
-      const expiryRaw = dec.fields[1]
-      const privRaw = dec.fields[2]
-      const secLevelRaw = dec.fields[3]
-      const protoNameRaw = dec.fields[4]
-      const counterpartyRaw = dec.fields[5]
-
-      // Decrypt all fields
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
-      const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as
-        | 0
-        | 1
-        | 2
-      const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
-      const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
-
-      // Strict attribute match; NO expiry filtering
-      if (
-        domainDecoded !== originator ||
-        privDecoded !== !!privileged ||
-        secLevelDecoded !== secLevel ||
-        protoNameDecoded !== protoName ||
-        (secLevelDecoded === 2 && cptyDecoded !== counterparty)
-      ) {
-        continue
+    for (const originTag of originsToTry) {
+      const tags = [
+        `originator ${originTag}`,
+        `privileged ${!!privileged}`,
+        `protocolName ${protoName}`,
+        `protocolSecurityLevel ${secLevel}`
+      ]
+      if (secLevel === 2) {
+        tags.push(`counterparty ${counterparty}`)
       }
 
-      matches.push({
-        tx: tx.toBEEF(),
-        txid,
-        outputIndex: vout,
-        outputScript: tx.outputs[vout].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator,
-        privileged,
-        protocol: protoName,
-        securityLevel: secLevel,
-        expiry: expiryDecoded,
-        counterparty: cptyDecoded
-      })
+      const result = await this.underlying.listOutputs(
+        {
+          basket: BASKET_MAP.protocol,
+          tags,
+          tagQueryMode: 'all',
+          include: 'entire transactions'
+        },
+        this.adminOriginator
+      )
+
+      for (const out of result.outputs) {
+        if (seen.has(out.outpoint)) continue
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const vout = Number(outputIndexStr)
+        const dec = PushDrop.decode(tx.outputs[vout].lockingScript)
+        if (!dec || !dec.fields || dec.fields.length < 6) continue
+
+        const domainRaw = dec.fields[0]
+        const expiryRaw = dec.fields[1]
+        const privRaw = dec.fields[2]
+        const secLevelRaw = dec.fields[3]
+        const protoNameRaw = dec.fields[4]
+        const counterpartyRaw = dec.fields[5]
+
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (normalizedDomain !== originator) {
+          continue
+        }
+
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+        const secLevelDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secLevelRaw)), 10) as
+          | 0
+          | 1
+          | 2
+        const protoNameDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(protoNameRaw))
+        const cptyDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(counterpartyRaw))
+
+        if (
+          privDecoded !== !!privileged ||
+          secLevelDecoded !== secLevel ||
+          protoNameDecoded !== protoName ||
+          (secLevelDecoded === 2 && cptyDecoded !== counterparty)
+        ) {
+          continue
+        }
+
+        seen.add(out.outpoint)
+        matches.push({
+          tx: tx.toBEEF(),
+          txid,
+          outputIndex: vout,
+          outputScript: tx.outputs[vout].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator,
+          rawOriginator: domainDecoded,
+          privileged,
+          protocol: protoName,
+          securityLevel: secLevel,
+          expiry: expiryDecoded,
+          counterparty: cptyDecoded
+        })
+      }
     }
 
     return matches
@@ -1446,42 +1504,53 @@ export class WalletPermissionsManager implements WalletInterface {
   private async findBasketToken(
     originator: string,
     basket: string,
-    includeExpired: boolean
+    includeExpired: boolean,
+    originatorLookupValues?: string[]
   ): Promise<PermissionToken | undefined> {
-    const result = await this.underlying.listOutputs(
-      {
-        basket: BASKET_MAP.basket,
-        tags: [`originator ${originator}`, `basket ${basket}`],
-        tagQueryMode: 'all',
-        include: 'entire transactions'
-      },
-      this.adminOriginator
-    )
+    const originsToTry = originatorLookupValues?.length ? originatorLookupValues : [originator]
 
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 3) continue
-      const domainRaw = dec.fields[0]
-      const expiryRaw = dec.fields[1]
-      const basketRaw = dec.fields[2]
+    for (const originTag of originsToTry) {
+      const result = await this.underlying.listOutputs(
+        {
+          basket: BASKET_MAP.basket,
+          tags: [`originator ${originTag}`, `basket ${basket}`],
+          tagQueryMode: 'all',
+          include: 'entire transactions'
+        },
+        this.adminOriginator
+      )
 
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const basketDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(basketRaw))
-      if (domainDecoded !== originator || basketDecoded !== basket) continue
-      if (!includeExpired && this.isTokenExpired(expiryDecoded)) continue
+      for (const out of result.outputs) {
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 3) continue
+        const domainRaw = dec.fields[0]
+        const expiryRaw = dec.fields[1]
+        const basketRaw = dec.fields[2]
 
-      return {
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator,
-        basketName: basketDecoded,
-        expiry: expiryDecoded
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (normalizedDomain !== originator) {
+          continue
+        }
+
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const basketDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(basketRaw))
+        if (basketDecoded !== basket) continue
+        if (!includeExpired && this.isTokenExpired(expiryDecoded)) continue
+
+        return {
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator,
+          rawOriginator: domainDecoded,
+          basketName: basketDecoded,
+          expiry: expiryDecoded
+        }
       }
     }
     return undefined
@@ -1494,101 +1563,116 @@ export class WalletPermissionsManager implements WalletInterface {
     verifier: string,
     certType: string,
     fields: string[],
-    includeExpired: boolean
+    includeExpired: boolean,
+    originatorLookupValues?: string[]
   ): Promise<PermissionToken | undefined> {
-    const result = await this.underlying.listOutputs(
-      {
-        basket: BASKET_MAP.certificate,
-        tags: [`originator ${originator}`, `privileged ${!!privileged}`, `type ${certType}`, `verifier ${verifier}`],
-        tagQueryMode: 'all',
-        include: 'entire transactions'
-      },
-      this.adminOriginator
-    )
+    const originsToTry = originatorLookupValues?.length ? originatorLookupValues : [originator]
 
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 6) continue
-      const [domainRaw, expiryRaw, privRaw, typeRaw, fieldsRaw, verifierRaw] = dec.fields
+    for (const originTag of originsToTry) {
+      const result = await this.underlying.listOutputs(
+        {
+          basket: BASKET_MAP.certificate,
+          tags: [`originator ${originTag}`, `privileged ${!!privileged}`, `type ${certType}`, `verifier ${verifier}`],
+          tagQueryMode: 'all',
+          include: 'entire transactions'
+        },
+        this.adminOriginator
+      )
 
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
-      const typeDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(typeRaw))
-      const verifierDec = Utils.toUTF8(await this.decryptPermissionTokenField(verifierRaw))
+      for (const out of result.outputs) {
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 6) continue
+        const [domainRaw, expiryRaw, privRaw, typeRaw, fieldsRaw, verifierRaw] = dec.fields
 
-      const fieldsJson = await this.decryptPermissionTokenField(fieldsRaw)
-      const allFields = JSON.parse(Utils.toUTF8(fieldsJson)) as string[]
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (normalizedDomain !== originator) {
+          continue
+        }
 
-      if (
-        domainDecoded !== originator ||
-        privDecoded !== !!privileged ||
-        typeDecoded !== certType ||
-        verifierDec !== verifier
-      ) {
-        continue
-      }
-      // Check if 'fields' is a subset of 'allFields'
-      const setAll = new Set(allFields)
-      if (fields.some(f => !setAll.has(f))) {
-        continue
-      }
-      if (!includeExpired && this.isTokenExpired(expiryDecoded)) {
-        continue
-      }
-      return {
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator,
-        privileged,
-        verifier: verifierDec,
-        certType: typeDecoded,
-        certFields: allFields,
-        expiry: expiryDecoded
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+        const typeDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(typeRaw))
+        const verifierDec = Utils.toUTF8(await this.decryptPermissionTokenField(verifierRaw))
+
+        const fieldsJson = await this.decryptPermissionTokenField(fieldsRaw)
+        const allFields = JSON.parse(Utils.toUTF8(fieldsJson)) as string[]
+
+        if (privDecoded !== !!privileged || typeDecoded !== certType || verifierDec !== verifier) {
+          continue
+        }
+        // Check if 'fields' is a subset of 'allFields'
+        const setAll = new Set(allFields)
+        if (fields.some(f => !setAll.has(f))) {
+          continue
+        }
+        if (!includeExpired && this.isTokenExpired(expiryDecoded)) {
+          continue
+        }
+        return {
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator,
+          rawOriginator: domainDecoded,
+          privileged,
+          verifier: verifierDec,
+          certType: typeDecoded,
+          certFields: allFields,
+          expiry: expiryDecoded
+        }
       }
     }
     return undefined
   }
 
   /** Looks for a DSAP token matching origin, returning the first one found. */
-  private async findSpendingToken(originator: string): Promise<PermissionToken | undefined> {
-    const result = await this.underlying.listOutputs(
-      {
-        basket: BASKET_MAP.spending,
-        tags: [`originator ${originator}`],
-        tagQueryMode: 'all',
-        include: 'entire transactions'
-      },
-      this.adminOriginator
-    )
+  private async findSpendingToken(
+    originator: string,
+    originatorLookupValues?: string[]
+  ): Promise<PermissionToken | undefined> {
+    const originsToTry = originatorLookupValues?.length ? originatorLookupValues : [originator]
 
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 2) continue
-      const domainRaw = dec.fields[0]
-      const amtRaw = dec.fields[1]
+    for (const originTag of originsToTry) {
+      const result = await this.underlying.listOutputs(
+        {
+          basket: BASKET_MAP.spending,
+          tags: [`originator ${originTag}`],
+          tagQueryMode: 'all',
+          include: 'entire transactions'
+        },
+        this.adminOriginator
+      )
 
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      if (domainDecoded !== originator) continue
-      const amtDecodedStr = Utils.toUTF8(await this.decryptPermissionTokenField(amtRaw))
-      const authorizedAmount = parseInt(amtDecodedStr, 10)
+      for (const out of result.outputs) {
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 2) continue
+        const domainRaw = dec.fields[0]
+        const amtRaw = dec.fields[1]
 
-      return {
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator,
-        authorizedAmount,
-        expiry: 0 // Not time-limited, monthly authorization
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (normalizedDomain !== originator) continue
+        const amtDecodedStr = Utils.toUTF8(await this.decryptPermissionTokenField(amtRaw))
+        const authorizedAmount = parseInt(amtDecodedStr, 10)
+
+        return {
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator,
+          rawOriginator: domainDecoded,
+          authorizedAmount,
+          expiry: 0 // Not time-limited, monthly authorization
+        }
       }
     }
     return undefined
@@ -1610,14 +1694,21 @@ export class WalletPermissionsManager implements WalletInterface {
    * Returns spending for an originator in the current calendar month.
    */
   public async querySpentSince(token: PermissionToken): Promise<number> {
-    const { actions } = await this.underlying.listActions(
-      {
-        labels: [`admin originator ${token.originator}`, `admin month ${this.getCurrentMonthYearUTC()}`],
-        labelQueryMode: 'all'
-      },
-      this.adminOriginator
-    )
-    return actions.reduce((a, e) => a + e.satoshis, 0)
+    const labelOrigins = this.buildOriginatorLookupValues(token.rawOriginator, token.originator)
+    let total = 0
+
+    for (const labelOrigin of labelOrigins) {
+      const { actions } = await this.underlying.listActions(
+        {
+          labels: [`admin originator ${labelOrigin}`, `admin month ${this.getCurrentMonthYearUTC()}`],
+          labelQueryMode: 'all'
+        },
+        this.adminOriginator
+      )
+      total += actions.reduce((a, e) => a + e.satoshis, 0)
+    }
+
+    return total
   }
 
   /* ---------------------------------------------------------------------
@@ -1634,6 +1725,8 @@ export class WalletPermissionsManager implements WalletInterface {
    * @param amount   For DSAP, the authorized spending limit
    */
   private async createPermissionOnChain(r: PermissionRequest, expiry: number, amount?: number): Promise<void> {
+    const normalizedOriginator = this.normalizeOriginator(r.originator) || r.originator
+    r.originator = normalizedOriginator
     const basketName = BASKET_MAP[r.type]
     if (!basketName) return
 
@@ -1755,6 +1848,7 @@ export class WalletPermissionsManager implements WalletInterface {
     newExpiry: number,
     newAmount?: number
   ): Promise<void> {
+    r.originator = this.normalizeOriginator(r.originator) || r.originator
     // 1) build new fields
     const newFields = await this.buildPushdropFields(r, newExpiry, newAmount)
 
@@ -1773,7 +1867,8 @@ export class WalletPermissionsManager implements WalletInterface {
       oldToken.originator,
       oldToken.privileged!,
       [oldToken.securityLevel!, oldToken.protocol!],
-      oldToken.counterparty!
+      oldToken.counterparty!,
+      this.buildOriginatorLookupValues(oldToken.rawOriginator, oldToken.originator)
     )
 
     // If so, coalesce them into a single token first, to avoid bloat
@@ -1942,66 +2037,81 @@ export class WalletPermissionsManager implements WalletInterface {
     counterparty?: string
   } = {}): Promise<PermissionToken[]> {
     const basketName = BASKET_MAP.protocol
-    const tags: string[] = []
-
-    if (originator) {
-      tags.push(`originator ${originator}`)
-    }
+    const baseTags: string[] = []
 
     if (privileged !== undefined) {
-      tags.push(`privileged ${!!privileged}`)
+      baseTags.push(`privileged ${!!privileged}`)
     }
 
     if (protocolName) {
-      tags.push(`protocolName ${protocolName}`)
+      baseTags.push(`protocolName ${protocolName}`)
     }
 
     if (protocolSecurityLevel !== undefined) {
-      tags.push(`protocolSecurityLevel ${protocolSecurityLevel}`)
+      baseTags.push(`protocolSecurityLevel ${protocolSecurityLevel}`)
     }
 
     if (counterparty) {
-      tags.push(`counterparty ${counterparty}`)
+      baseTags.push(`counterparty ${counterparty}`)
     }
-    const result = await this.underlying.listOutputs(
-      {
-        basket: basketName,
-        tags,
-        tagQueryMode: 'all',
-        include: 'entire transactions',
-        limit: 100
-      },
-      this.adminOriginator
-    )
 
+    const originFilter = originator ? this.prepareOriginator(originator) : undefined
+    const originVariants = originFilter ? originFilter.lookupValues : [undefined]
+    const seen = new Set<string>()
     const tokens: PermissionToken[] = []
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 6) continue
-      const [domainRaw, expiryRaw, privRaw, secRaw, protoRaw, cptyRaw] = dec.fields
 
-      const domainDec = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDec = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const privDec = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
-      const secDec = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secRaw)), 10) as 0 | 1 | 2
-      const protoDec = Utils.toUTF8(await this.decryptPermissionTokenField(protoRaw))
-      const cptyDec = Utils.toUTF8(await this.decryptPermissionTokenField(cptyRaw))
+    for (const originTag of originVariants) {
+      const tags = [...baseTags]
+      if (originTag) {
+        tags.push(`originator ${originTag}`)
+      }
+      const result = await this.underlying.listOutputs(
+        {
+          basket: basketName,
+          tags,
+          tagQueryMode: 'all',
+          include: 'entire transactions',
+          limit: 100
+        },
+        this.adminOriginator
+      )
 
-      tokens.push({
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        satoshis: out.satoshis,
-        originator: domainDec,
-        expiry: expiryDec,
-        privileged: privDec,
-        securityLevel: secDec,
-        protocol: protoDec,
-        counterparty: cptyDec
-      })
+      for (const out of result.outputs) {
+        if (seen.has(out.outpoint)) continue
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 6) continue
+        const [domainRaw, expiryRaw, privRaw, secRaw, protoRaw, cptyRaw] = dec.fields
+
+        const domainDec = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDec)
+        if (originFilter && normalizedDomain !== originFilter.normalized) {
+          continue
+        }
+
+        const expiryDec = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const privDec = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+        const secDec = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(secRaw)), 10) as 0 | 1 | 2
+        const protoDec = Utils.toUTF8(await this.decryptPermissionTokenField(protoRaw))
+        const cptyDec = Utils.toUTF8(await this.decryptPermissionTokenField(cptyRaw))
+
+        seen.add(out.outpoint)
+        tokens.push({
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          satoshis: out.satoshis,
+          originator: normalizedDomain,
+          rawOriginator: domainDec,
+          expiry: expiryDec,
+          privileged: privDec,
+          securityLevel: secDec,
+          protocol: protoDec,
+          counterparty: cptyDec
+        })
+      }
     }
     return tokens
   }
@@ -2037,46 +2147,60 @@ export class WalletPermissionsManager implements WalletInterface {
    */
   public async listBasketAccess(params: { originator?: string; basket?: string } = {}): Promise<PermissionToken[]> {
     const basketName = BASKET_MAP.basket
-    const tags: string[] = []
-
-    if (params.originator) {
-      tags.push(`originator ${params.originator}`)
-    }
+    const baseTags: string[] = []
 
     if (params.basket) {
-      tags.push(`basket ${params.basket}`)
+      baseTags.push(`basket ${params.basket}`)
     }
-    const result = await this.underlying.listOutputs(
-      {
-        basket: basketName,
-        tags,
-        tagQueryMode: 'all',
-        include: 'entire transactions',
-        limit: 10000
-      },
-      this.adminOriginator
-    )
 
+    const originFilter = params.originator ? this.prepareOriginator(params.originator) : undefined
+    const originVariants = originFilter ? originFilter.lookupValues : [undefined]
+    const seen = new Set<string>()
     const tokens: PermissionToken[] = []
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 3) continue
-      const [domainRaw, expiryRaw, basketRaw] = dec.fields
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const basketDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(basketRaw))
-      tokens.push({
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        satoshis: out.satoshis,
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        originator: domainDecoded,
-        basketName: basketDecoded,
-        expiry: expiryDecoded
-      })
+
+    for (const originTag of originVariants) {
+      const tags = [...baseTags]
+      if (originTag) {
+        tags.push(`originator ${originTag}`)
+      }
+      const result = await this.underlying.listOutputs(
+        {
+          basket: basketName,
+          tags,
+          tagQueryMode: 'all',
+          include: 'entire transactions',
+          limit: 10000
+        },
+        this.adminOriginator
+      )
+
+      for (const out of result.outputs) {
+        if (seen.has(out.outpoint)) continue
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 3) continue
+        const [domainRaw, expiryRaw, basketRaw] = dec.fields
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (originFilter && normalizedDomain !== originFilter.normalized) {
+          continue
+        }
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const basketDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(basketRaw))
+        seen.add(out.outpoint)
+        tokens.push({
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          satoshis: out.satoshis,
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          originator: normalizedDomain,
+          rawOriginator: domainDecoded,
+          basketName: basketDecoded,
+          expiry: expiryDecoded
+        })
+      }
     }
     return tokens
   }
@@ -2176,61 +2300,75 @@ export class WalletPermissionsManager implements WalletInterface {
     } = {}
   ): Promise<PermissionToken[]> {
     const basketName = BASKET_MAP.certificate
-    const tags: string[] = []
-
-    if (params.originator) {
-      tags.push(`originator ${params.originator}`)
-    }
+    const baseTags: string[] = []
 
     if (params.privileged !== undefined) {
-      tags.push(`privileged ${!!params.privileged}`)
+      baseTags.push(`privileged ${!!params.privileged}`)
     }
 
     if (params.certType) {
-      tags.push(`type ${params.certType}`)
+      baseTags.push(`type ${params.certType}`)
     }
 
     if (params.verifier) {
-      tags.push(`verifier ${params.verifier}`)
+      baseTags.push(`verifier ${params.verifier}`)
     }
-    const result = await this.underlying.listOutputs(
-      {
-        basket: basketName,
-        tags,
-        tagQueryMode: 'all',
-        include: 'entire transactions',
-        limit: 10000
-      },
-      this.adminOriginator
-    )
 
+    const originFilter = params.originator ? this.prepareOriginator(params.originator) : undefined
+    const originVariants = originFilter ? originFilter.lookupValues : [undefined]
+    const seen = new Set<string>()
     const tokens: PermissionToken[] = []
-    for (const out of result.outputs) {
-      const [txid, outputIndexStr] = out.outpoint.split('.')
-      const tx = Transaction.fromBEEF(result.BEEF!, txid)
-      const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
-      if (!dec?.fields || dec.fields.length < 6) continue
-      const [domainRaw, expiryRaw, privRaw, typeRaw, fieldsRaw, verifierRaw] = dec.fields
-      const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
-      const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
-      const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
-      const typeDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(typeRaw))
-      const verifierDec = Utils.toUTF8(await this.decryptPermissionTokenField(verifierRaw))
-      const fieldsJson = await this.decryptPermissionTokenField(fieldsRaw)
-      const allFields = JSON.parse(Utils.toUTF8(fieldsJson)) as string[]
-      tokens.push({
-        tx: tx.toBEEF(),
-        txid: out.outpoint.split('.')[0],
-        outputIndex: parseInt(out.outpoint.split('.')[1], 10),
-        satoshis: out.satoshis,
-        outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
-        originator: domainDecoded,
-        privileged: privDecoded,
-        certType: typeDecoded,
-        certFields: allFields,
-        verifier: verifierDec,
-        expiry: expiryDecoded
-      })
+
+    for (const originTag of originVariants) {
+      const tags = [...baseTags]
+      if (originTag) {
+        tags.push(`originator ${originTag}`)
+      }
+      const result = await this.underlying.listOutputs(
+        {
+          basket: basketName,
+          tags,
+          tagQueryMode: 'all',
+          include: 'entire transactions',
+          limit: 10000
+        },
+        this.adminOriginator
+      )
+
+      for (const out of result.outputs) {
+        if (seen.has(out.outpoint)) continue
+        const [txid, outputIndexStr] = out.outpoint.split('.')
+        const tx = Transaction.fromBEEF(result.BEEF!, txid)
+        const dec = PushDrop.decode(tx.outputs[Number(outputIndexStr)].lockingScript)
+        if (!dec?.fields || dec.fields.length < 6) continue
+        const [domainRaw, expiryRaw, privRaw, typeRaw, fieldsRaw, verifierRaw] = dec.fields
+        const domainDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(domainRaw))
+        const normalizedDomain = this.normalizeOriginator(domainDecoded)
+        if (originFilter && normalizedDomain !== originFilter.normalized) {
+          continue
+        }
+        const expiryDecoded = parseInt(Utils.toUTF8(await this.decryptPermissionTokenField(expiryRaw)), 10)
+        const privDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(privRaw)) === 'true'
+        const typeDecoded = Utils.toUTF8(await this.decryptPermissionTokenField(typeRaw))
+        const verifierDec = Utils.toUTF8(await this.decryptPermissionTokenField(verifierRaw))
+        const fieldsJson = await this.decryptPermissionTokenField(fieldsRaw)
+        const allFields = JSON.parse(Utils.toUTF8(fieldsJson)) as string[]
+        seen.add(out.outpoint)
+        tokens.push({
+          tx: tx.toBEEF(),
+          txid: out.outpoint.split('.')[0],
+          outputIndex: parseInt(out.outpoint.split('.')[1], 10),
+          satoshis: out.satoshis,
+          outputScript: tx.outputs[Number(outputIndexStr)].lockingScript.toHex(),
+          originator: normalizedDomain,
+          rawOriginator: domainDecoded,
+          privileged: privDecoded,
+          certType: typeDecoded,
+          certFields: allFields,
+          verifier: verifierDec,
+          expiry: expiryDecoded
+        })
+      }
     }
     return tokens
   }
@@ -2881,8 +3019,10 @@ export class WalletPermissionsManager implements WalletInterface {
   public async waitForAuthentication(
     ...args: Parameters<WalletInterface['waitForAuthentication']>
   ): ReturnType<WalletInterface['waitForAuthentication']> {
-    const [_, originator] = args
+    let [_, originator] = args
     if (this.config.seekGroupedPermission && originator) {
+      const { normalized: normalizedOriginator } = this.prepareOriginator(originator)
+      originator = normalizedOriginator
       // 1. Fetch manifest.json from the originator
       let groupPermissions: GroupedPermissions | undefined
       try {
@@ -2970,7 +3110,7 @@ export class WalletPermissionsManager implements WalletInterface {
             try {
               await new Promise<boolean>(async (resolve, reject) => {
                 this.activeRequests.set(key, {
-                  request: { originator, permissions: permissionsToRequest },
+                  request: { originator: originator as string, permissions: permissionsToRequest },
                   pending: [{ resolve, reject }]
                 })
 
@@ -3021,7 +3161,7 @@ export class WalletPermissionsManager implements WalletInterface {
 
   /** Returns true if the specified origin is the admin originator. */
   private isAdminOriginator(originator: string): boolean {
-    return originator === this.adminOriginator
+    return this.normalizeOriginator(originator) === this.adminOriginator
   }
 
   /**
@@ -3091,20 +3231,81 @@ export class WalletPermissionsManager implements WalletInterface {
     this.permissionCache.set(key, { expiry, cachedAt: Date.now() })
   }
 
+  /** Normalizes and canonicalizes originator domains (e.g., lowercase + drop default ports). */
+  private normalizeOriginator(originator?: string): string {
+    if (!originator) return ''
+    const trimmed = originator.trim()
+    if (!trimmed) {
+      return ''
+    }
+
+    try {
+      const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)
+      const candidate = hasScheme ? trimmed : `https://${trimmed}`
+      const url = new URL(candidate)
+      if (!url.hostname) {
+        return trimmed.toLowerCase()
+      }
+      const hostname = url.hostname.toLowerCase()
+      const needsBrackets = hostname.includes(':')
+      const baseHost = needsBrackets ? `[${hostname}]` : hostname
+      const port = url.port
+      const defaultPort = WalletPermissionsManager.DEFAULT_PORTS[url.protocol]
+      if (port && defaultPort && port === defaultPort) {
+        return baseHost
+      }
+      return port ? `${baseHost}:${port}` : baseHost
+    } catch {
+      // Fall back to a conservative lowercase trim if URL parsing fails.
+      return trimmed.toLowerCase()
+    }
+  }
+
+  /**
+   * Produces a normalized originator value along with the set of legacy
+   * representations that should be considered when searching for existing
+   * permission tokens (for backwards compatibility).
+   */
+  private prepareOriginator(originator?: string): { normalized: string; lookupValues: string[] } {
+    const trimmed = originator?.trim()
+    if (!trimmed) {
+      throw new Error('Originator is required for permission checks.')
+    }
+    const normalized = this.normalizeOriginator(trimmed) || trimmed.toLowerCase()
+    const lookupValues = Array.from(new Set([trimmed, normalized])).filter(Boolean)
+    return { normalized, lookupValues }
+  }
+
+  /**
+   * Builds a unique list of originator variants that should be searched when
+   * looking up on-chain tokens (e.g., legacy raw + normalized forms).
+   */
+  private buildOriginatorLookupValues(...origins: Array<string | undefined>): string[] {
+    const variants = new Set<string>()
+    for (const origin of origins) {
+      const trimmed = origin?.trim()
+      if (trimmed) {
+        variants.add(trimmed)
+      }
+    }
+    return Array.from(variants)
+  }
+
   /**
    * Builds a "map key" string so that identical requests (e.g. "protocol:domain:true:protoName:counterparty")
    * do not produce multiple user prompts.
    */
   private buildRequestKey(r: PermissionRequest): string {
+    const normalizedOriginator = this.normalizeOriginator(r.originator)
     switch (r.type) {
       case 'protocol':
-        return `proto:${r.originator}:${!!r.privileged}:${r.protocolID?.join(',')}:${r.counterparty}`
+        return `proto:${normalizedOriginator}:${!!r.privileged}:${r.protocolID?.join(',')}:${r.counterparty}`
       case 'basket':
-        return `basket:${r.originator}:${r.basket}`
+        return `basket:${normalizedOriginator}:${r.basket}`
       case 'certificate':
-        return `cert:${r.originator}:${!!r.privileged}:${r.certificate?.verifier}:${r.certificate?.certType}:${r.certificate?.fields.join('|')}`
+        return `cert:${normalizedOriginator}:${!!r.privileged}:${r.certificate?.verifier}:${r.certificate?.certType}:${r.certificate?.fields.join('|')}`
       case 'spending':
-        return `spend:${r.originator}:${r.spending?.satoshis}`
+        return `spend:${normalizedOriginator}:${r.spending?.satoshis}`
     }
   }
 }
