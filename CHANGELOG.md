@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.40
+
+- Change correct import of WERR_REVIEW_ACTIONS in createActions.ts to wallet-toolbox package.
+
 ## wallet-toolbox 1.6.39
 
 - Change WalletError unknownToJson error to resolve unknown toJson error.
