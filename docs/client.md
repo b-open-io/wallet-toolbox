@@ -3750,6 +3750,7 @@ authorization without an associated persistent on-chain token.
 export interface PermissionRequest {
     type: "protocol" | "basket" | "certificate" | "spending";
     originator: string;
+    displayOriginator?: string;
     privileged?: boolean;
     protocolID?: WalletProtocol;
     counterparty?: string;
@@ -3798,6 +3799,7 @@ export interface PermissionToken {
     outputScript: string;
     satoshis: number;
     originator: string;
+    rawOriginator?: string;
     expiry: number;
     privileged?: boolean;
     protocol?: string;
@@ -3897,6 +3899,16 @@ The protocol name, if this is a DPACP token.
 
 ```ts
 protocol?: string
+```
+
+###### Property rawOriginator
+
+The raw, unnormalized originator string captured at the time the permission
+token was created. This is preserved so we can continue to recognize legacy
+permissions that were stored with different casing or explicit default ports.
+
+```ts
+rawOriginator?: string
 ```
 
 ###### Property satoshis

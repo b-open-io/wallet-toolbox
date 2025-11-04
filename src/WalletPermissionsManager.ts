@@ -413,9 +413,12 @@ export class WalletPermissionsManager implements WalletInterface {
 
   /** Cache recently confirmed permissions to avoid repeated lookups. */
   private permissionCache: Map<string, { expiry: number; cachedAt: number }> = new Map()
+  private recentGrants: Map<string, number> = new Map()
 
   /** How long a cached permission remains valid (5 minutes). */
   private static readonly CACHE_TTL_MS = 5 * 60 * 1000
+  /** Window during which freshly granted permissions are auto-allowed (except spending). */
+  private static readonly RECENT_GRANT_COVER_MS = 15 * 1000
 
   /** Default ports used when normalizing originator values. */
   private static readonly DEFAULT_PORTS: Record<string, string> = {
@@ -591,6 +594,7 @@ export class WalletPermissionsManager implements WalletInterface {
       const expiry = params.expiry || Math.floor(Date.now() / 1000) + 3600 * 24 * 30
       const key = this.buildRequestKey(matching.request as PermissionRequest)
       this.cachePermission(key, expiry)
+      this.markRecentGrant(matching.request as PermissionRequest)
     }
   }
 
@@ -686,53 +690,48 @@ export class WalletPermissionsManager implements WalletInterface {
         originLookupValues
       )
       if (token) {
-        await this.renewPermissionOnChain(
-          token,
-          {
-            type: 'protocol',
-            originator,
-            privileged: false, // No privileged protocols allowed in groups for added security.
-            protocolID: p.protocolID,
-            counterparty: p.counterparty || 'self',
-            reason: p.description
-          },
-          expiry
-        )
+        const request: PermissionRequest = {
+          type: 'protocol',
+          originator,
+          privileged: false, // No privileged protocols allowed in groups for added security.
+          protocolID: p.protocolID,
+          counterparty: p.counterparty || 'self',
+          reason: p.description
+        }
+        await this.renewPermissionOnChain(token, request, expiry)
+        this.markRecentGrant(request)
       } else {
-        await this.createPermissionOnChain(
-          {
-            type: 'protocol',
-            originator,
-            privileged: false, // No privileged protocols allowed in groups for added security.
-            protocolID: p.protocolID,
-            counterparty: p.counterparty || 'self',
-            reason: p.description
-          },
-          expiry
-        )
+        const request: PermissionRequest = {
+          type: 'protocol',
+          originator,
+          privileged: false, // No privileged protocols allowed in groups for added security.
+          protocolID: p.protocolID,
+          counterparty: p.counterparty || 'self',
+          reason: p.description
+        }
+        await this.createPermissionOnChain(request, expiry)
+        this.markRecentGrant(request)
       }
     }
     for (const b of params.granted.basketAccess || []) {
-      await this.createPermissionOnChain(
-        { type: 'basket', originator, basket: b.basket, reason: b.description },
-        expiry
-      )
+      const request: PermissionRequest = { type: 'basket', originator, basket: b.basket, reason: b.description }
+      await this.createPermissionOnChain(request, expiry)
+      this.markRecentGrant(request)
     }
     for (const c of params.granted.certificateAccess || []) {
-      await this.createPermissionOnChain(
-        {
-          type: 'certificate',
-          originator,
-          privileged: false, // No certificates on the privileged identity are allowed as part of groups.
-          certificate: {
-            verifier: c.verifierPublicKey,
-            certType: c.type,
-            fields: c.fields
-          },
-          reason: c.description
+      const request: PermissionRequest = {
+        type: 'certificate',
+        originator,
+        privileged: false, // No certificates on the privileged identity are allowed as part of groups.
+        certificate: {
+          verifier: c.verifierPublicKey,
+          certType: c.type,
+          fields: c.fields
         },
-        expiry
-      )
+        reason: c.description
+      }
+      await this.createPermissionOnChain(request, expiry)
+      this.markRecentGrant(request)
     }
 
     // Resolve all pending promises for this request
@@ -831,6 +830,9 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isPermissionCached(cacheKey)) {
       return true
     }
+    if (this.isRecentlyGranted(cacheKey)) {
+      return true
+    }
 
     // 4) Attempt to find a valid token in the internal basket
     const token = await this.findProtocolToken(
@@ -910,6 +912,9 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isPermissionCached(cacheKey)) {
       return true
     }
+    if (this.isRecentlyGranted(cacheKey)) {
+      return true
+    }
     const token = await this.findBasketToken(originator, basket, true, lookupValues)
     if (token) {
       if (!this.isTokenExpired(token.expiry)) {
@@ -983,6 +988,9 @@ export class WalletPermissionsManager implements WalletInterface {
       certificate: { verifier, certType, fields }
     })
     if (this.isPermissionCached(cacheKey)) {
+      return true
+    }
+    if (this.isRecentlyGranted(cacheKey)) {
       return true
     }
     const token = await this.findCertificateToken(
@@ -1340,6 +1348,7 @@ export class WalletPermissionsManager implements WalletInterface {
       if (secLevel === 2) {
         tags.push(`counterparty ${counterparty}`)
       }
+
       const result = await this.underlying.listOutputs(
         {
           basket: BASKET_MAP.protocol,
@@ -1989,7 +1998,9 @@ export class WalletPermissionsManager implements WalletInterface {
         tags.push(`privileged ${!!r.privileged}`)
         tags.push(`protocolName ${r.protocolID![1]}`)
         tags.push(`protocolSecurityLevel ${r.protocolID![0]}`)
-        tags.push(`counterparty ${r.counterparty}`)
+        if (r.protocolID![0] === 2) {
+          tags.push(`counterparty ${r.counterparty}`)
+        }
         break
       }
       case 'basket': {
@@ -3229,6 +3240,25 @@ export class WalletPermissionsManager implements WalletInterface {
   /** Caches the fact that the permission for `key` is valid until `expiry`. */
   private cachePermission(key: string, expiry: number): void {
     this.permissionCache.set(key, { expiry, cachedAt: Date.now() })
+  }
+
+  /** Records that a non-spending permission was just granted so we can skip re-prompting briefly. */
+  private markRecentGrant(request: PermissionRequest): void {
+    if (request.type === 'spending') return
+    const key = this.buildRequestKey(request)
+    if (!key) return
+    this.recentGrants.set(key, Date.now() + WalletPermissionsManager.RECENT_GRANT_COVER_MS)
+  }
+
+  /** Returns true if we are inside the short "cover window" immediately after granting permission. */
+  private isRecentlyGranted(key: string): boolean {
+    const expiry = this.recentGrants.get(key)
+    if (!expiry) return false
+    if (Date.now() > expiry) {
+      this.recentGrants.delete(key)
+      return false
+    }
+    return true
   }
 
   /** Normalizes and canonicalizes originator domains (e.g., lowercase + drop default ports). */
