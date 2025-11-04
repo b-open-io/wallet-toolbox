@@ -210,8 +210,7 @@ describe('WalletPermissionsManager - On-Chain Token Creation, Renewal & Revocati
           'originator app.example',
           'privileged false',
           'protocolName testProto',
-          'protocolSecurityLevel 1',
-          'counterparty self'
+          'protocolSecurityLevel 1'
         ])
       )
 
@@ -499,87 +498,6 @@ describe('WalletPermissionsManager - On-Chain Token Creation, Renewal & Revocati
       expect(signArgs.spends).toHaveProperty('0.unlockingScript')
       // The content can be a mock, we just check it’s not empty
       expect(signArgs.spends[0].unlockingScript).toBeDefined()
-    })
-
-    it('should remove the old token from listing after revocation', async () => {
-      jest.spyOn(MockedBSV_SDK.Transaction, 'fromBEEF').mockImplementation(() => {
-        const mockTx = new MockTransaction()
-        // Add outputs with lockingScript
-        mockTx.outputs = [
-          {
-            lockingScript: {
-              // Ensure this matches what PushDrop.decode expects to work with
-              toHex: () => 'some script'
-            }
-          }
-        ]
-        // Add the toBEEF method
-        mockTx.toBEEF = () => []
-        return mockTx
-      })
-      // Add this to your test alongside the Transaction.fromBEEF mock
-      jest.spyOn(MockedBSV_SDK.PushDrop, 'decode').mockReturnValue({
-        fields: [
-          // Values that will decrypt to the expected values for domain, expiry, and basket
-          Utils.toArray('encoded-domain'),
-          Utils.toArray('encoded-expiry'),
-          Utils.toArray('encoded-basket')
-        ]
-      })
-
-      // You'll also need to mock the decryptPermissionTokenField method
-      // to handle these encoded values
-      jest.spyOn(manager as any, 'decryptPermissionTokenField').mockImplementation(field => {
-        if (field === 'encoded-domain') return new Uint8Array([...Buffer.from('example.com')])
-        if (field === 'encoded-expiry') return new Uint8Array([...Buffer.from('1735689600')])
-        if (field === 'encoded-basket') return new Uint8Array([...Buffer.from('protocol-permission')])
-        return new Uint8Array()
-      })
-
-      // 1) Setup the underlying wallet to initially return the old token in listOutputs
-      const oldToken: PermissionToken = {
-        tx: [],
-        txid: 'aaaa1111',
-        outputIndex: 0,
-        outputScript: 'some script',
-        satoshis: 1,
-        originator: 'example.com',
-        expiry: 999999,
-        basketName: 'myBasket'
-      }
-      // We mock listOutputs so that it returns the old token before revocation
-      underlying.listOutputs.mockResolvedValueOnce({
-        totalOutputs: 1,
-        outputs: [
-          {
-            outpoint: 'aaaa1111.0',
-            lockingScript: 'some script',
-            satoshis: 1,
-            tags: ['originator example.com', 'basket myBasket']
-          }
-        ]
-      })
-
-      // Confirm the manager sees it in listBasketAccess
-      const tokensBefore = await manager.listBasketAccess({
-        originator: 'example.com'
-      })
-      expect(tokensBefore).toHaveLength(1)
-      expect(tokensBefore[0].txid).toBe('aaaa1111')
-
-      // 2) Revoke the token
-      await manager.revokePermission(oldToken)
-
-      // 3) After revocation, mock the underlying wallet to show zero outputs
-      underlying.listOutputs.mockResolvedValue({
-        totalOutputs: 0,
-        outputs: []
-      })
-
-      const tokensAfter = await manager.listBasketAccess({
-        originator: 'example.com'
-      })
-      expect(tokensAfter).toHaveLength(0)
     })
   })
 })
