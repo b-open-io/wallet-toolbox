@@ -567,10 +567,10 @@ export class WalletStorageManager implements sdk.WalletStorage {
   /**
    * Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg,
    * and originated from proven_txs records tracked by this storage.
-   * 
+   *
    * This method is optimized for making sure outgoing beefs are valid before sharing them externally.
    * In particular, it only "repairs" proofs previously tracked by this storage.
-   * 
+   *
    * Any merkle root that fails `isValidRootForHeight` triggers a reprove attempt for that block header.
    * This results in proven_txs with invalid proofs being updated with new valid proofs where possible.
    *
@@ -599,7 +599,9 @@ export class WalletStorageManager implements sdk.WalletStorage {
       if (!isValid) {
         // root is not currently the valid hash for this height according to the chaintracker.
         // What beef txids depended on this root:
-        const txids = beef.txs.filter(tx => tx.bumpIndex !== undefined && beef.bumps[tx.bumpIndex].blockHeight === height).map(tx => tx.txid)
+        const txids = beef.txs
+          .filter(tx => tx.bumpIndex !== undefined && beef.bumps[tx.bumpIndex].blockHeight === height)
+          .map(tx => tx.txid)
         const reproveResults = await this.reproveHeader(root)
         r.invalidRoots[height] = { root, reproveResults }
       }
@@ -938,5 +940,5 @@ export class WalletStorageManager implements sdk.WalletStorage {
 export interface VerifyAndRepairBeefResult {
   isStructurallyValid: boolean
   originalRoots: Record<number, string>
-  invalidRoots: Record<number, { root: string, reproveResults: sdk.ReproveHeaderResult }>
+  invalidRoots: Record<number, { root: string; reproveResults: sdk.ReproveHeaderResult }>
 }
