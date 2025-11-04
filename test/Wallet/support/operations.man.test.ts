@@ -11,7 +11,7 @@ describe('operations.man tests', () => {
 
   test('0 review and release all production invalid change utxos', async () => {
     const { env, storage } = await _tu.createMainReviewSetup()
-    const users = await storage.findUsers({ partial: {} })
+    const users = await storage.findUsers({ partial: { userId: 202 } })
     const withInvalid: Record<number, { user: TableUser; outputs: WalletOutput[]; total: number }> = {}
     const vargs: ValidListOutputsArgs = {
       basket: specOpInvalidChange,
@@ -324,6 +324,16 @@ describe('operations.man tests', () => {
       log += `${outpoint} ${or.isUtxo} ${or.status}\n`
     }
     logger(log)
+    await storage.destroy()
+  })
+
+  test('15 abort a transaction', async () => {
+    const { env, storage } = await _tu.createMainReviewSetup()
+    const refOrTxid = '42671b6c9b79cec03bf5be9105203589b8b092774a40b459fbd835e5fd582202'
+    const userId = 496
+    const auth = { userId, identityKey: '' }
+    const r = await storage.abortAction(auth, { reference: refOrTxid })
+    console.log(r)
     await storage.destroy()
   })
 })
