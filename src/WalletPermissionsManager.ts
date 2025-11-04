@@ -1887,7 +1887,6 @@ export class WalletPermissionsManager implements WalletInterface {
         basket: BASKET_MAP[r.type],
         description: `Coalesce ${r.type} permission tokens`
       })
-      console.log('Coalesced permission tokens:', txid)
     } else {
       // Otherwise, just proceed with the single-token renewal
       // 3) For BRC-100, we do a "createAction" with a partial input referencing oldToken
