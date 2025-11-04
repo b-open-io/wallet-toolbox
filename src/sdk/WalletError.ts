@@ -147,14 +147,22 @@ export class WalletError extends Error implements WalletErrorObject {
   static unknownToJson(error: unknown | WalletError): string {
     let json: string | undefined
     let e: WalletError | undefined
-    if (error instanceof WalletError || (typeof error === 'object' && error?.constructor.name.startsWith('WERR_'))) {
-      e = error as WalletError
-    } else if (error instanceof Error) {
-      e = new WalletError(error.name, error.message)
+    const t = typeof error
+    const ctor = t === 'object' && error !== null ? (error as any).constructor?.name : undefined
+    const name = t === 'object' && error !== null && typeof (error as any).name === 'string' ? (error as any).name : ''
+    const message = t === 'object' && error !== null && typeof (error as any).message === 'string' ? (error as any).message : ''
+    const toJson = t === 'object' && error !== null && typeof (error as any).toJson === 'function' ? (error as any).toJson : undefined
+    console.log(`WalletError.unknownToJson: error type=${t} ctor=${ctor} name=${name} message=${message} hasToJson=${toJson ? 'yes' : 'no'}`)
+    if (ctor && ctor.startsWith('WERR_') && toJson !== undefined) {
+      json = (error as WalletError).toJson()
+    } else if (name && message) {
+      e = new WalletError(name, message)
+      json = e.toJson()
     } else {
       e = new WalletError('WERR_UNKNOWN', String(error))
+      json = e.toJson()
     }
-    json = e.toJson()
+    console.log(`WalletError.unknownToJson: json=${json}`)
     return json
   }
 }

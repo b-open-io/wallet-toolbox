@@ -462,7 +462,7 @@ export class Chaintracks implements ChaintracksManagementApi {
         let skipBulkSync =
           !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2
 
-        if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
+        if (skipBulkSync && now - lastBulkSync > cdnSyncRepeatMsecs) {
           // If we haven't re-synced in a long time, do it just to check for a CDN update.
           skipBulkSync = false
         }
