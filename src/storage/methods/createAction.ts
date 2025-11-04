@@ -10,8 +10,7 @@ import {
   Random,
   ReviewActionResult,
   Script,
-  Utils,
-  WERR_REVIEW_ACTIONS
+  Utils
 } from '@bsv/sdk'
 import {
   generateChangeSdk,
@@ -35,7 +34,7 @@ import {
   ValidCreateActionOutput,
   validateSatoshis
 } from '../../sdk/validationHelpers'
-import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
+import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_REVIEW_ACTIONS } from '../../sdk/WERR_errors'
 import {
   randomBytesBase64,
   sha256Hash,
