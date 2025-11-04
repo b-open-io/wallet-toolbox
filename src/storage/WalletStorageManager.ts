@@ -579,6 +579,7 @@ export class WalletStorageManager implements sdk.WalletStorage {
    * @returns VerifyAndRepairBeefResult, in particular `verifiedBeef` is valid only verify and repair succeeded fully.
    */
   async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<VerifyAndRepairBeefResult> {
+    throw new sdk.WERR_NOT_IMPLEMENTED()
 
     const r: VerifyAndRepairBeefResult = {
       isStructurallyValid: false,
