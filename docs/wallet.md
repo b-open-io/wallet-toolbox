@@ -8014,6 +8014,7 @@ export interface WalletSettings {
     trustSettings: TrustSettings;
     theme?: WalletTheme;
     currency?: string;
+    permissionMode?: "simple" | "advanced";
 }
 ```
 
@@ -16161,61 +16162,61 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [WalletErrorFromJson](#function-walleterrorfromjson) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
-| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBlockHeader](#function-isblockheader) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
-| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateBase64String](#function-validatebase64string) |
-| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isHexString](#function-ishexstring) | [validateBasketInsertion](#function-validatebasketinsertion) |
-| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
-| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateBulkFileData](#function-validatebulkfiledata) |
-| [addWork](#function-addwork) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
-| [arcDefaultUrl](#function-arcdefaulturl) | [isLive](#function-islive) | [validateCreateActionInput](#function-validatecreateactioninput) |
-| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
-| [arraysEqual](#function-arraysequal) | [isMoreWork](#function-ismorework) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
-| [asArray](#function-asarray) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
-| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listCertificates](#function-listcertificates) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
-| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
-| [asBsvSdkScript](#function-asbsvsdkscript) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
-| [asBsvSdkTx](#function-asbsvsdktx) | [makeAtomicBeef](#function-makeatomicbeef) | [validateGenesisHeader](#function-validategenesisheader) |
-| [asString](#function-asstring) | [makeChangeLock](#function-makechangelock) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
-| [asUint8Array](#function-asuint8array) | [maxDate](#function-maxdate) | [validateHeaderFormat](#function-validateheaderformat) |
-| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [offsetPubKey](#function-offsetpubkey) | [validateInteger](#function-validateinteger) |
-| [blockHash](#function-blockhash) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
-| [buildSignableTransaction](#function-buildsignabletransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
-| [completeSignedTransaction](#function-completesignedtransaction) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListActionsArgs](#function-validatelistactionsargs) |
-| [convertBitsToTarget](#function-convertbitstotarget) | [processAction](#function-processaction) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
-| [convertBitsToWork](#function-convertbitstowork) | [processAction](#function-processaction) | [validateListOutputsArgs](#function-validatelistoutputsargs) |
-| [convertBufferToUint32](#function-convertbuffertouint32) | [proveCertificate](#function-provecertificate) | [validateOptionalInteger](#function-validateoptionalinteger) |
-| [convertProofToMerklePath](#function-convertprooftomerklepath) | [purgeDataIdb](#function-purgedataidb) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
-| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [randomBytes](#function-randombytes) | [validateOriginator](#function-validateoriginator) |
-| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytesBase64](#function-randombytesbase64) | [validateOutpointString](#function-validateoutpointstring) |
+| [WalletErrorFromJson](#function-walleterrorfromjson) | [internalizeAction](#function-internalizeaction) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) |
+| [WocHeadersBulkListener](#function-wocheadersbulklistener) | [isBaseBlockHeader](#function-isbaseblockheader) | [validateAcquireIssuanceCertificateArgs](#function-validateacquireissuancecertificateargs) |
+| [WocHeadersBulkListener_test](#function-wocheadersbulklistener_test) | [isBlockHeader](#function-isblockheader) | [validateAgainstDirtyHashes](#function-validateagainstdirtyhashes) |
+| [WocHeadersLiveListener](#function-wocheaderslivelistener) | [isCreateActionSpecOp](#function-iscreateactionspecop) | [validateBase64String](#function-validatebase64string) |
+| [WocHeadersLiveListener_test](#function-wocheaderslivelistener_test) | [isHexString](#function-ishexstring) | [validateBasketInsertion](#function-validatebasketinsertion) |
+| [acquireDirectCertificate](#function-acquiredirectcertificate) | [isKnownValidBulkHeaderFile](#function-isknownvalidbulkheaderfile) | [validateBufferOfHeaders](#function-validatebufferofheaders) |
+| [addWork](#function-addwork) | [isListActionsSpecOp](#function-islistactionsspecop) | [validateBulkFileData](#function-validatebulkfiledata) |
+| [arcDefaultUrl](#function-arcdefaulturl) | [isListOutputsSpecOp](#function-islistoutputsspecop) | [validateCreateActionArgs](#function-validatecreateactionargs) |
+| [arcGorillaPoolUrl](#function-arcgorillapoolurl) | [isLive](#function-islive) | [validateCreateActionInput](#function-validatecreateactioninput) |
+| [arraysEqual](#function-arraysequal) | [isLiveBlockHeader](#function-isliveblockheader) | [validateCreateActionOptions](#function-validatecreateactionoptions) |
+| [asArray](#function-asarray) | [isMoreWork](#function-ismorework) | [validateCreateActionOutput](#function-validatecreateactionoutput) |
+| [asBsvSdkPrivateKey](#function-asbsvsdkprivatekey) | [listActionsIdb](#function-listactionsidb) | [validateDiscoverByAttributesArgs](#function-validatediscoverbyattributesargs) |
+| [asBsvSdkPublickKey](#function-asbsvsdkpublickkey) | [listCertificates](#function-listcertificates) | [validateDiscoverByIdentityKeyArgs](#function-validatediscoverbyidentitykeyargs) |
+| [asBsvSdkScript](#function-asbsvsdkscript) | [listOutputsIdb](#function-listoutputsidb) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
+| [asBsvSdkTx](#function-asbsvsdktx) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
+| [asString](#function-asstring) | [makeAtomicBeef](#function-makeatomicbeef) | [validateGenesisHeader](#function-validategenesisheader) |
+| [asUint8Array](#function-asuint8array) | [makeChangeLock](#function-makechangelock) | [validateHeaderDifficulty](#function-validateheaderdifficulty) |
+| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [maxDate](#function-maxdate) | [validateHeaderFormat](#function-validateheaderformat) |
+| [blockHash](#function-blockhash) | [offsetPubKey](#function-offsetpubkey) | [validateInteger](#function-validateinteger) |
+| [buildSignableTransaction](#function-buildsignabletransaction) | [optionalArraysEqual](#function-optionalarraysequal) | [validateInternalizeActionArgs](#function-validateinternalizeactionargs) |
+| [completeSignedTransaction](#function-completesignedtransaction) | [parseTxScriptOffsets](#function-parsetxscriptoffsets) | [validateInternalizeOutput](#function-validateinternalizeoutput) |
+| [convertBitsToTarget](#function-convertbitstotarget) | [parseWalletOutpoint](#function-parsewalletoutpoint) | [validateListActionsArgs](#function-validatelistactionsargs) |
+| [convertBitsToWork](#function-convertbitstowork) | [processAction](#function-processaction) | [validateListCertificatesArgs](#function-validatelistcertificatesargs) |
+| [convertBufferToUint32](#function-convertbuffertouint32) | [processAction](#function-processaction) | [validateListOutputsArgs](#function-validatelistoutputsargs) |
+| [convertProofToMerklePath](#function-convertprooftomerklepath) | [proveCertificate](#function-provecertificate) | [validateOptionalInteger](#function-validateoptionalinteger) |
+| [convertUint32ToBuffer](#function-convertuint32tobuffer) | [purgeDataIdb](#function-purgedataidb) | [validateOptionalOutpointString](#function-validateoptionaloutpointstring) |
+| [convertWocToBlockHeaderHex](#function-convertwoctoblockheaderhex) | [randomBytes](#function-randombytes) | [validateOriginator](#function-validateoriginator) |
+| [createAction](#function-createaction) | [randomBytesBase64](#function-randombytesbase64) | [validateOutpointString](#function-validateoutpointstring) |
 | [createAction](#function-createaction) | [randomBytesHex](#function-randombyteshex) | [validatePositiveIntegerOrZero](#function-validatepositiveintegerorzero) |
-| [createAction](#function-createaction) | [readUInt32BE](#function-readuint32be) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
-| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
-| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [reviewStatusIdb](#function-reviewstatusidb) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
-| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateSatoshis](#function-validatesatoshis) |
-| [createIdbChaintracks](#function-createidbchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateScriptHash](#function-validatescripthash) |
-| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
-| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionArgs](#function-validatesignactionargs) |
-| [createSyncMap](#function-createsyncmap) | [sha256Hash](#function-sha256hash) | [validateSignActionOptions](#function-validatesignactionoptions) |
-| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
-| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateStringLength](#function-validatestringlength) |
-| [deserializeBlockHeader](#function-deserializeblockheader) | [signAction](#function-signaction) | [validateWalletPayment](#function-validatewalletpayment) |
-| [deserializeBlockHeaders](#function-deserializeblockheaders) | [stampLog](#function-stamplog) | [varUintSize](#function-varuintsize) |
-| [doubleSha256BE](#function-doublesha256be) | [stampLogFormat](#function-stamplogformat) | [verifyHexString](#function-verifyhexstring) |
-| [doubleSha256LE](#function-doublesha256le) | [subWork](#function-subwork) | [verifyId](#function-verifyid) |
-| [generateChangeSdk](#function-generatechangesdk) | [swapByteOrder](#function-swapbyteorder) | [verifyInteger](#function-verifyinteger) |
-| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [throwDummyReviewActions](#function-throwdummyreviewactions) | [verifyNumber](#function-verifynumber) |
-| [genesisBuffer](#function-genesisbuffer) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyOne](#function-verifyone) |
-| [genesisHeader](#function-genesisheader) | [toWalletNetwork](#function-towalletnetwork) | [verifyOneOrNone](#function-verifyoneornone) |
-| [getBeefForTransaction](#function-getbeeffortransaction) | [transactionInputSize](#function-transactioninputsize) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
-| [getBeefForTxid](#function-getbeeffortxid) | [transactionOutputSize](#function-transactionoutputsize) | [verifyTruthy](#function-verifytruthy) |
-| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionSize](#function-transactionsize) | [verifyUnlockScripts](#function-verifyunlockscripts) |
-| [getIdentityKey](#function-getidentitykey) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [wait](#function-wait) |
+| [createDefaultIdbChaintracksOptions](#function-createdefaultidbchaintracksoptions) | [readUInt32BE](#function-readuint32be) | [validateProveCertificateArgs](#function-validateprovecertificateargs) |
+| [createDefaultNoDbChaintracksOptions](#function-createdefaultnodbchaintracksoptions) | [readUInt32LE](#function-readuint32le) | [validateRelinquishCertificateArgs](#function-validaterelinquishcertificateargs) |
+| [createDefaultWalletServicesOptions](#function-createdefaultwalletservicesoptions) | [reviewStatusIdb](#function-reviewstatusidb) | [validateRelinquishOutputArgs](#function-validaterelinquishoutputargs) |
+| [createIdbChaintracks](#function-createidbchaintracks) | [selectBulkHeaderFiles](#function-selectbulkheaderfiles) | [validateSatoshis](#function-validatesatoshis) |
+| [createNoDbChaintracks](#function-createnodbchaintracks) | [serializeBaseBlockHeader](#function-serializebaseblockheader) | [validateScriptHash](#function-validatescripthash) |
+| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [serializeBaseBlockHeaders](#function-serializebaseblockheaders) | [validateSecondsSinceEpoch](#function-validatesecondssinceepoch) |
+| [createSyncMap](#function-createsyncmap) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) | [validateSignActionArgs](#function-validatesignactionargs) |
+| [deserializeBaseBlockHeader](#function-deserializebaseblockheader) | [sha256Hash](#function-sha256hash) | [validateSignActionOptions](#function-validatesignactionoptions) |
+| [deserializeBaseBlockHeaders](#function-deserializebaseblockheaders) | [sha256HashOfBinaryFile](#function-sha256hashofbinaryfile) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
+| [deserializeBlockHeader](#function-deserializeblockheader) | [shareReqsWithWorld](#function-sharereqswithworld) | [validateStringLength](#function-validatestringlength) |
+| [deserializeBlockHeaders](#function-deserializeblockheaders) | [signAction](#function-signaction) | [validateWalletPayment](#function-validatewalletpayment) |
+| [doubleSha256BE](#function-doublesha256be) | [stampLog](#function-stamplog) | [varUintSize](#function-varuintsize) |
+| [doubleSha256LE](#function-doublesha256le) | [stampLogFormat](#function-stamplogformat) | [verifyHexString](#function-verifyhexstring) |
+| [generateChangeSdk](#function-generatechangesdk) | [subWork](#function-subwork) | [verifyId](#function-verifyid) |
+| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [swapByteOrder](#function-swapbyteorder) | [verifyInteger](#function-verifyinteger) |
+| [genesisBuffer](#function-genesisbuffer) | [throwDummyReviewActions](#function-throwdummyreviewactions) | [verifyNumber](#function-verifynumber) |
+| [genesisHeader](#function-genesisheader) | [toBinaryBaseBlockHeader](#function-tobinarybaseblockheader) | [verifyOne](#function-verifyone) |
+| [getBeefForTransaction](#function-getbeeffortransaction) | [toWalletNetwork](#function-towalletnetwork) | [verifyOneOrNone](#function-verifyoneornone) |
+| [getBeefForTxid](#function-getbeeffortxid) | [transactionInputSize](#function-transactioninputsize) | [verifyOptionalHexString](#function-verifyoptionalhexstring) |
+| [getExchangeRatesIo](#function-getexchangeratesio) | [transactionOutputSize](#function-transactionoutputsize) | [verifyTruthy](#function-verifytruthy) |
+| [getIdentityKey](#function-getidentitykey) | [transactionSize](#function-transactionsize) | [verifyUnlockScripts](#function-verifyunlockscripts) |
+| [getPermissionConfigForMode](#function-getpermissionconfigformode) | [updateChaintracksFiatExchangeRates](#function-updatechaintracksfiatexchangerates) | [wait](#function-wait) |
 | [getProofs](#function-getproofs) | [updateExchangeratesapi](#function-updateexchangeratesapi) | [wocGetHeadersHeaderToBlockHeader](#function-wocgetheadersheadertoblockheader) |
 | [getSyncChunk](#function-getsyncchunk) | [validBulkHeaderFilesByFileHash](#function-validbulkheaderfilesbyfilehash) | [workBNtoBuffer](#function-workbntobuffer) |
 | [getWhatsOnChainBlockHeaderByHash](#function-getwhatsonchainblockheaderbyhash) | [validateAbortActionArgs](#function-validateabortactionargs) | [writeUInt32BE](#function-writeuint32be) |
 | [internalizeAction](#function-internalizeaction) | [validateAcquireCertificateArgs](#function-validateacquirecertificateargs) | [writeUInt32LE](#function-writeuint32le) |
-| [internalizeAction](#function-internalizeaction) | [validateAcquireDirectCertificateArgs](#function-validateacquiredirectcertificateargs) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -17111,6 +17112,28 @@ export async function getIdentityKey(wallet: CertOpsWallet): Promise<PubKeyHex>
 ```
 
 See also: [CertOpsWallet](./client.md#interface-certopswallet)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: getPermissionConfigForMode
+
+Get permissions manager configuration based on permission mode
+
+```ts
+export function getPermissionConfigForMode(mode: "simple" | "advanced" = "simple"): Partial<PermissionsManagerConfig> 
+```
+
+See also: [PermissionsManagerConfig](./client.md#interface-permissionsmanagerconfig)
+
+Returns
+
+PermissionsManagerConfig object
+
+Argument Details
+
++ **mode**
+  + 'simple' for minimal prompts (trust first), 'advanced' for maximum control
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -19372,7 +19395,8 @@ DEFAULT_SETTINGS = {
             }
         ]
     },
-    theme: { mode: "dark" }
+    theme: { mode: "dark" },
+    permissionMode: "simple"
 } as WalletSettings
 ```
 
