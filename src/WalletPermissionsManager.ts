@@ -574,7 +574,7 @@ export class WalletPermissionsManager implements WalletInterface {
         // brand-new permission token
         await this.createPermissionOnChain(
           request,
-          params.expiry || Math.floor(Date.now() / 1000) + 3600 * 24 * 30, // default 30-day expiry
+          params.expiry || 0, // default: never expires
           params.amount
         )
       } else {
@@ -582,7 +582,7 @@ export class WalletPermissionsManager implements WalletInterface {
         await this.renewPermissionOnChain(
           request.previousToken!,
           request,
-          params.expiry || Math.floor(Date.now() / 1000) + 3600 * 24 * 30,
+          params.expiry || 0, // default: never expires
           params.amount
         )
       }
@@ -591,7 +591,7 @@ export class WalletPermissionsManager implements WalletInterface {
     // Only cache non-ephemeral permissions
     // Ephemeral permissions should not be cached as they are one-time authorizations
     if (!params.ephemeral) {
-      const expiry = params.expiry || Math.floor(Date.now() / 1000) + 3600 * 24 * 30
+      const expiry = params.expiry || 0 // default: never expires
       const key = this.buildRequestKey(matching.request as PermissionRequest)
       this.cachePermission(key, expiry)
       this.markRecentGrant(matching.request as PermissionRequest)
@@ -666,7 +666,7 @@ export class WalletPermissionsManager implements WalletInterface {
     }
     // --- End Validation ---
 
-    const expiry = params.expiry || Math.floor(Date.now() / 1000) + 3600 * 24 * 30 // 30-day default
+    const expiry = params.expiry || 0 // default: never expires
 
     if (params.granted.spendingAuthorization) {
       await this.createPermissionOnChain(
