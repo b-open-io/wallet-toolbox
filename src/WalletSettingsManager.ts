@@ -1,4 +1,5 @@
 import { LocalKVStore, PubKeyHex, WalletInterface } from '@bsv/sdk'
+import { PermissionsManagerConfig } from './WalletPermissionsManager'
 
 export interface Certifier {
   name: string
@@ -19,6 +20,7 @@ export interface WalletSettings {
   trustSettings: TrustSettings
   theme?: WalletTheme
   currency?: string
+  permissionMode?: 'simple' | 'advanced'
 }
 export interface WalletSettingsManagerConfig {
   defaultSettings: WalletSettings
@@ -47,7 +49,8 @@ export const DEFAULT_SETTINGS = {
       }
     ]
   },
-  theme: { mode: 'dark' }
+  theme: { mode: 'dark' },
+  permissionMode: 'simple'
 } as WalletSettings
 
 // Mapping of certifier names to their testnet identity keys
@@ -67,6 +70,62 @@ export const TESTNET_DEFAULT_SETTINGS: WalletSettings = {
       // Use the testnet key if provided, otherwise fallback to the default
       identityKey: TESTNET_IDENTITY_KEYS[certifier.name] || certifier.identityKey
     }))
+  }
+}
+
+/**
+ * Get permissions manager configuration based on permission mode
+ * 
+ * @param mode - 'simple' for minimal prompts (trust first), 'advanced' for maximum control
+ * @returns PermissionsManagerConfig object
+ */
+export function getPermissionConfigForMode(mode: 'simple' | 'advanced' = 'simple'): Partial<PermissionsManagerConfig> {
+  if (mode === 'simple') {
+    // Simple mode: Trust apps by default, only prompt for sensitive operations
+    return {
+      differentiatePrivilegedOperations: true,
+      seekBasketInsertionPermissions: false,
+      seekBasketListingPermissions: true,
+      seekBasketRemovalPermissions: true,
+      seekCertificateAcquisitionPermissions: true,
+      seekCertificateDisclosurePermissions: true,
+      seekCertificateRelinquishmentPermissions: true,
+      seekCertificateListingPermissions: false,
+      seekGroupedPermission: true, // One-time app install prompt
+      seekPermissionsForIdentityKeyRevelation: false,
+      seekPermissionsForIdentityResolution: false,
+      seekPermissionsForKeyLinkageRevelation: false,
+      seekPermissionsForPublicKeyRevelation: false,
+      seekPermissionWhenApplyingActionLabels: false,
+      seekPermissionWhenListingActionsByLabel: false,
+      seekProtocolPermissionsForEncrypting: false,
+      seekProtocolPermissionsForHMAC: false,
+      seekProtocolPermissionsForSigning: false,
+      seekSpendingPermissions: true // Always prompt for spending
+    }
+  } else {
+    // Advanced mode: Prompt for everything (power user control)
+    return {
+      differentiatePrivilegedOperations: true,
+      seekBasketInsertionPermissions: true,
+      seekBasketListingPermissions: true,
+      seekBasketRemovalPermissions: true,
+      seekCertificateAcquisitionPermissions: true,
+      seekCertificateDisclosurePermissions: true,
+      seekCertificateRelinquishmentPermissions: true,
+      seekCertificateListingPermissions: true,
+      seekGroupedPermission: true,
+      seekPermissionsForIdentityKeyRevelation: true,
+      seekPermissionsForIdentityResolution: true,
+      seekPermissionsForKeyLinkageRevelation: true,
+      seekPermissionsForPublicKeyRevelation: true,
+      seekPermissionWhenApplyingActionLabels: true,
+      seekPermissionWhenListingActionsByLabel: true,
+      seekProtocolPermissionsForEncrypting: true,
+      seekProtocolPermissionsForHMAC: true,
+      seekProtocolPermissionsForSigning: true,
+      seekSpendingPermissions: true
+    }
   }
 }
 
