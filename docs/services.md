@@ -3515,7 +3515,7 @@ export class Chaintracks implements ChaintracksManagementApi {
                 const presentHeight = await this.getPresentHeight();
                 const before = await this.storage.getAvailableHeightRanges();
                 let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2;
-                if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
+                if (skipBulkSync && now - lastBulkSync > cdnSyncRepeatMsecs) {
                     skipBulkSync = false;
                 }
                 this.log(`Chaintracks Update Services: Bulk Header Sync Review

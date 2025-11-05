@@ -72,29 +72,29 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 | [FindCommissionsArgs](#interface-findcommissionsargs) | [ServiceToCall](#interface-servicetocall) | [ValidWalletPayment](#interface-validwalletpayment) |
 | [FindForUserSincePagedArgs](#interface-findforusersincepagedargs) | [SetupClientWalletArgs](#interface-setupclientwalletargs) | [ValidWalletSignerArgs](#interface-validwalletsignerargs) |
 | [FindMonitorEventsArgs](#interface-findmonitoreventsargs) | [SetupClientWalletClientArgs](#interface-setupclientwalletclientargs) | [ValidateGenerateChangeSdkParamsResult](#interface-validategeneratechangesdkparamsresult) |
-| [FindOutputBasketsArgs](#interface-findoutputbasketsargs) | [SetupWallet](#interface-setupwallet) | [WalletArgs](#interface-walletargs) |
-| [FindOutputTagMapsArgs](#interface-findoutputtagmapsargs) | [SetupWalletClient](#interface-setupwalletclient) | [WalletBalance](#interface-walletbalance) |
-| [FindOutputTagsArgs](#interface-findoutputtagsargs) | [SetupWalletIdb](#interface-setupwalletidb) | [WalletPermissionsManagerCallbacks](#interface-walletpermissionsmanagercallbacks) |
-| [FindOutputsArgs](#interface-findoutputsargs) | [SetupWalletIdbArgs](#interface-setupwalletidbargs) | [WalletServices](#interface-walletservices) |
-| [FindPartialSincePagedArgs](#interface-findpartialsincepagedargs) | [SignActionResultX](#interface-signactionresultx) | [WalletServicesOptions](#interface-walletservicesoptions) |
-| [FindProvenTxReqsArgs](#interface-findproventxreqsargs) | [StartAuthResponse](#interface-startauthresponse) | [WalletSettings](#interface-walletsettings) |
-| [FindProvenTxsArgs](#interface-findproventxsargs) | [StatusForTxidResult](#interface-statusfortxidresult) | [WalletSettingsManagerConfig](#interface-walletsettingsmanagerconfig) |
-| [FindSincePagedArgs](#interface-findsincepagedargs) | [StorageAdminStats](#interface-storageadminstats) | [WalletSigner](#interface-walletsigner) |
-| [FindSyncStatesArgs](#interface-findsyncstatesargs) | [StorageCreateActionResult](#interface-storagecreateactionresult) | [WalletStorage](#interface-walletstorage) |
-| [FindTransactionsArgs](#interface-findtransactionsargs) | [StorageCreateTransactionSdkInput](#interface-storagecreatetransactionsdkinput) | [WalletStorageInfo](#interface-walletstorageinfo) |
-| [FindTxLabelMapsArgs](#interface-findtxlabelmapsargs) | [StorageCreateTransactionSdkOutput](#interface-storagecreatetransactionsdkoutput) | [WalletStorageProvider](#interface-walletstorageprovider) |
-| [FindTxLabelsArgs](#interface-findtxlabelsargs) | [StorageFeeModel](#interface-storagefeemodel) | [WalletStorageReader](#interface-walletstoragereader) |
-| [FindUsersArgs](#interface-findusersargs) | [StorageGetBeefOptions](#interface-storagegetbeefoptions) | [WalletStorageSync](#interface-walletstoragesync) |
-| [GenerateChangeSdkChangeInput](#interface-generatechangesdkchangeinput) | [StorageIdbOptions](#interface-storageidboptions) | [WalletStorageSyncReader](#interface-walletstoragesyncreader) |
-| [GenerateChangeSdkChangeOutput](#interface-generatechangesdkchangeoutput) | [StorageIdbSchema](#interface-storageidbschema) | [WalletStorageWriter](#interface-walletstoragewriter) |
-| [GenerateChangeSdkInput](#interface-generatechangesdkinput) | [StorageIdentity](#interface-storageidentity) | [WalletTheme](#interface-wallettheme) |
-| [GenerateChangeSdkOutput](#interface-generatechangesdkoutput) | [StorageInternalizeActionResult](#interface-storageinternalizeactionresult) | [WhatsOnChainServicesOptions](#interface-whatsonchainservicesoptions) |
-| [GenerateChangeSdkParams](#interface-generatechangesdkparams) | [StorageProcessActionArgs](#interface-storageprocessactionargs) | [WocChainInfo](#interface-wocchaininfo) |
-| [GenerateChangeSdkResult](#interface-generatechangesdkresult) | [StorageProcessActionResults](#interface-storageprocessactionresults) | [WocGetHeaderByteFileLinks](#interface-wocgetheaderbytefilelinks) |
-| [GenerateChangeSdkStorageChange](#interface-generatechangesdkstoragechange) | [StorageProvenOrReq](#interface-storageprovenorreq) | [WocGetHeadersHeader](#interface-wocgetheadersheader) |
-| [GetHeaderByteFileLinksResult](#interface-getheaderbytefilelinksresult) | [StorageProviderOptions](#interface-storageprovideroptions) | [WocHeader](#interface-wocheader) |
-| [GetMerklePathResult](#interface-getmerklepathresult) | [StorageReaderOptions](#interface-storagereaderoptions) | [XValidCreateActionOutput](#interface-xvalidcreateactionoutput) |
-| [GetRawTxResult](#interface-getrawtxresult) | [StorageReaderWriterOptions](#interface-storagereaderwriteroptions) |  |
+| [FindOutputBasketsArgs](#interface-findoutputbasketsargs) | [SetupWallet](#interface-setupwallet) | [VerifyAndRepairBeefResult](#interface-verifyandrepairbeefresult) |
+| [FindOutputTagMapsArgs](#interface-findoutputtagmapsargs) | [SetupWalletClient](#interface-setupwalletclient) | [WalletArgs](#interface-walletargs) |
+| [FindOutputTagsArgs](#interface-findoutputtagsargs) | [SetupWalletIdb](#interface-setupwalletidb) | [WalletBalance](#interface-walletbalance) |
+| [FindOutputsArgs](#interface-findoutputsargs) | [SetupWalletIdbArgs](#interface-setupwalletidbargs) | [WalletPermissionsManagerCallbacks](#interface-walletpermissionsmanagercallbacks) |
+| [FindPartialSincePagedArgs](#interface-findpartialsincepagedargs) | [SignActionResultX](#interface-signactionresultx) | [WalletServices](#interface-walletservices) |
+| [FindProvenTxReqsArgs](#interface-findproventxreqsargs) | [StartAuthResponse](#interface-startauthresponse) | [WalletServicesOptions](#interface-walletservicesoptions) |
+| [FindProvenTxsArgs](#interface-findproventxsargs) | [StatusForTxidResult](#interface-statusfortxidresult) | [WalletSettings](#interface-walletsettings) |
+| [FindSincePagedArgs](#interface-findsincepagedargs) | [StorageAdminStats](#interface-storageadminstats) | [WalletSettingsManagerConfig](#interface-walletsettingsmanagerconfig) |
+| [FindSyncStatesArgs](#interface-findsyncstatesargs) | [StorageCreateActionResult](#interface-storagecreateactionresult) | [WalletSigner](#interface-walletsigner) |
+| [FindTransactionsArgs](#interface-findtransactionsargs) | [StorageCreateTransactionSdkInput](#interface-storagecreatetransactionsdkinput) | [WalletStorage](#interface-walletstorage) |
+| [FindTxLabelMapsArgs](#interface-findtxlabelmapsargs) | [StorageCreateTransactionSdkOutput](#interface-storagecreatetransactionsdkoutput) | [WalletStorageInfo](#interface-walletstorageinfo) |
+| [FindTxLabelsArgs](#interface-findtxlabelsargs) | [StorageFeeModel](#interface-storagefeemodel) | [WalletStorageProvider](#interface-walletstorageprovider) |
+| [FindUsersArgs](#interface-findusersargs) | [StorageGetBeefOptions](#interface-storagegetbeefoptions) | [WalletStorageReader](#interface-walletstoragereader) |
+| [GenerateChangeSdkChangeInput](#interface-generatechangesdkchangeinput) | [StorageIdbOptions](#interface-storageidboptions) | [WalletStorageSync](#interface-walletstoragesync) |
+| [GenerateChangeSdkChangeOutput](#interface-generatechangesdkchangeoutput) | [StorageIdbSchema](#interface-storageidbschema) | [WalletStorageSyncReader](#interface-walletstoragesyncreader) |
+| [GenerateChangeSdkInput](#interface-generatechangesdkinput) | [StorageIdentity](#interface-storageidentity) | [WalletStorageWriter](#interface-walletstoragewriter) |
+| [GenerateChangeSdkOutput](#interface-generatechangesdkoutput) | [StorageInternalizeActionResult](#interface-storageinternalizeactionresult) | [WalletTheme](#interface-wallettheme) |
+| [GenerateChangeSdkParams](#interface-generatechangesdkparams) | [StorageProcessActionArgs](#interface-storageprocessactionargs) | [WhatsOnChainServicesOptions](#interface-whatsonchainservicesoptions) |
+| [GenerateChangeSdkResult](#interface-generatechangesdkresult) | [StorageProcessActionResults](#interface-storageprocessactionresults) | [WocChainInfo](#interface-wocchaininfo) |
+| [GenerateChangeSdkStorageChange](#interface-generatechangesdkstoragechange) | [StorageProvenOrReq](#interface-storageprovenorreq) | [WocGetHeaderByteFileLinks](#interface-wocgetheaderbytefilelinks) |
+| [GetHeaderByteFileLinksResult](#interface-getheaderbytefilelinksresult) | [StorageProviderOptions](#interface-storageprovideroptions) | [WocGetHeadersHeader](#interface-wocgetheadersheader) |
+| [GetMerklePathResult](#interface-getmerklepathresult) | [StorageReaderOptions](#interface-storagereaderoptions) | [WocHeader](#interface-wocheader) |
+| [GetRawTxResult](#interface-getrawtxresult) | [StorageReaderWriterOptions](#interface-storagereaderwriteroptions) | [XValidCreateActionOutput](#interface-xvalidcreateactionoutput) |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -3750,6 +3750,7 @@ authorization without an associated persistent on-chain token.
 export interface PermissionRequest {
     type: "protocol" | "basket" | "certificate" | "spending";
     originator: string;
+    displayOriginator?: string;
     privileged?: boolean;
     protocolID?: WalletProtocol;
     counterparty?: string;
@@ -3798,6 +3799,7 @@ export interface PermissionToken {
     outputScript: string;
     satoshis: number;
     originator: string;
+    rawOriginator?: string;
     expiry: number;
     privileged?: boolean;
     protocol?: string;
@@ -3897,6 +3899,16 @@ The protocol name, if this is a DPACP token.
 
 ```ts
 protocol?: string
+```
+
+###### Property rawOriginator
+
+The raw, unnormalized originator string captured at the time the permission
+token was created. This is preserved so we can continue to recognize legacy
+permissions that were stored with different casing or explicit default ports.
+
+```ts
+rawOriginator?: string
 ```
 
 ###### Property satoshis
@@ -7441,6 +7453,24 @@ export interface ValidateGenerateChangeSdkParamsResult {
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Interface: VerifyAndRepairBeefResult
+
+```ts
+export interface VerifyAndRepairBeefResult {
+    isStructurallyValid: boolean;
+    originalRoots: Record<number, string>;
+    invalidRoots: Record<number, {
+        root: string;
+        reproveResults: sdk.ReproveHeaderResult;
+    }>;
+}
+```
+
+See also: [ReproveHeaderResult](./client.md#interface-reproveheaderresult)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Interface: WalletArgs
 
 ```ts
@@ -9602,7 +9632,7 @@ export class Chaintracks implements ChaintracksManagementApi {
                 const presentHeight = await this.getPresentHeight();
                 const before = await this.storage.getAvailableHeightRanges();
                 let skipBulkSync = !before.live.isEmpty && before.live.maxHeight >= presentHeight - this.addLiveRecursionLimit / 2;
-                if (skipBulkSync && now - lastSyncCheck > cdnSyncRepeatMsecs) {
+                if (skipBulkSync && now - lastBulkSync > cdnSyncRepeatMsecs) {
                     skipBulkSync = false;
                 }
                 this.log(`Chaintracks Update Services: Bulk Header Sync Review
@@ -15728,7 +15758,7 @@ export class WalletStorageManager implements sdk.WalletStorage {
     async findOutputs(args: sdk.FindOutputsArgs): Promise<TableOutput[]> 
     async findProvenTxReqs(args: sdk.FindProvenTxReqsArgs): Promise<TableProvenTxReq[]> 
     async reproveHeader(deactivatedHash: string): Promise<sdk.ReproveHeaderResult> 
-    async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<boolean> 
+    async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<VerifyAndRepairBeefResult> 
     async reproveProven(ptx: TableProvenTx, noUpdate?: boolean): Promise<sdk.ReproveProvenResult> 
     async syncFromReader(identityKey: string, reader: sdk.WalletStorageSyncReader, activeSync?: sdk.WalletStorageSync, log: string = ""): Promise<{
         inserts: number;
@@ -15747,7 +15777,7 @@ export class WalletStorageManager implements sdk.WalletStorage {
 }
 ```
 
-See also: [AuthId](./client.md#interface-authid), [FindCertificatesArgs](./client.md#interface-findcertificatesargs), [FindOutputBasketsArgs](./client.md#interface-findoutputbasketsargs), [FindOutputsArgs](./client.md#interface-findoutputsargs), [FindProvenTxReqsArgs](./client.md#interface-findproventxreqsargs), [ReproveHeaderResult](./client.md#interface-reproveheaderresult), [ReproveProvenResult](./client.md#interface-reproveprovenresult), [StorageCreateActionResult](./client.md#interface-storagecreateactionresult), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [StorageProcessActionArgs](./client.md#interface-storageprocessactionargs), [StorageProcessActionResults](./client.md#interface-storageprocessactionresults), [StorageProvider](./storage.md#class-storageprovider), [TableCertificate](./storage.md#interface-tablecertificate), [TableCertificateX](./storage.md#interface-tablecertificatex), [TableOutput](./storage.md#interface-tableoutput), [TableOutputBasket](./storage.md#interface-tableoutputbasket), [TableProvenTx](./storage.md#interface-tableproventx), [TableProvenTxReq](./storage.md#interface-tableproventxreq), [TableSettings](./storage.md#interface-tablesettings), [TableUser](./storage.md#interface-tableuser), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs), [ValidListActionsArgs](./client.md#interface-validlistactionsargs), [ValidListCertificatesArgs](./client.md#interface-validlistcertificatesargs), [ValidListOutputsArgs](./client.md#interface-validlistoutputsargs), [WalletServices](./client.md#interface-walletservices), [WalletStorage](./client.md#interface-walletstorage), [WalletStorageInfo](./client.md#interface-walletstorageinfo), [WalletStorageProvider](./client.md#interface-walletstorageprovider), [WalletStorageReader](./client.md#interface-walletstoragereader), [WalletStorageSync](./client.md#interface-walletstoragesync), [WalletStorageSyncReader](./client.md#interface-walletstoragesyncreader), [WalletStorageWriter](./client.md#interface-walletstoragewriter), [createAction](./storage.md#function-createaction), [internalizeAction](./storage.md#function-internalizeaction), [listActions](./storage.md#function-listactions), [listCertificates](./storage.md#function-listcertificates), [listOutputs](./storage.md#function-listoutputs), [processAction](./storage.md#function-processaction)
+See also: [AuthId](./client.md#interface-authid), [FindCertificatesArgs](./client.md#interface-findcertificatesargs), [FindOutputBasketsArgs](./client.md#interface-findoutputbasketsargs), [FindOutputsArgs](./client.md#interface-findoutputsargs), [FindProvenTxReqsArgs](./client.md#interface-findproventxreqsargs), [ReproveHeaderResult](./client.md#interface-reproveheaderresult), [ReproveProvenResult](./client.md#interface-reproveprovenresult), [StorageCreateActionResult](./client.md#interface-storagecreateactionresult), [StorageInternalizeActionResult](./client.md#interface-storageinternalizeactionresult), [StorageProcessActionArgs](./client.md#interface-storageprocessactionargs), [StorageProcessActionResults](./client.md#interface-storageprocessactionresults), [StorageProvider](./storage.md#class-storageprovider), [TableCertificate](./storage.md#interface-tablecertificate), [TableCertificateX](./storage.md#interface-tablecertificatex), [TableOutput](./storage.md#interface-tableoutput), [TableOutputBasket](./storage.md#interface-tableoutputbasket), [TableProvenTx](./storage.md#interface-tableproventx), [TableProvenTxReq](./storage.md#interface-tableproventxreq), [TableSettings](./storage.md#interface-tablesettings), [TableUser](./storage.md#interface-tableuser), [ValidCreateActionArgs](./client.md#interface-validcreateactionargs), [ValidListActionsArgs](./client.md#interface-validlistactionsargs), [ValidListCertificatesArgs](./client.md#interface-validlistcertificatesargs), [ValidListOutputsArgs](./client.md#interface-validlistoutputsargs), [VerifyAndRepairBeefResult](./storage.md#interface-verifyandrepairbeefresult), [WalletServices](./client.md#interface-walletservices), [WalletStorage](./client.md#interface-walletstorage), [WalletStorageInfo](./client.md#interface-walletstorageinfo), [WalletStorageProvider](./client.md#interface-walletstorageprovider), [WalletStorageReader](./client.md#interface-walletstoragereader), [WalletStorageSync](./client.md#interface-walletstoragesync), [WalletStorageSyncReader](./client.md#interface-walletstoragesyncreader), [WalletStorageWriter](./client.md#interface-walletstoragewriter), [createAction](./storage.md#function-createaction), [internalizeAction](./storage.md#function-internalizeaction), [listActions](./storage.md#function-listactions), [listCertificates](./storage.md#function-listcertificates), [listOutputs](./storage.md#function-listoutputs), [processAction](./storage.md#function-processaction)
 
 ###### Constructor
 
@@ -15929,15 +15959,23 @@ Argument Details
 
 ###### Method verifyAndRepairBeef
 
-Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg.
+Extends the Beef `verify` function to handle BUMPs that have become invalid due to a chain reorg,
+and originated from proven_txs records tracked by this storage.
+
+This method is optimized for making sure outgoing beefs are valid before sharing them externally.
+In particular, it only "repairs" proofs previously tracked by this storage.
 
 Any merkle root that fails `isValidRootForHeight` triggers a reprove attempt for that block header.
 This results in proven_txs with invalid proofs being updated with new valid proofs where possible.
-Finally, a new beef is generated and verified against the chaintracker.
 
 ```ts
-async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<boolean> 
+async verifyAndRepairBeef(beef: Beef, allowTxidOnly?: boolean): Promise<VerifyAndRepairBeefResult> 
 ```
+See also: [VerifyAndRepairBeefResult](./storage.md#interface-verifyandrepairbeefresult)
+
+Returns
+
+VerifyAndRepairBeefResult, in particular `verifiedBeef` is valid only verify and repair succeeded fully.
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
