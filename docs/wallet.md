@@ -8014,6 +8014,7 @@ export interface WalletSettings {
     trustSettings: TrustSettings;
     theme?: WalletTheme;
     currency?: string;
+    permissionMode?: string;
 }
 ```
 
@@ -19372,7 +19373,8 @@ DEFAULT_SETTINGS = {
             }
         ]
     },
-    theme: { mode: "dark" }
+    theme: { mode: "dark" },
+    permissionMode: "simple"
 } as WalletSettings
 ```
 

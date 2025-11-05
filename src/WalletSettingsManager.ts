@@ -19,6 +19,7 @@ export interface WalletSettings {
   trustSettings: TrustSettings
   theme?: WalletTheme
   currency?: string
+  permissionMode?: string // Vendor-specific permission UX mode identifier
 }
 export interface WalletSettingsManagerConfig {
   defaultSettings: WalletSettings
@@ -47,7 +48,8 @@ export const DEFAULT_SETTINGS = {
       }
     ]
   },
-  theme: { mode: 'dark' }
+  theme: { mode: 'dark' },
+  permissionMode: 'simple'
 } as WalletSettings
 
 // Mapping of certifier names to their testnet identity keys
