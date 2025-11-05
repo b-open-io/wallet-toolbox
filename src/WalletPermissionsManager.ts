@@ -1789,11 +1789,17 @@ export class WalletPermissionsManager implements WalletInterface {
   ): Promise<string> {
     if (!oldTokens?.length) throw new Error('No permission tokens to coalesce')
     if (oldTokens.length < 2) throw new Error('Need at least 2 tokens to coalesce')
-
     // 1) Create a signable action with N inputs and a single renewed output
+    // Merge all input token BEEFs into a single BEEF structure
+    const inputBeef = new Beef()
+    for (const token of oldTokens) {
+      inputBeef.mergeBeef(Beef.fromBinary(token.tx))
+    }
+
     const { signableTransaction } = await this.createAction(
       {
         description: opts?.description ?? `Coalesce ${oldTokens.length} permission tokens`,
+        inputBEEF: inputBeef.toBinary(),
         inputs: oldTokens.map((t, i) => ({
           outpoint: `${t.txid}.${t.outputIndex}`,
           unlockingScriptLength: 74,
@@ -1821,14 +1827,23 @@ export class WalletPermissionsManager implements WalletInterface {
       throw new Error('Failed to create signable transaction')
     }
 
-    // 2) Sign each input
+    // 2) Sign each input - each token needs its own unlocker with the correct locking script
     const partialTx = Transaction.fromAtomicBEEF(signableTransaction.tx)
     const pushdrop = new PushDrop(this.underlying)
-    const unlocker = pushdrop.unlock(WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL, '1', 'self')
 
     const spends: Record<number, { unlockingScript: string }> = {}
     for (let i = 0; i < oldTokens.length; i++) {
-      // The signable transaction already contains the necessary prevout context
+      const token = oldTokens[i]
+      // Each token requires its own unlocker with the specific locking script
+      const unlocker = pushdrop.unlock(
+        WalletPermissionsManager.PERM_TOKEN_ENCRYPTION_PROTOCOL,
+        '1',
+        'self',
+        'all',
+        false,
+        1,
+        LockingScript.fromHex(token.outputScript)
+      )
       const unlockingScript = await unlocker.sign(partialTx, i)
       spends[i] = { unlockingScript: unlockingScript.toHex() }
     }
@@ -1838,7 +1853,6 @@ export class WalletPermissionsManager implements WalletInterface {
       reference: signableTransaction.reference,
       spends
     })
-
     if (!txid) throw new Error('Failed to finalize coalescing transaction')
     return txid
   }
@@ -1882,7 +1896,7 @@ export class WalletPermissionsManager implements WalletInterface {
 
     // If so, coalesce them into a single token first, to avoid bloat
     if (oldTokens.length > 1) {
-      const txid = await this.coalescePermissionTokens(oldTokens, newScript, {
+      await this.coalescePermissionTokens(oldTokens, newScript, {
         tags,
         basket: BASKET_MAP[r.type],
         description: `Coalesce ${r.type} permission tokens`
