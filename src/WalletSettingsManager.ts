@@ -75,7 +75,7 @@ export const TESTNET_DEFAULT_SETTINGS: WalletSettings = {
 
 /**
  * Get permissions manager configuration based on permission mode
- * 
+ *
  * @param mode - 'simple' for minimal prompts (trust first), 'advanced' for maximum control
  * @returns PermissionsManagerConfig object
  */
