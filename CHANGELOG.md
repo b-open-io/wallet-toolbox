@@ -4,6 +4,18 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.6.43
+
+- Change WERR toJson methods to add code property for HTTPWalletJSON rethrow support.
+
+## wallet-toolbox 1.6.42
+
+- Change WalletPermissionsManager changes
+
+## wallet-toolbox 1.6.41
+
+- Change WalletPermissionsManager changes
+
 ## wallet-toolbox 1.6.40
 
 - Change correct import of WERR_REVIEW_ACTIONS in createActions.ts to wallet-toolbox package.
