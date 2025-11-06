@@ -56,6 +56,7 @@ export class WERR_INVALID_PARAMETER extends WalletError {
   }
   override toJson(): string {
     const obj = JSON.parse(super.toJson())
+    obj.code = 6 // Must match HTTPWalletJSON.ts code
     obj.parameter = this.parameter
     return JSON.stringify(obj)
   }
@@ -139,6 +140,7 @@ export class WERR_INSUFFICIENT_FUNDS extends WalletError {
   }
   override toJson(): string {
     const obj = JSON.parse(super.toJson())
+    obj.code = 7 // Must match HTTPWalletJSON.ts code
     obj.totalSatoshisNeeded = this.totalSatoshisNeeded
     obj.moreSatoshisNeeded = this.moreSatoshisNeeded
     return JSON.stringify(obj)
@@ -189,6 +191,7 @@ export class WERR_REVIEW_ACTIONS extends WalletError {
   }
   override toJson(): string {
     const obj = JSON.parse(super.toJson())
+    obj.code = 5 // Must match HTTPWalletJSON.ts code
     obj.reviewActionResults = this.reviewActionResults
     obj.sendWithResults = this.sendWithResults
     obj.txid = this.txid
