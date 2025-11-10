@@ -751,7 +751,7 @@ export class WalletPermissionsManager implements WalletInterface {
       throw new Error('Request ID not found.')
     }
     const err = new Error('The user has denied the request for permission.')
-    ;(err as any).code = 'ERR_PERMISSION_DENIED'
+      ; (err as any).code = 'ERR_PERMISSION_DENIED'
     for (const p of matching.pending) {
       p.reject(err)
     }
@@ -2728,24 +2728,35 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['internalizeAction']>
   ): ReturnType<WalletInterface['internalizeAction']> {
     const [requestArgs, originator] = args
+
+    // Add admin labels to track received transactions by originator, just like createAction does
+    const modifiedArgs = {
+      ...requestArgs,
+      labels: [
+        ...(requestArgs.labels || []),
+        `admin originator ${originator}`,
+        `admin month ${this.getCurrentMonthYearUTC()}`
+      ]
+    }
+
     // If the transaction is inserting outputs into baskets, we also ensure basket permission
-    for (const outIndex in requestArgs.outputs) {
-      const out = requestArgs.outputs[outIndex]
+    for (const outIndex in modifiedArgs.outputs) {
+      const out = modifiedArgs.outputs[outIndex]
       if (out.protocol === 'basket insertion') {
         await this.ensureBasketAccess({
           originator: originator!,
           basket: out.insertionRemittance!.basket,
-          reason: requestArgs.description,
+          reason: modifiedArgs.description,
           usageType: 'insertion'
         })
         if (out.insertionRemittance!.customInstructions) {
-          requestArgs.outputs[outIndex].insertionRemittance!.customInstructions = await this.maybeEncryptMetadata(
+          modifiedArgs.outputs[outIndex].insertionRemittance!.customInstructions = await this.maybeEncryptMetadata(
             out.insertionRemittance!.customInstructions
           )
         }
       }
     }
-    return this.underlying.internalizeAction(...args)
+    return this.underlying.internalizeAction(modifiedArgs, originator)
   }
 
   public async listOutputs(
