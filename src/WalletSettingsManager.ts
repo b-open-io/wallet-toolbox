@@ -82,9 +82,10 @@ export class WalletSettingsManager {
     private wallet: WalletInterface,
     private config: WalletSettingsManagerConfig = {
       defaultSettings: DEFAULT_SETTINGS
-    }
+    },
+    originator?: PubKeyHex
   ) {
-    this.kv = new LocalKVStore(wallet, SETTINGS_BASKET, true)
+    this.kv = new LocalKVStore(wallet, SETTINGS_BASKET, true, originator)
   }
 
   /**
