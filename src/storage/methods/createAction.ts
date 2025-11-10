@@ -1,17 +1,4 @@
-import {
-  Beef,
-  BigNumber,
-  Curve,
-  OriginatorDomainNameStringUnder250Bytes,
-  P2PKH,
-  PrivateKey,
-  PubKeyHex,
-  PublicKey,
-  Random,
-  ReviewActionResult,
-  Script,
-  Utils
-} from '@bsv/sdk'
+import { Beef, OriginatorDomainNameStringUnder250Bytes, Random, ReviewActionResult, Script, Utils } from '@bsv/sdk'
 import {
   generateChangeSdk,
   GenerateChangeSdkChangeInput,
@@ -37,7 +24,6 @@ import {
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_REVIEW_ACTIONS } from '../../sdk/WERR_errors'
 import {
   randomBytesBase64,
-  sha256Hash,
   verifyId,
   verifyInteger,
   verifyNumber,
@@ -52,6 +38,7 @@ import { TableOutputTag } from '../schema/tables/TableOutputTag'
 import { TableTransaction } from '../schema/tables/TableTransaction'
 import { EntityProvenTx } from '../schema/entities/EntityProvenTx'
 import { throwDummyReviewActions } from '../../Wallet'
+import { createStorageServiceChargeScript } from './offsetKey'
 
 let disableDoubleSpendCheckForTest = true
 export function setDisableDoubleSpendCheckForTest(v: boolean) {
@@ -941,56 +928,4 @@ async function mergeAllocatedChangeBeefs(
     }
   }
   return trimInputBeef(beef, vargs)
-}
-
-function keyOffsetToHashedSecret(pub: PublicKey, keyOffset?: string): { hashedSecret: BigNumber; keyOffset: string } {
-  let offset: PrivateKey
-  if (keyOffset !== undefined && typeof keyOffset === 'string') {
-    if (keyOffset.length === 64) offset = PrivateKey.fromString(keyOffset, 'hex')
-    else offset = PrivateKey.fromWif(keyOffset)
-  } else {
-    offset = PrivateKey.fromRandom()
-    keyOffset = offset.toWif()
-  }
-
-  const sharedSecret = pub.mul(offset).encode(true, undefined) as number[]
-  const hashedSecret = sha256Hash(sharedSecret)
-
-  return { hashedSecret: new BigNumber(hashedSecret), keyOffset }
-}
-
-export function offsetPubKey(pubKey: string, keyOffset?: string): { offsetPubKey: string; keyOffset: string } {
-  const pub = PublicKey.fromString(pubKey)
-
-  const r = keyOffsetToHashedSecret(pub, keyOffset)
-
-  // The hashed secret is multiplied by the generator point.
-  const point = new Curve().g.mul(r.hashedSecret)
-
-  // The resulting point is added to the recipient public key.
-  const offsetPubKey = new PublicKey(pub.add(point))
-
-  return { offsetPubKey: offsetPubKey.toString(), keyOffset: r.keyOffset }
-}
-
-export function lockScriptWithKeyOffsetFromPubKey(
-  pubKey: string,
-  keyOffset?: string
-): { script: string; keyOffset: string } {
-  const r = offsetPubKey(pubKey, keyOffset)
-
-  const offsetPub = PublicKey.fromString(r.offsetPubKey)
-
-  const hash = offsetPub.toHash() as number[]
-
-  const script = new P2PKH().lock(hash).toHex()
-
-  return { script, keyOffset: r.keyOffset }
-}
-
-export function createStorageServiceChargeScript(pubKeyHex: PubKeyHex): {
-  script: string
-  keyOffset: string
-} {
-  return lockScriptWithKeyOffsetFromPubKey(pubKeyHex)
 }
