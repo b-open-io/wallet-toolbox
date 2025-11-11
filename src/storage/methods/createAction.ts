@@ -231,7 +231,7 @@ async function createNewInputs(
         if (o2.spendable != true) {
           throw new WERR_INVALID_PARAMETER(
             `inputs[${i.vin}]`,
-            `spendable output. output ${o.txid}:${o.vout} appears to have been spent.`
+            `spendable output. output ${o.txid}:${o.vout} appears to have been spent (spendable=${o2.spendable}).`
           )
         }
         await storage.updateOutput(
