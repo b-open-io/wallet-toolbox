@@ -4,6 +4,10 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.7.1
+
+- Add optional skipInvalidProofs to StorageGetBeefOptions
+
 ## wallet-toolbox 1.7.0
 
 - Update dependency to @bsv/sdk 1.9.3, makinig this new version a minor bump as well
