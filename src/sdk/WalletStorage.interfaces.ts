@@ -390,6 +390,8 @@ export interface StorageGetBeefOptions {
   minProofLevel?: number
   /** optional. If valid, any merkleRoot that fails to validate will result in an exception without merging to `mergeToBeef`. */
   chainTracker?: ChainTracker
+  /** optional. Default is false. If chainTracker is valid and an invalid proof is found: if true, pursues deeper beef. If false, throws WERR_INVALID_MERKLE_ROOT. */
+  skipInvalidProofs?: boolean
 }
 
 export interface StorageSyncReaderOptions {

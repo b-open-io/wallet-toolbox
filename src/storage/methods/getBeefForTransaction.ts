@@ -107,12 +107,18 @@ async function mergeBeefForTransactionRecurse(
       const root = mp.computeRoot()
       const isValid = await options.chainTracker.isValidRootForHeight(root, r.proven.height)
       if (!isValid) {
-        throw new WERR_INVALID_MERKLE_ROOT(r.proven.blockHash, r.proven.height, root, txid)
+        if (!options.skipInvalidProofs) {
+          throw new WERR_INVALID_MERKLE_ROOT(r.proven.blockHash, r.proven.height, root, txid)
+        }
+        // ignore this currently invalid proof and try to recurse deeper
+        r.proven = undefined
       }
     }
-    beef.mergeRawTx(r.proven.rawTx)
-    beef.mergeBump(mp)
-    return beef
+    if (r.proven) {
+      beef.mergeRawTx(r.proven.rawTx)
+      beef.mergeBump(mp)
+      return beef
+    }
   }
 
   if (!r.rawTx) throw new WERR_INVALID_PARAMETER(`txid ${txid}`, `valid transaction on chain ${storage.chain}`)
