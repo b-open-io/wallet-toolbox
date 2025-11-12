@@ -4580,17 +4580,18 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 
 | | | |
 | --- | --- | --- |
-| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [listActionsIdb](#function-listactionsidb) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) |
-| [createAction](#function-createaction) | [listCertificates](#function-listcertificates) | [shareReqsWithWorld](#function-sharereqswithworld) |
-| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [listOutputs](#function-listoutputs) | [transactionInputSize](#function-transactioninputsize) |
-| [createSyncMap](#function-createsyncmap) | [listOutputsIdb](#function-listoutputsidb) | [transactionOutputSize](#function-transactionoutputsize) |
-| [determineDBType](#function-determinedbtype) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [transactionSize](#function-transactionsize) |
-| [generateChangeSdk](#function-generatechangesdk) | [offsetPubKey](#function-offsetpubkey) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
-| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [processAction](#function-processaction) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
-| [getBeefForTransaction](#function-getbeeffortransaction) | [purgeData](#function-purgedata) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
-| [getSyncChunk](#function-getsyncchunk) | [purgeDataIdb](#function-purgedataidb) | [varUintSize](#function-varuintsize) |
-| [internalizeAction](#function-internalizeaction) | [reviewStatus](#function-reviewstatus) |  |
-| [listActions](#function-listactions) | [reviewStatusIdb](#function-reviewstatusidb) |  |
+| [attemptToPostReqsToNetwork](#function-attempttopostreqstonetwork) | [listActionsIdb](#function-listactionsidb) | [reviewStatusIdb](#function-reviewstatusidb) |
+| [createAction](#function-createaction) | [listCertificates](#function-listcertificates) | [setDisableDoubleSpendCheckForTest](#function-setdisabledoublespendcheckfortest) |
+| [createStorageServiceChargeScript](#function-createstorageservicechargescript) | [listOutputs](#function-listoutputs) | [shareReqsWithWorld](#function-sharereqswithworld) |
+| [createSyncMap](#function-createsyncmap) | [listOutputsIdb](#function-listoutputsidb) | [transactionInputSize](#function-transactioninputsize) |
+| [determineDBType](#function-determinedbtype) | [lockScriptWithKeyOffsetFromPubKey](#function-lockscriptwithkeyoffsetfrompubkey) | [transactionOutputSize](#function-transactionoutputsize) |
+| [generateChangeSdk](#function-generatechangesdk) | [offsetPrivKey](#function-offsetprivkey) | [transactionSize](#function-transactionsize) |
+| [generateChangeSdkMakeStorage](#function-generatechangesdkmakestorage) | [offsetPubKey](#function-offsetpubkey) | [validateGenerateChangeSdkParams](#function-validategeneratechangesdkparams) |
+| [getBeefForTransaction](#function-getbeeffortransaction) | [processAction](#function-processaction) | [validateGenerateChangeSdkResult](#function-validategeneratechangesdkresult) |
+| [getSyncChunk](#function-getsyncchunk) | [purgeData](#function-purgedata) | [validateStorageFeeModel](#function-validatestoragefeemodel) |
+| [internalizeAction](#function-internalizeaction) | [purgeDataIdb](#function-purgedataidb) | [varUintSize](#function-varuintsize) |
+| [keyOffsetToHashedSecret](#function-keyoffsettohashedsecret) | [redeemServiceCharges](#function-redeemservicecharges) |  |
+| [listActions](#function-listactions) | [reviewStatus](#function-reviewstatus) |  |
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
@@ -4771,6 +4772,18 @@ See also: [AuthId](./client.md#interface-authid), [StorageInternalizeActionResul
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Function: keyOffsetToHashedSecret
+
+```ts
+export function keyOffsetToHashedSecret(pub: PublicKey, keyOffset?: string): {
+    hashedSecret: BigNumber;
+    keyOffset: string;
+} 
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Function: listActions
 
 ```ts
@@ -4838,6 +4851,18 @@ export function lockScriptWithKeyOffsetFromPubKey(pubKey: string, keyOffset?: st
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
 ---
+##### Function: offsetPrivKey
+
+```ts
+export function offsetPrivKey(privKey: string, keyOffset?: string): {
+    offsetPrivKey: string;
+    keyOffset: string;
+} 
+```
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
 ##### Function: offsetPubKey
 
 ```ts
@@ -4879,6 +4904,17 @@ export async function purgeDataIdb(storage: StorageIdb, params: PurgeParams, trx
 ```
 
 See also: [PurgeParams](./client.md#interface-purgeparams), [PurgeResults](./client.md#interface-purgeresults), [StorageIdb](./storage.md#class-storageidb), [TrxToken](./client.md#interface-trxtoken)
+
+Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
+
+---
+##### Function: redeemServiceCharges
+
+```ts
+export function redeemServiceCharges(privateKeyWif: string, charges: TableCommission[]): {}[] 
+```
+
+See also: [TableCommission](./storage.md#interface-tablecommission)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
