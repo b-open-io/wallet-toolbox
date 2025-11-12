@@ -63,6 +63,31 @@ export class WERR_INVALID_PARAMETER extends WalletError {
 }
 
 /**
+ * Invalid merkleRoot ${merkleRoot} for block ${blockHash} at height ${blockHeight}${txid ? ` for txid ${txid}` : ''}.
+ * 
+ * Typically thrown when a chain tracker fails to validate a merkle root.
+ */
+export class WERR_INVALID_MERKLE_ROOT extends WalletError {
+  constructor(
+    public blockHash: string,
+    public blockHeight: number,
+    public merkleRoot: string,
+    public txid?: string,
+  ) {
+    super('WERR_INVALID_MERKLE_ROOT', `Invalid merkleRoot ${merkleRoot} for block ${blockHash} at height ${blockHeight}${txid ? ` for txid ${txid}` : ''}.`)
+  }
+  override toJson(): string {
+    const obj = JSON.parse(super.toJson())
+    obj.code = 8 // Must match HTTPWalletJSON.ts code
+    obj.blockHash = this.blockHash
+    obj.blockHeight = this.blockHeight
+    obj.merkleRoot = this.merkleRoot
+    obj.txid = this.txid
+    return JSON.stringify(obj)
+  }
+}
+
+/**
  * The required ${parameter} parameter is missing.
  *
  * This is an example of an error object with a custom property `parameter`

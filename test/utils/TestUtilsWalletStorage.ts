@@ -77,6 +77,7 @@ export interface TuEnv extends TuEnvFlags {
   taalApiKey: string
   bitailsApiKey: string
   whatsonchainApiKey: string
+  commissionsIdentity: string
   devKeys: Record<string, string>
   /**
    * file path to local sqlite file for identityKey
@@ -147,6 +148,8 @@ export abstract class TestUtilsWalletStorage {
     const bitailsApiKey = (chain === 'main' ? process.env.MAIN_BITAILS_API_KEY : process.env.TEST_BITAILS_API_KEY) || ''
     const whatsonchainApiKey =
       (chain === 'main' ? process.env.MAIN_WHATSONCHAIN_API_KEY : process.env.TEST_WHATSONCHAIN_API_KEY) || ''
+    const commissionsIdentity =
+      (chain === 'main' ? process.env.MAIN_COMMISSIONS_IDENTITY : process.env.TEST_COMMISSIONS_IDENTITY) || ''
     return {
       ...flagsEnv,
       identityKey,
@@ -154,6 +157,7 @@ export abstract class TestUtilsWalletStorage {
       taalApiKey,
       bitailsApiKey,
       whatsonchainApiKey,
+      commissionsIdentity,
       devKeys: JSON.parse(DEV_KEYS) as Record<string, string>,
       filePath,
       testIdentityKey,

@@ -2,7 +2,7 @@ import { Beef } from '@bsv/sdk'
 import { StorageProvider } from '../StorageProvider'
 import { ProvenOrRawTx, StorageGetBeefOptions } from '../../sdk/WalletStorage.interfaces'
 import { EntityProvenTx } from '../schema/entities/EntityProvenTx'
-import { WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
+import { WERR_INVALID_MERKLE_ROOT, WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { asBsvSdkTx, verifyTruthy } from '../../utility/utilityHelpers'
 
 /**
@@ -102,8 +102,16 @@ async function mergeBeefForTransactionRecurse(
   if (r.proven) {
     // storage has proven this txid,
     // merge both the raw transaction and its merkle path
+    const mp = new EntityProvenTx(r.proven).getMerklePath()
+    if (options.chainTracker) {
+      const root = mp.computeRoot()
+      const isValid = await options.chainTracker.isValidRootForHeight(root, r.proven.height)
+      if (!isValid) {
+        throw new WERR_INVALID_MERKLE_ROOT(r.proven.blockHash, r.proven.height, root, txid)
+      }
+    }
     beef.mergeRawTx(r.proven.rawTx)
-    beef.mergeBump(new EntityProvenTx(r.proven).getMerklePath())
+    beef.mergeBump(mp)
     return beef
   }
 
