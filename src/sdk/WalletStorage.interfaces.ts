@@ -2,6 +2,7 @@ import {
   AbortActionArgs,
   AbortActionResult,
   Beef,
+  ChainTracker,
   InternalizeActionArgs,
   InternalizeActionResult,
   ListActionsArgs,
@@ -387,6 +388,8 @@ export interface StorageGetBeefOptions {
   ignoreNewProven?: boolean
   /** optional. Default is zero. Ignores available merkle paths until recursion detpth equals or exceeds value  */
   minProofLevel?: number
+  /** optional. If valid, any merkleRoot that fails to validate will result in an exception without merging to `mergeToBeef`. */
+  chainTracker?: ChainTracker
 }
 
 export interface StorageSyncReaderOptions {
