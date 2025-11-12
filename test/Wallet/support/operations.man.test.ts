@@ -49,7 +49,7 @@ describe('operations.man tests', () => {
 
   test('1 review and unfail false doubleSpends', async () => {
     const { env, storage, services } = await _tu.createMainReviewSetup()
-    let offset = 0
+    let offset = 400
     const limit = 100
     let allUnfails: number[] = []
     let reviewed = 0
@@ -82,7 +82,7 @@ describe('operations.man tests', () => {
 
   test('2 review and unfail false invalids', async () => {
     const { env, storage, services } = await _tu.createMainReviewSetup()
-    let offset = 0
+    let offset = 500
     const limit = 100
     let allUnfails: number[] = []
     let reviewed = 0

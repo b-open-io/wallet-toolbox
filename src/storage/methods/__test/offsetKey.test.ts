@@ -124,7 +124,6 @@ describe('offsetKey tests', () => {
     storage.setServices(setup.services)
 
     try {
-
       // await setup.wallet.abortAction({ reference: 'e9c03bdf603e90ebe482044e8d0f7afbf2d6fe480a13dbd8689e2e5e5183bed4' })
 
       // txid b6f72df4224efbacab42a16e1e88f48c217f03929c36987b9067d2556de47c10
@@ -136,6 +135,7 @@ describe('offsetKey tests', () => {
 
       const comms: TableCommission[] = []
       const beef = new Beef()
+      const chainTracker = await setup.services.getChainTracker()
       const inputs: CreateActionInput[] = []
 
       const fca: FindCommissionsArgs = {
@@ -143,13 +143,18 @@ describe('offsetKey tests', () => {
         paged: { limit: 200, offset: 0 }
       }
 
-      for (; comms.length < fca.paged!.limit;) {
+      for (; comms.length < fca.paged!.limit; ) {
         const unredeemedComms = await storage.findCommissions(fca)
         if (unredeemedComms.length === 0) break
         for (const comm of unredeemedComms) {
           const tt = verifyTruthy(await storage.findTransactionById(comm.transactionId, undefined, true))
           if (tt.provenTxId && tt.txid) {
-            await storage.getBeefForTransaction(tt.txid, { mergeToBeef: beef })
+            // Only add merge valid beefs...
+            try {
+              await storage.getBeefForTransaction(tt.txid, { mergeToBeef: beef, chainTracker })
+            } catch (e) {
+              // Ignore errors in merging beefs
+            }
             const tx = verifyTruthy(beef.findTxid(tt.txid)).tx!
             const commVOut = tx.outputs.findIndex(
               o => o.satoshis === comm.satoshis && o.lockingScript.toHex() === Utils.toHex(comm.lockingScript)
