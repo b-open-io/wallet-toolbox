@@ -24,7 +24,6 @@ import {
   GetVersionResult,
   InternalizeActionArgs,
   InternalizeActionResult,
-  KeyDeriver,
   ListActionsArgs,
   ListActionsResult,
   ListCertificatesArgs,
@@ -127,6 +126,7 @@ export interface WalletArgs {
   privilegedKeyManager?: PrivilegedKeyManager
   settingsManager?: WalletSettingsManager
   lookupResolver?: LookupResolver
+  logger?: WalletConsole
 }
 
 function isWalletSigner(args: WalletArgs | WalletSigner): args is WalletSigner {
@@ -174,6 +174,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
   userParty: string
   proto: ProtoWallet
   privilegedKeyManager?: PrivilegedKeyManager
+  logger?: WalletConsole
 
   pendingSignActions: Record<string, PendingSignAction>
 
@@ -186,7 +187,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     argsOrSigner: WalletArgs | WalletSigner,
     services?: WalletServices,
     monitor?: Monitor,
-    privilegedKeyManager?: PrivilegedKeyManager
+    privilegedKeyManager?: PrivilegedKeyManager,
+    logger?: WalletConsole
   ) {
     const args: WalletArgs = !isWalletSigner(argsOrSigner)
       ? argsOrSigner
@@ -196,7 +198,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
           storage: argsOrSigner.storage,
           services,
           monitor,
-          privilegedKeyManager
+          privilegedKeyManager,
+          logger
         }
 
     if (args.storage._authId.identityKey != args.keyDeriver.identityKey)
@@ -218,6 +221,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
     this.services = args.services
     this.monitor = args.monitor
     this.privilegedKeyManager = args.privilegedKeyManager
+    this.logger = args.logger
 
     this.identityKey = this.keyDeriver.identityKey
 
@@ -760,6 +764,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: CreateActionArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<CreateActionResult> {
+    let log = ''
+    let logger = this.logger
     validateOriginator(originator)
 
     if (!args.options) args.options = {}
@@ -1131,4 +1137,31 @@ export function throwDummyReviewActions() {
     beef.toBinaryAtomic(txid),
     [`${txid}.0`]
   )
+}
+
+/**
+ * A console-like interface for logging within wallet operations.
+ * 
+ * Intended to reflect a subset of standard `Console` interface methods used by `Wallet`
+ */
+export interface WalletConsole {
+  /**
+   * Increases indentation of subsequent lines.
+   *
+   * If one or more `label`s are provided, those are printed first without the
+   * additional indentation.
+   */
+  group(...label: any[]): void;
+  /**
+   * Decreases indentation of subsequent lines.
+   */
+  groupEnd(): void;
+  /**
+   * Log a message.
+   */
+  log(message?: any, ...optionalParams: any[]): void;
+  /**
+   * Log an error message.
+   */
+  error(message?: any, ...optionalParams: any[]): void;
 }
