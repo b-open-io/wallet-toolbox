@@ -2,14 +2,14 @@ import {
   AbortActionArgs,
   AbortActionResult,
   InternalizeActionArgs,
-  InternalizeActionResult,
   ListActionsResult,
   ListCertificatesResult,
   ListOutputsResult,
   RelinquishCertificateArgs,
   RelinquishOutputArgs,
   WalletInterface,
-  AuthFetch
+  AuthFetch,
+  Validation
 } from '@bsv/sdk'
 import {
   AuthId,
@@ -30,12 +30,6 @@ import {
 } from '../../sdk/WalletStorage.interfaces'
 import { WERR_INVALID_OPERATION } from '../../sdk/WERR_errors'
 import { WalletServices } from '../../sdk/WalletServices.interfaces'
-import {
-  ValidCreateActionArgs,
-  ValidListActionsArgs,
-  ValidListCertificatesArgs,
-  ValidListOutputsArgs
-} from '../../sdk/validationHelpers'
 import { TableSettings } from '../schema/tables/TableSettings'
 import { TableUser } from '../schema/tables/TableUser'
 import { TableSyncState } from '../schema/tables/TableSyncState'
@@ -229,7 +223,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `createAction` arguments.
    * @returns `StorageCreateActionResults` supporting additional wallet processing to yield `createAction` results.
    */
-  async createAction(auth: AuthId, args: ValidCreateActionArgs): Promise<StorageCreateActionResult> {
+  async createAction(auth: AuthId, args: Validation.ValidCreateActionArgs): Promise<StorageCreateActionResult> {
     return this.rpcCall<StorageCreateActionResult>('createAction', [auth, args])
   }
 
@@ -309,7 +303,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listActions` arguments.
    * @returns `listActions` results.
    */
-  async listActions(auth: AuthId, vargs: ValidListActionsArgs): Promise<ListActionsResult> {
+  async listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     const r = await this.rpcCall<ListActionsResult>('listActions', [auth, vargs])
     return r
   }
@@ -321,7 +315,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listOutputs` arguments.
    * @returns `listOutputs` results.
    */
-  async listOutputs(auth: AuthId, vargs: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  async listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     const r = await this.rpcCall<ListOutputsResult>('listOutputs', [auth, vargs])
     return r
   }
@@ -333,7 +327,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listCertificates` arguments.
    * @returns `listCertificates` results.
    */
-  async listCertificates(auth: AuthId, vargs: ValidListCertificatesArgs): Promise<ListCertificatesResult> {
+  async listCertificates(auth: AuthId, vargs: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
     const r = await this.rpcCall<ListCertificatesResult>('listCertificates', [auth, vargs])
     return r
   }

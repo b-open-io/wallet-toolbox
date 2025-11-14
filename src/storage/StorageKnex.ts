@@ -1,4 +1,4 @@
-import { ListActionsResult, ListOutputsResult } from '@bsv/sdk'
+import { ListActionsResult, ListOutputsResult, Validation } from '@bsv/sdk'
 import {
   outputColumnsWithoutLockingScript,
   TableCertificate,
@@ -56,7 +56,6 @@ import {
 } from '../sdk/WalletStorage.interfaces'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_NOT_IMPLEMENTED, WERR_UNAUTHORIZED } from '../sdk/WERR_errors'
 import { verifyOne, verifyOneOrNone, verifyTruthy } from '../utility/utilityHelpers'
-import { ValidListActionsArgs, ValidListOutputsArgs } from '../sdk/validationHelpers'
 import { EntityTimeStamp, TransactionStatus } from '../sdk/types'
 
 export interface StorageKnexOptions extends StorageProviderOptions {
@@ -232,11 +231,11 @@ export class StorageKnex extends StorageProvider implements WalletStorageProvide
     return this.validateEntities(rs, undefined, ['isDeleted'])
   }
 
-  override async listActions(auth: AuthId, vargs: ValidListActionsArgs): Promise<ListActionsResult> {
+  override async listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     if (!auth.userId) throw new WERR_UNAUTHORIZED()
     return await listActions(this, auth, vargs)
   }
-  override async listOutputs(auth: AuthId, vargs: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  override async listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     if (!auth.userId) throw new WERR_UNAUTHORIZED()
     return await listOutputs(this, auth, vargs)
   }

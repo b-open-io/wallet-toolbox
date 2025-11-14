@@ -7,24 +7,19 @@ import {
   SignableTransaction,
   TXIDHexString,
   Script,
-  Transaction
+  Transaction,
+  Validation
 } from '@bsv/sdk'
 import { buildSignableTransaction } from './buildSignableTransaction'
 import {
   AuthId,
   ReviewActionResult,
-  StorageCreateActionResult,
-  StorageCreateTransactionSdkOutput,
   StorageProcessActionArgs,
   StorageProcessActionResults
 } from '../../sdk/WalletStorage.interfaces'
 import { completeSignedTransaction, verifyUnlockScripts } from './completeSignedTransaction'
 import { PendingSignAction, Wallet } from '../../Wallet'
-import { ValidCreateActionArgs, ValidCreateActionInput, ValidProcessActionArgs } from '../../sdk/validationHelpers'
 import { WERR_INTERNAL } from '../../sdk/WERR_errors'
-import { KeyPair } from '../../sdk/types'
-import { verifyTruthy } from '../../utility/utilityHelpers'
-import { ScriptTemplateBRC29 } from '../../utility/ScriptTemplateBRC29'
 
 export interface CreateActionResultX extends CreateActionResult {
   txid?: TXIDHexString
@@ -38,7 +33,7 @@ export interface CreateActionResultX extends CreateActionResult {
 export async function createAction(
   wallet: Wallet,
   auth: AuthId,
-  vargs: ValidCreateActionArgs
+  vargs: Validation.ValidCreateActionArgs
 ): Promise<CreateActionResultX> {
   const r: CreateActionResultX = {}
 
@@ -72,7 +67,7 @@ export async function createAction(
   return r
 }
 
-async function createNewTx(wallet: Wallet, args: ValidCreateActionArgs): Promise<PendingSignAction> {
+async function createNewTx(wallet: Wallet, args: Validation.ValidCreateActionArgs): Promise<PendingSignAction> {
   const storageArgs = removeUnlockScripts(args)
   const dcr = await wallet.storage.createAction(storageArgs)
 
@@ -88,7 +83,7 @@ async function createNewTx(wallet: Wallet, args: ValidCreateActionArgs): Promise
 function makeSignableTransactionResult(
   prior: PendingSignAction,
   wallet: Wallet,
-  args: ValidCreateActionArgs
+  args: Validation.ValidCreateActionArgs
 ): CreateActionResult {
   if (!prior.dcr.inputBeef) throw new WERR_INTERNAL('prior.dcr.inputBeef must be valid')
 
@@ -120,13 +115,13 @@ function makeSignableTransactionBeef(tx: Transaction, inputBEEF: number[]): numb
   return beef.toBinaryAtomic(tx.id('hex'))
 }
 
-function removeUnlockScripts(args: ValidCreateActionArgs) {
+function removeUnlockScripts(args: Validation.ValidCreateActionArgs) {
   let storageArgs = args
   if (!storageArgs.inputs.every(i => i.unlockingScript === undefined)) {
     // Never send unlocking scripts to storage, all it needs is the script length.
     storageArgs = { ...args, inputs: [] }
     for (const i of args.inputs) {
-      const di: ValidCreateActionInput = {
+      const di: Validation.ValidCreateActionInput = {
         ...i,
         unlockingScriptLength: i.unlockingScript !== undefined ? i.unlockingScript.length : i.unlockingScriptLength
       }
@@ -141,7 +136,7 @@ export async function processAction(
   prior: PendingSignAction | undefined,
   wallet: Wallet,
   auth: AuthId,
-  vargs: ValidProcessActionArgs
+  vargs: Validation.ValidProcessActionArgs
 ): Promise<StorageProcessActionResults> {
   const args: StorageProcessActionArgs = {
     isNewTx: vargs.isNewTx,

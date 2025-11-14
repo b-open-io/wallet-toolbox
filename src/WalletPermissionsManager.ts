@@ -7,11 +7,9 @@ import {
   WalletProtocol,
   Base64String,
   PubKeyHex,
-  SecurityLevels,
-  CreateActionInput,
-  Beef
+  Beef,
+  Validation
 } from '@bsv/sdk'
-import { validateCreateActionArgs } from './sdk'
 
 ////// TODO: ADD SUPPORT FOR ADMIN COUNTERPARTIES BASED ON WALLET STORAGE
 //////       PROHIBITION OF SPECIAL OPERATIONS IS ALSO CRITICAL.
@@ -2648,7 +2646,7 @@ export class WalletPermissionsManager implements WalletInterface {
      *    - If the user originally wanted signAndProcess (the default when undefined), we forcibly set it to false earlier, so check if we should now finalize it.
      *    - If the transaction still needs more signatures, we must return the signableTransaction.
      */
-    const vargs = validateCreateActionArgs(args)
+    const vargs = Validation.validateCreateActionArgs(args)
     if (vargs.isSignAction) {
       return createResult
     }

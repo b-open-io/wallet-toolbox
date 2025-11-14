@@ -3,12 +3,12 @@ import {
   AbortActionResult,
   Beef,
   InternalizeActionArgs,
-  InternalizeActionResult,
   ListActionsResult,
   ListCertificatesResult,
   ListOutputsResult,
   RelinquishCertificateArgs,
-  RelinquishOutputArgs
+  RelinquishOutputArgs,
+  Validation
 } from '@bsv/sdk'
 import { EntitySyncState } from '../storage/schema/entities'
 import * as sdk from '../sdk'
@@ -22,7 +22,6 @@ import {
   TableSettings,
   TableUser
 } from '../storage/schema/tables'
-import { wait } from '../utility/utilityHelpers'
 import { StorageProvider } from './StorageProvider'
 import { StorageClient } from './remoting/StorageClient'
 
@@ -430,20 +429,20 @@ export class WalletStorageManager implements sdk.WalletStorage {
   }
 
   async abortAction(args: AbortActionArgs): Promise<AbortActionResult> {
-    sdk.validateAbortActionArgs(args)
+    Validation.validateAbortActionArgs(args)
     return await this.runAsWriter(async writer => {
       const auth = await this.getAuth(true)
       return await writer.abortAction(auth, args)
     })
   }
-  async createAction(vargs: sdk.ValidCreateActionArgs): Promise<sdk.StorageCreateActionResult> {
+  async createAction(vargs: Validation.ValidCreateActionArgs): Promise<sdk.StorageCreateActionResult> {
     return await this.runAsWriter(async writer => {
       const auth = await this.getAuth(true)
       return await writer.createAction(auth, vargs)
     })
   }
   async internalizeAction(args: InternalizeActionArgs): Promise<sdk.StorageInternalizeActionResult> {
-    sdk.validateInternalizeActionArgs(args)
+    Validation.validateInternalizeActionArgs(args)
     return await this.runAsWriter(async writer => {
       const auth = await this.getAuth(true)
       return await writer.internalizeAction(auth, args)
@@ -451,14 +450,14 @@ export class WalletStorageManager implements sdk.WalletStorage {
   }
 
   async relinquishCertificate(args: RelinquishCertificateArgs): Promise<number> {
-    sdk.validateRelinquishCertificateArgs(args)
+    Validation.validateRelinquishCertificateArgs(args)
     return await this.runAsWriter(async writer => {
       const auth = await this.getAuth(true)
       return await writer.relinquishCertificate(auth, args)
     })
   }
   async relinquishOutput(args: RelinquishOutputArgs): Promise<number> {
-    sdk.validateRelinquishOutputArgs(args)
+    Validation.validateRelinquishOutputArgs(args)
     return await this.runAsWriter(async writer => {
       const auth = await this.getAuth(true)
       return await writer.relinquishOutput(auth, args)
@@ -478,19 +477,19 @@ export class WalletStorageManager implements sdk.WalletStorage {
     })
   }
 
-  async listActions(vargs: sdk.ValidListActionsArgs): Promise<ListActionsResult> {
+  async listActions(vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     const auth = await this.getAuth()
     return await this.runAsReader(async reader => {
       return await reader.listActions(auth, vargs)
     })
   }
-  async listCertificates(args: sdk.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
+  async listCertificates(args: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
     const auth = await this.getAuth()
     return await this.runAsReader(async reader => {
       return await reader.listCertificates(auth, args)
     })
   }
-  async listOutputs(vargs: sdk.ValidListOutputsArgs): Promise<ListOutputsResult> {
+  async listOutputs(vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     const auth = await this.getAuth()
     return await this.runAsReader(async reader => {
       return await reader.listOutputs(auth, vargs)

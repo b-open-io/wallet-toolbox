@@ -2,6 +2,7 @@
 import { AtomicBEEF, Beef, CreateActionArgs, SignActionArgs } from '@bsv/sdk'
 import { sdk, StorageKnex } from '../../../src/index.all'
 import { _tu, expectToThrowWERR, TestWalletNoSetup } from '../../utils/TestUtilsWalletStorage'
+import { WalletLogger } from '../../../src/WalletLogger'
 
 const includeTestChaintracks = false
 const noLog = true
@@ -69,6 +70,8 @@ describe('createAction test', () => {
 
   test('1_repeatable txid', async () => {
     for (const { wallet } of ctxs) {
+      //wallet.makeLogger = () => console
+      wallet.makeLogger = () => new WalletLogger()
       wallet.randomVals = [0.1, 0.2, 0.3, 0.7, 0.8, 0.9]
       const root = '02135476'
       const kp = _tu.getKeyPair(root.repeat(8))

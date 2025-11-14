@@ -1,5 +1,5 @@
+import { Validation } from '@bsv/sdk'
 import { specOpFailedActions, specOpNoSendActions, TransactionStatus } from '../../sdk/types'
-import { ValidListActionsArgs } from '../../sdk/validationHelpers'
 import { AuthId } from '../../sdk/WalletStorage.interfaces'
 import { TableTransaction } from '../schema/tables/TableTransaction'
 import { StorageProvider } from '../StorageProvider'
@@ -16,7 +16,7 @@ export interface ListActionsSpecOp {
   postProcess?: (
     s: StorageProvider,
     auth: AuthId,
-    vargs: ValidListActionsArgs,
+    vargs: Validation.ValidListActionsArgs,
     specOpLabels: string[],
     txs: Partial<TableTransaction>[]
   ) => Promise<void>
@@ -31,7 +31,7 @@ export const getLabelToSpecOp: () => Record<string, ListActionsSpecOp> = () => {
       postProcess: async (
         s: StorageProvider,
         auth: AuthId,
-        vargs: ValidListActionsArgs,
+        vargs: Validation.ValidListActionsArgs,
         specOpLabels: string[],
         txs: Partial<TableTransaction>[]
       ): Promise<void> => {
@@ -52,7 +52,7 @@ export const getLabelToSpecOp: () => Record<string, ListActionsSpecOp> = () => {
       postProcess: async (
         s: StorageProvider,
         auth: AuthId,
-        vargs: ValidListActionsArgs,
+        vargs: Validation.ValidListActionsArgs,
         specOpLabels: string[],
         txs: Partial<TableTransaction>[]
       ): Promise<void> => {

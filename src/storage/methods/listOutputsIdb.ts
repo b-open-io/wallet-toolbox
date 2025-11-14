@@ -1,8 +1,7 @@
-import { Beef, ListOutputsResult, OriginatorDomainNameStringUnder250Bytes, WalletOutput } from '@bsv/sdk'
+import { Beef, ListOutputsResult, OriginatorDomainNameStringUnder250Bytes, WalletOutput, Validation } from '@bsv/sdk'
 import { getBasketToSpecOp, ListOutputsSpecOp } from './ListOutputsSpecOp'
 import { StorageIdb } from '../StorageIdb'
 import { AuthId, FindOutputsArgs } from '../../sdk/WalletStorage.interfaces'
-import { ValidListOutputsArgs } from '../../sdk/validationHelpers'
 import { verifyId } from '../../utility/utilityHelpers'
 import { WERR_NOT_IMPLEMENTED } from '../../sdk/WERR_errors'
 import { TableOutputBasket } from '../schema/tables/TableOutputBasket'
@@ -12,7 +11,7 @@ import { asString } from '../../utility/utilityHelpers.noBuffer'
 export async function listOutputsIdb(
   storage: StorageIdb,
   auth: AuthId,
-  vargs: ValidListOutputsArgs,
+  vargs: Validation.ValidListOutputsArgs,
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<ListOutputsResult> {
   const userId = verifyId(auth.userId)

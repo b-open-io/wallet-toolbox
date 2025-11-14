@@ -1,8 +1,7 @@
-import { Beef, MerklePath, Transaction, Utils, WalletOutput } from '@bsv/sdk'
-import { sdk, TableOutput, TableUser, verifyOne, verifyOneOrNone } from '../../../src'
+import { Beef, MerklePath, Transaction, WalletOutput, Validation } from '@bsv/sdk'
+import { TableOutput, TableUser, verifyOne, verifyOneOrNone } from '../../../src'
 import { _tu, logger } from '../../utils/TestUtilsWalletStorage'
-import { specOpInvalidChange, ValidListOutputsArgs } from '../../../src/sdk'
-import { LocalWalletTestOptions } from '../../utils/localWalletMethods'
+import { specOpInvalidChange } from '../../../src/sdk'
 import { Format } from '../../../src/utility/Format'
 import { asString } from '../../../src/utility/utilityHelpers.noBuffer'
 
@@ -13,7 +12,7 @@ describe('operations.man tests', () => {
     const { env, storage } = await _tu.createMainReviewSetup()
     const users = await storage.findUsers({ partial: { userId: 124 } })
     const withInvalid: Record<number, { user: TableUser; outputs: WalletOutput[]; total: number }> = {}
-    const vargs: ValidListOutputsArgs = {
+    const vargs: Validation.ValidListOutputsArgs = {
       basket: specOpInvalidChange,
       tags: ['release'],
       tagQueryMode: 'all',

@@ -1,4 +1,4 @@
-import { Utils } from '@bsv/sdk'
+import { Utils, Validation } from '@bsv/sdk'
 import { Knex } from 'knex'
 import { StorageReader, StorageReaderOptions } from '../StorageReader'
 import { TableSettings } from '../schema/tables/TableSettings'
@@ -46,7 +46,6 @@ import { asArray, asString } from '../../utility/utilityHelpers.buffer'
 import { TableTxLabelMap } from '../schema/tables/TableTxLabelMap'
 import { TableOutputTagMap } from '../schema/tables/TableOutputTagMap'
 import { TableMonitorEvent } from '../schema/tables/TableMonitorEvent'
-import { isHexString } from '../../sdk/validationHelpers'
 
 export interface StorageMySQLDojoReaderOptions extends StorageReaderOptions {
   chain: Chain
@@ -692,6 +691,6 @@ function convertSyncStatus(status: DojoSyncStatus): SyncStatus {
 
 function forceToBase64(s?: string | null): string {
   if (!s) return randomBytesBase64(12)
-  if (isHexString(s)) return Utils.toBase64(asArray(s.trim()))
+  if (Validation.isHexString(s)) return Utils.toBase64(asArray(s.trim()))
   return s.trim()
 }

@@ -1,14 +1,15 @@
-import { ListCertificatesResult, OriginatorDomainNameStringUnder250Bytes } from '@bsv/sdk'
+import { ListCertificatesResult, OriginatorDomainNameStringUnder250Bytes, Validation } from '@bsv/sdk'
 import { StorageProvider, TableCertificate } from '../index.client'
-import { sdk } from '../../index.client'
+import { AuthId, FindCertificatesArgs } from '../../sdk/WalletStorage.interfaces'
+import { Paged } from '../../sdk/types'
 
 export async function listCertificates(
   storage: StorageProvider,
-  auth: sdk.AuthId,
-  vargs: sdk.ValidListCertificatesArgs,
+  auth: AuthId,
+  vargs: Validation.ValidListCertificatesArgs,
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<ListCertificatesResult> {
-  const paged: sdk.Paged = { limit: vargs.limit, offset: vargs.offset }
+  const paged: Paged = { limit: vargs.limit, offset: vargs.offset }
 
   const partial: Partial<TableCertificate> = {
     userId: auth.userId,
@@ -26,7 +27,7 @@ export async function listCertificates(
   }
 
   const r = await storage.transaction(async trx => {
-    const findCertsArgs: sdk.FindCertificatesArgs = {
+    const findCertsArgs: FindCertificatesArgs = {
       partial,
       certifiers: vargs.certifiers,
       types: vargs.types,

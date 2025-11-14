@@ -3,7 +3,6 @@ import {
   AbortActionResult,
   Beef,
   InternalizeActionArgs,
-  InternalizeActionResult,
   ListActionsResult,
   ListOutputsResult,
   PubKeyHex,
@@ -11,7 +10,8 @@ import {
   TrustSelf,
   RelinquishCertificateArgs,
   RelinquishOutputArgs,
-  AbortActionArgs
+  AbortActionArgs,
+  Validation
 } from '@bsv/sdk'
 import { getBeefForTransaction } from './methods/getBeefForTransaction'
 import { GetReqsAndBeefDetail, GetReqsAndBeefResult, processAction } from './methods/processAction'
@@ -53,15 +53,6 @@ import { TableOutput, TableOutputX } from '../../src/storage/schema/tables/Table
 import { TableOutputTag } from '../../src/storage/schema/tables/TableOutputTag'
 import { TableTxLabel } from '../../src/storage/schema/tables/TableTxLabel'
 import { TableMonitorEvent } from '../../src/storage/schema/tables/TableMonitorEvent'
-import {
-  parseWalletOutpoint,
-  validateRelinquishCertificateArgs,
-  validateRelinquishOutputArgs,
-  ValidCreateActionArgs,
-  ValidListActionsArgs,
-  ValidListCertificatesArgs,
-  ValidListOutputsArgs
-} from '../sdk/validationHelpers'
 import { TableCertificateX } from './schema/tables/TableCertificate'
 import {
   WERR_INTERNAL,
@@ -130,8 +121,8 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
   abstract getLabelsForTransactionId(transactionId?: number, trx?: TrxToken): Promise<TableTxLabel[]>
   abstract getTagsForOutputId(outputId: number, trx?: TrxToken): Promise<TableOutputTag[]>
 
-  abstract listActions(auth: AuthId, args: ValidListActionsArgs): Promise<ListActionsResult>
-  abstract listOutputs(auth: AuthId, args: ValidListOutputsArgs): Promise<ListOutputsResult>
+  abstract listActions(auth: AuthId, args: Validation.ValidListActionsArgs): Promise<ListActionsResult>
+  abstract listOutputs(auth: AuthId, args: Validation.ValidListOutputsArgs): Promise<ListOutputsResult>
 
   abstract countChangeInputs(userId: number, basketId: number, excludeSending: boolean): Promise<number>
 
@@ -420,7 +411,7 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
     }, trx)
   }
 
-  async createAction(auth: AuthId, args: ValidCreateActionArgs): Promise<StorageCreateActionResult> {
+  async createAction(auth: AuthId, args: Validation.ValidCreateActionArgs): Promise<StorageCreateActionResult> {
     if (!auth.userId) throw new WERR_UNAUTHORIZED()
     return await createAction(this, auth, args)
   }
@@ -433,7 +424,7 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
     return await attemptToPostReqsToNetwork(this, reqs, trx)
   }
 
-  async listCertificates(auth: AuthId, args: ValidListCertificatesArgs): Promise<ListCertificatesResult> {
+  async listCertificates(auth: AuthId, args: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
     return await listCertificates(this, auth, args)
   }
 
@@ -511,7 +502,7 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
   }
 
   async relinquishCertificate(auth: AuthId, args: RelinquishCertificateArgs): Promise<number> {
-    const vargs = validateRelinquishCertificateArgs(args)
+    const vargs = Validation.validateRelinquishCertificateArgs(args)
     const cert = verifyOne(
       await this.findCertificates({
         partial: {
@@ -527,8 +518,8 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
   }
 
   async relinquishOutput(auth: AuthId, args: RelinquishOutputArgs): Promise<number> {
-    const vargs = validateRelinquishOutputArgs(args)
-    const { txid, vout } = parseWalletOutpoint(vargs.output)
+    const vargs = Validation.validateRelinquishOutputArgs(args)
+    const { txid, vout } = Validation.parseWalletOutpoint(vargs.output)
     const output = verifyOne(await this.findOutputs({ partial: { txid, vout } }))
     return await this.updateOutput(output.outputId, { basketId: undefined })
   }

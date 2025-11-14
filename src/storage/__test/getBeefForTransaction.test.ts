@@ -1,4 +1,4 @@
-import { Beef, ListActionsResult, ListOutputsResult, Utils } from '@bsv/sdk'
+import { Beef, ListActionsResult, ListOutputsResult, Utils, Validation } from '@bsv/sdk'
 import { StorageAdminStats, StorageProvider } from '../StorageProvider'
 import { Chain } from '../../sdk/types'
 import { Services } from '../../services/Services'
@@ -45,7 +45,6 @@ import {
   StorageGetBeefOptions,
   TrxToken
 } from '../../sdk/WalletStorage.interfaces'
-import { ValidListActionsArgs, ValidListOutputsArgs } from '../../sdk/validationHelpers'
 
 describe('getBeefForTransaction tests', () => {
   jest.setTimeout(99999999)
@@ -129,10 +128,10 @@ class ProtoStorage extends StorageProvider {
   override getTagsForOutputId(outputId: number, trx?: TrxToken): Promise<TableOutputTag[]> {
     throw this.nip
   }
-  override listActions(auth: AuthId, args: ValidListActionsArgs): Promise<ListActionsResult> {
+  override listActions(auth: AuthId, args: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     throw this.nip
   }
-  override listOutputs(auth: AuthId, args: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  override listOutputs(auth: AuthId, args: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     throw this.nip
   }
   override countChangeInputs(userId: number, basketId: number, excludeSending: boolean): Promise<number> {

@@ -4,7 +4,8 @@ import {
   BasketInsertion,
   InternalizeActionArgs,
   TransactionOutput,
-  Beef
+  Beef,
+  Validation
 } from '@bsv/sdk'
 import { GetReqsAndBeefResult, shareReqsWithWorld } from './processAction'
 import { StorageProvider } from '../StorageProvider'
@@ -12,7 +13,6 @@ import { AuthId, StorageInternalizeActionResult, StorageProvenOrReq } from '../.
 import { TableOutput } from '../schema/tables/TableOutput'
 import { TableOutputBasket } from '../schema/tables/TableOutputBasket'
 import { TableTransaction } from '../schema/tables/TableTransaction'
-import { validateInternalizeActionArgs, ValidInternalizeActionArgs } from '../../sdk/validationHelpers'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { randomBytesBase64, verifyId, verifyOne, verifyOneOrNone } from '../../utility/utilityHelpers'
 import { TransactionStatus } from '../../sdk/types'
@@ -100,14 +100,14 @@ class InternalizeActionContext {
   /** all the wallet payments from incoming outputs array */
   walletPayments: WalletPaymentX[]
   userId: number
-  vargs: ValidInternalizeActionArgs
+  vargs: Validation.ValidInternalizeActionArgs
 
   constructor(
     public storage: StorageProvider,
     public auth: AuthId,
     public args: InternalizeActionArgs
   ) {
-    this.vargs = validateInternalizeActionArgs(args)
+    this.vargs = Validation.validateInternalizeActionArgs(args)
     this.userId = auth.userId!
     this.r = {
       accepted: true,

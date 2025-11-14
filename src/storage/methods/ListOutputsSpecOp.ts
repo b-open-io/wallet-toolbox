@@ -1,5 +1,4 @@
-import { ListOutputsResult } from '@bsv/sdk'
-import { ValidListOutputsArgs } from '../../sdk/validationHelpers'
+import { ListOutputsResult, Validation } from '@bsv/sdk'
 import { StorageProvider } from '../StorageProvider'
 import { AuthId } from '../../sdk/WalletStorage.interfaces'
 import { TableOutput } from '../schema/tables/TableOutput'
@@ -16,20 +15,20 @@ export interface ListOutputsSpecOp {
   resultFromTags?: (
     s: StorageProvider,
     auth: AuthId,
-    vargs: ValidListOutputsArgs,
+    vargs: Validation.ValidListOutputsArgs,
     specOpTags: string[]
   ) => Promise<ListOutputsResult>
   resultFromOutputs?: (
     s: StorageProvider,
     auth: AuthId,
-    vargs: ValidListOutputsArgs,
+    vargs: Validation.ValidListOutputsArgs,
     specOpTags: string[],
     outputs: TableOutput[]
   ) => Promise<ListOutputsResult>
   filterOutputs?: (
     s: StorageProvider,
     auth: AuthId,
-    vargs: ValidListOutputsArgs,
+    vargs: Validation.ValidListOutputsArgs,
     specOpTags: string[],
     outputs: TableOutput[]
   ) => Promise<TableOutput[]>
@@ -54,7 +53,7 @@ export const getBasketToSpecOp: () => Record<string, ListOutputsSpecOp> = () => 
       resultFromOutputs: async (
         s: StorageProvider,
         auth: AuthId,
-        vargs: ValidListOutputsArgs,
+        vargs: Validation.ValidListOutputsArgs,
         specOpTags: string[],
         outputs: TableOutput[]
       ): Promise<ListOutputsResult> => {
@@ -73,7 +72,7 @@ export const getBasketToSpecOp: () => Record<string, ListOutputsSpecOp> = () => 
       filterOutputs: async (
         s: StorageProvider,
         auth: AuthId,
-        vargs: ValidListOutputsArgs,
+        vargs: Validation.ValidListOutputsArgs,
         specOpTags: string[],
         outputs: TableOutput[]
       ): Promise<TableOutput[]> => {
@@ -106,7 +105,7 @@ export const getBasketToSpecOp: () => Record<string, ListOutputsSpecOp> = () => 
       resultFromTags: async (
         s: StorageProvider,
         auth: AuthId,
-        vargs: ValidListOutputsArgs,
+        vargs: Validation.ValidListOutputsArgs,
         specOpTags: string[]
       ): Promise<ListOutputsResult> => {
         if (specOpTags.length !== 2)

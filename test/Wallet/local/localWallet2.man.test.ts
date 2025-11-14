@@ -1,7 +1,7 @@
-import { Beef, PrivateKey, SignActionArgs, WalletOutput } from '@bsv/sdk'
-import { sdk, Services, Setup, StorageKnex, TableUser } from '../../../src'
-import { _tu, TuEnv } from '../../utils/TestUtilsWalletStorage'
-import { specOpInvalidChange, ValidListOutputsArgs, WERR_REVIEW_ACTIONS } from '../../../src/sdk'
+import { Beef, PrivateKey, SignActionArgs, WalletOutput, Validation } from '@bsv/sdk'
+import { sdk, Setup, TableUser } from '../../../src'
+import { _tu } from '../../utils/TestUtilsWalletStorage'
+import { specOpInvalidChange, WERR_REVIEW_ACTIONS } from '../../../src/sdk'
 import {
   burnOneSatTestOutput,
   createMainReviewSetup,
@@ -104,7 +104,7 @@ describe('localWallet2 tests', () => {
     const users = await storage.findUsers({ partial: {} })
     const withInvalid: Record<number, { user: TableUser; outputs: WalletOutput[]; total: number }> = {}
     // [76, 48, 166, 94, 110, 111, 81]
-    const vargs: ValidListOutputsArgs = {
+    const vargs: Validation.ValidListOutputsArgs = {
       basket: specOpInvalidChange,
       tags: [],
       tagQueryMode: 'all',
