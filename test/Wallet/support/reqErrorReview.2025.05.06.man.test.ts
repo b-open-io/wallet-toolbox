@@ -1,10 +1,5 @@
 import { Beef, Transaction } from '@bsv/sdk'
-import {
-  EntityProvenTxReq,
-  sdk,
-  TableProvenTxReq,
-  verifyOneOrNone
-} from '../../../src'
+import { EntityProvenTxReq, sdk, TableProvenTxReq, verifyOneOrNone } from '../../../src'
 import { _tu, TuEnv } from '../../utils/TestUtilsWalletStorage'
 import { LocalWalletTestOptions } from '../../utils/localWalletMethods'
 import { Format } from '../../../src/utility/Format'

@@ -64,7 +64,7 @@ export class WERR_INVALID_PARAMETER extends WalletError {
 
 /**
  * Invalid merkleRoot ${merkleRoot} for block ${blockHash} at height ${blockHeight}${txid ? ` for txid ${txid}` : ''}.
- * 
+ *
  * Typically thrown when a chain tracker fails to validate a merkle root.
  */
 export class WERR_INVALID_MERKLE_ROOT extends WalletError {
@@ -72,9 +72,12 @@ export class WERR_INVALID_MERKLE_ROOT extends WalletError {
     public blockHash: string,
     public blockHeight: number,
     public merkleRoot: string,
-    public txid?: string,
+    public txid?: string
   ) {
-    super('WERR_INVALID_MERKLE_ROOT', `Invalid merkleRoot ${merkleRoot} for block ${blockHash} at height ${blockHeight}${txid ? ` for txid ${txid}` : ''}.`)
+    super(
+      'WERR_INVALID_MERKLE_ROOT',
+      `Invalid merkleRoot ${merkleRoot} for block ${blockHash} at height ${blockHeight}${txid ? ` for txid ${txid}` : ''}.`
+    )
   }
   override toJson(): string {
     const obj = JSON.parse(super.toJson())

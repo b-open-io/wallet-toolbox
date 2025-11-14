@@ -40,7 +40,10 @@ export async function signAction(wallet: Wallet, auth: AuthId, args: SignActionA
   return r
 }
 
-function mergePriorOptions(caVargs: Validation.ValidCreateActionArgs, saArgs: SignActionArgs): Validation.ValidSignActionArgs {
+function mergePriorOptions(
+  caVargs: Validation.ValidCreateActionArgs,
+  saArgs: SignActionArgs
+): Validation.ValidSignActionArgs {
   const saOptions = (saArgs.options ||= {})
   if (saOptions.acceptDelayedBroadcast === undefined)
     saOptions.acceptDelayedBroadcast = caVargs.options.acceptDelayedBroadcast
