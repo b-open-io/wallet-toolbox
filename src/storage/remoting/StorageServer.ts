@@ -198,10 +198,20 @@ export class StorageServer {
     if (params[0]['identityKey']) params[0].userId = user.userId
   }
 
+  server: any
+
   public start(): void {
-    this.app.listen(this.port, () => {
+    this.server = this.app.listen(this.port, () => {
       console.log(`WalletStorageServer listening at http://localhost:${this.port}`)
     })
+  }
+
+  public async close(): Promise<void> {
+    if (this.server) {
+      await this.server.close(() => {
+        console.log('WalletStorageServer closed')
+      })
+    }
   }
 
   validateDate(date: Date | string | number): Date {
