@@ -156,9 +156,6 @@ export class WalletError extends Error implements WalletErrorObject {
       t === 'object' && error !== null && typeof (error as any).toJson === 'function'
         ? (error as any).toJson
         : undefined
-    console.log(
-      `WalletError.unknownToJson: error type=${t} ctor=${ctor} name=${name} message=${message} hasToJson=${toJson ? 'yes' : 'no'}`
-    )
     if (ctor && ctor.startsWith('WERR_') && toJson !== undefined) {
       json = (error as WalletError).toJson()
     } else if (name && message) {
@@ -168,7 +165,6 @@ export class WalletError extends Error implements WalletErrorObject {
       e = new WalletError('WERR_UNKNOWN', String(error))
       json = e.toJson()
     }
-    console.log(`WalletError.unknownToJson: json=${json}`)
     return json
   }
 }
