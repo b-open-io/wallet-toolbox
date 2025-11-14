@@ -90,6 +90,10 @@ export class StorageClient implements WalletStorageProvider {
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
     try {
       const id = this.nextId++
+
+      if (params[1]?.['logger']) {
+
+      }
       const body = {
         jsonrpc: '2.0',
         method,

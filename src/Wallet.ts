@@ -66,7 +66,8 @@ import {
   AtomicBEEF,
   BEEF,
   KeyDeriverApi,
-  Validation
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import { acquireDirectCertificate } from './signer/methods/acquireDirectCertificate'
 import { proveCertificate } from './signer/methods/proveCertificate'
@@ -98,7 +99,6 @@ import { PrivilegedKeyManager } from './sdk/PrivilegedKeyManager'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_REVIEW_ACTIONS } from './sdk/WERR_errors'
 import { AuthId, StorageCreateActionResult, StorageInternalizeActionResult } from './sdk/WalletStorage.interfaces'
 import { WalletError } from './sdk/WalletError'
-import { WalletLoggerInterface } from './WalletLogger'
 
 export interface WalletArgs {
   chain: Chain
@@ -751,7 +751,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
   }
 
   logResult(r: any, logger?: WalletLoggerInterface): void {
-    if (!logger) return;
+    if (!logger) return
     logger.groupEnd()
     r['log'] = logger.flush?.()
   }

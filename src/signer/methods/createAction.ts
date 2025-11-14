@@ -36,30 +36,38 @@ export async function createAction(
   vargs: Validation.ValidCreateActionArgs
 ): Promise<CreateActionResultX> {
   const r: CreateActionResultX = {}
+  const logger = vargs.logger
 
   let prior: PendingSignAction | undefined = undefined
 
   if (vargs.isNewTx || vargs.isTestWerrReviewActions) {
     prior = await createNewTx(wallet, vargs)
+    logger?.log('created new transaction')
 
     if (vargs.isSignAction) {
-      return makeSignableTransactionResult(prior, wallet, vargs)
+      const r = makeSignableTransactionResult(prior, wallet, vargs)
+      logger?.log('created signable transaction result')
+      return r
     }
 
     prior.tx = await completeSignedTransaction(prior, {}, wallet)
+    logger?.log('completed signed transaction')
 
     r.txid = prior.tx.id('hex')
     const beef = new Beef()
     if (prior.dcr.inputBeef) beef.mergeBeef(prior.dcr.inputBeef)
     beef.mergeTransaction(prior.tx)
+    logger?.log('merged beef')
 
     verifyUnlockScripts(r.txid, beef)
+    logger?.log('verified unlock scripts')
 
     r.noSendChange = prior.dcr.noSendChangeOutputVouts?.map(vout => `${r.txid}.${vout}`)
     if (!vargs.options.returnTXIDOnly) r.tx = beef.toBinaryAtomic(r.txid)
   }
 
   const { sendWithResults, notDelayedResults } = await processAction(prior, wallet, auth, vargs)
+  logger?.log('processed transaction')
 
   r.sendWithResults = sendWithResults
   r.notDelayedResults = notDelayedResults
@@ -67,15 +75,18 @@ export async function createAction(
   return r
 }
 
-async function createNewTx(wallet: Wallet, args: Validation.ValidCreateActionArgs): Promise<PendingSignAction> {
-  const storageArgs = removeUnlockScripts(args)
+async function createNewTx(wallet: Wallet, vargs: Validation.ValidCreateActionArgs): Promise<PendingSignAction> {
+  const logger = vargs.logger
+  const storageArgs = removeUnlockScripts(vargs)
   const dcr = await wallet.storage.createAction(storageArgs)
 
   const reference = dcr.reference
 
-  const { tx, amount, pdi } = buildSignableTransaction(dcr, args, wallet)
+  const { tx, amount, pdi } = buildSignableTransaction(dcr, vargs, wallet)
+  logger?.log('built signable transaction')
 
-  const prior: PendingSignAction = { reference, dcr, args, amount, tx, pdi }
+
+  const prior: PendingSignAction = { reference, dcr, args: vargs, amount, tx, pdi }
 
   return prior
 }

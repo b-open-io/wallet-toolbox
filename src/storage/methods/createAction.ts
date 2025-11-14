@@ -1,4 +1,12 @@
-import { Beef, OriginatorDomainNameStringUnder250Bytes, Random, ReviewActionResult, Script, Utils, Validation } from '@bsv/sdk'
+import {
+  Beef,
+  OriginatorDomainNameStringUnder250Bytes,
+  Random,
+  ReviewActionResult,
+  Script,
+  Utils,
+  Validation
+} from '@bsv/sdk'
 import {
   generateChangeSdk,
   GenerateChangeSdkChangeInput,
@@ -45,6 +53,9 @@ export async function createAction(
   vargs: Validation.ValidCreateActionArgs,
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<StorageCreateActionResult> {
+  const logger = vargs.logger
+  debugger;
+  logger?.group(`storage createAction`)
   //stampLog(vargs, `start storage createTransactionSdk`)
 
   if (vargs.isTestWerrReviewActions) throwDummyReviewActions()
@@ -71,7 +82,9 @@ export async function createAction(
 
   const userId = auth.userId!
   const { storageBeef, beef, xinputs } = await validateRequiredInputs(storage, userId, vargs)
+  logger?.log('validated required inputs')
   const xoutputs = validateRequiredOutputs(storage, userId, vargs)
+  logger?.log('validated required outputs')
 
   const changeBasketName = 'default'
   const changeBasket = verifyOne(
@@ -80,14 +93,19 @@ export async function createAction(
     }),
     `Invalid outputGeneration basket "${changeBasketName}"`
   )
+  logger?.log('found change basket')
 
   const noSendChangeIn = await validateNoSendChange(storage, userId, vargs, changeBasket)
+  logger?.log('validated noSendChange')
 
   const availableChangeCount = await storage.countChangeInputs(userId, changeBasket.basketId, !vargs.isDelayed)
+  logger?.log(`counted change inputs ${availableChangeCount}`)
 
   const feeModel = validateStorageFeeModel(storage.feeModel)
+  logger?.log(`validated fee model ${JSON.stringify(feeModel)}`)
 
   const newTx = await createNewTxRecord(storage, userId, vargs, storageBeef)
+  logger?.log(`created new transaction record`)
 
   const ctx: CreateTransactionSdkContext = {
     xinputs,
@@ -101,11 +119,13 @@ export async function createAction(
 
   const { allocatedChange, changeOutputs, derivationPrefix, maxPossibleSatoshisAdjustment } =
     await fundNewTransactionSdk(storage, userId, vargs, ctx)
+  logger?.log(`funded new transaction`)
 
   if (maxPossibleSatoshisAdjustment) {
     const a = maxPossibleSatoshisAdjustment
     if (ctx.xoutputs[a.fixedOutputIndex].satoshis !== maxPossibleSatoshis) throw new WERR_INTERNAL()
     ctx.xoutputs[a.fixedOutputIndex].satoshis = a.satoshis
+    logger?.log(`adjusted change outputs to max possible`)
   }
 
   // The satoshis of the transaction is the satoshis we get back in change minus the satoshis we spend.
@@ -114,10 +134,13 @@ export async function createAction(
   await storage.updateTransaction(newTx.transactionId!, { satoshis })
 
   const { outputs, changeVouts } = await createNewOutputs(storage, userId, vargs, ctx, changeOutputs)
+  logger?.log(`created new output records`)
 
   const inputBeef = await mergeAllocatedChangeBeefs(storage, userId, vargs, allocatedChange, beef)
+  logger?.log(`merged allocated change beefs`)
 
   const inputs = await createNewInputs(storage, userId, vargs, ctx, allocatedChange)
+  logger?.log(`created new inputs`)
 
   const r: StorageCreateActionResult = {
     reference: newTx.reference!,
@@ -130,7 +153,7 @@ export async function createAction(
     noSendChangeOutputVouts: vargs.isNoSend ? changeVouts : undefined
   }
 
-  //stampLog(vargs, `end storage createTransactionSdk`)
+  logger?.groupEnd()
   return r
 }
 
