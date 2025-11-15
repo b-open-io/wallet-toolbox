@@ -54,7 +54,6 @@ export async function createAction(
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<StorageCreateActionResult> {
   const logger = vargs.logger
-  debugger;
   logger?.group(`storage createAction`)
   //stampLog(vargs, `start storage createTransactionSdk`)
 

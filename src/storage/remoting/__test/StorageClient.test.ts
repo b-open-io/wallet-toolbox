@@ -1,4 +1,4 @@
-import { CreateActionArgs } from "@bsv/sdk"
+import { CreateActionArgs, WalletLoggerInterface } from "@bsv/sdk"
 import { _tu, TestWalletNoSetup, TestWalletOnly } from "../../../../test/utils/TestUtilsWalletStorage"
 import { wait } from "../../../utility/utilityHelpers"
 import { WalletLogger } from "../../../WalletLogger"
@@ -75,6 +75,7 @@ async function createStorageServer(): Promise<{ setup: TestWalletNoSetup, server
     }
   }
   const server = new StorageServer(setup.activeStorage, options)
+  server.makeLogger = (log?: string | WalletLoggerInterface) => new WalletLogger(log)
 
   server.start()
 

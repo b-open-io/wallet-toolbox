@@ -1,4 +1,4 @@
-import { WalletLoggerInterface } from '@bsv/sdk'
+import { WalletInterface, WalletLoggerInterface, WalletLoggerLog } from '@bsv/sdk'
 import { WalletError } from './sdk/WalletError'
 
 export class WalletLogger implements WalletLoggerInterface {
@@ -7,9 +7,9 @@ export class WalletLogger implements WalletLoggerInterface {
   isOrigin: boolean = true
   isError: boolean = false
 
-  constructor(log?: string) {
+  constructor(log?: string | WalletLoggerInterface) {
     if (log) {
-      const lo = JSON.parse(log)
+      const lo = typeof log ==='string' ? JSON.parse(log) : log
       this.indent = lo.indent || 0
       this.logs = lo.logs || []
       this.isOrigin = false
@@ -86,14 +86,17 @@ export class WalletLogger implements WalletLoggerInterface {
       const msecs = last.when - first.when
       log += `   msecs WalletLogger ${new Date(first.when).toISOString()} logged ${msecs / 1000} seconds\n`
       let prev = first
-      let lastBegin: WalletLoggerLog | undefined
+      const begins: WalletLoggerLog[] = []
       for (const d of this.logs) {
         let df = (d.when - prev.when).toString()
         df = `${' '.repeat(8 - df.length)}${df}`
         const what = d.isBegin ? ' begin' : d.isEnd ? ' end' : d.isError ? ' ERROR' : ''
-        if (d.isBegin) lastBegin = d
+        if (d.isBegin) begins.push(d)
         let m = d.log
-        if (!m && d.isEnd && lastBegin) m = lastBegin.log
+        if (!m && d.isEnd && begins.length > 0) {
+          const begin = begins.pop()!
+          m = begin.log
+        }
         log += `${df}${'  '.repeat(d.indent)}${what} ${m}\n`
         prev = d
       }
@@ -108,18 +111,15 @@ export class WalletLogger implements WalletLoggerInterface {
     const r = this.isOrigin ? undefined : this.toWalletLoggerJson()
     return r
   }
+
+  merge(log: WalletLoggerInterface) : void {
+    if (log.logs) {
+      this.logs.push(...log.logs)
+    }
+  }
 }
 
-export function logWalletError(eu: unknown, logger?: WalletLoggerInterface): void {
+export function logWalletError(eu: unknown, logger?: WalletLoggerInterface, label?: string): void {
   if (!logger) return
-  logger.error('WalletError:', WalletError.unknownToJson(eu))
-}
-
-export interface WalletLoggerLog {
-  when: number
-  indent: number
-  log: string
-  isError?: boolean
-  isBegin?: boolean
-  isEnd?: boolean
+  logger.error(label || 'WalletError', WalletError.unknownToJson(eu))
 }

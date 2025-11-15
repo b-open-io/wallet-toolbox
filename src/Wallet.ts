@@ -67,7 +67,8 @@ import {
   BEEF,
   KeyDeriverApi,
   Validation,
-  WalletLoggerInterface
+  WalletLoggerInterface,
+  MakeLogger
 } from '@bsv/sdk'
 import { acquireDirectCertificate } from './signer/methods/acquireDirectCertificate'
 import { proveCertificate } from './signer/methods/proveCertificate'
@@ -109,7 +110,7 @@ export interface WalletArgs {
   privilegedKeyManager?: PrivilegedKeyManager
   settingsManager?: WalletSettingsManager
   lookupResolver?: LookupResolver
-  makeLogger?: (json?: string) => WalletLoggerInterface
+  makeLogger?: MakeLogger
 }
 
 function isWalletSigner(args: WalletArgs | WalletSigner): args is WalletSigner {
@@ -157,7 +158,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
   userParty: string
   proto: ProtoWallet
   privilegedKeyManager?: PrivilegedKeyManager
-  makeLogger?: (json?: string) => WalletLoggerInterface
+  makeLogger?: MakeLogger
 
   pendingSignActions: Record<string, PendingSignAction>
 
@@ -171,7 +172,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
     services?: WalletServices,
     monitor?: Monitor,
     privilegedKeyManager?: PrivilegedKeyManager,
-    makeLogger?: (json?: string) => WalletLoggerInterface
+    makeLogger?: MakeLogger
   ) {
     const args: WalletArgs = !isWalletSigner(argsOrSigner)
       ? argsOrSigner

@@ -9,7 +9,8 @@ import {
   RelinquishOutputArgs,
   WalletInterface,
   AuthFetch,
-  Validation
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import {
   AuthId,
@@ -40,6 +41,7 @@ import { TableProvenTxReq } from '../schema/tables/TableProvenTxReq'
 import { EntityTimeStamp } from '../../sdk/types'
 import { WalletError } from '../../sdk/WalletError'
 import { WalletErrorFromJson } from '../../sdk/WalletErrorFromJson'
+import { logWalletError } from '../../WalletLogger'
 
 /**
  * `StorageClient` implements the `WalletStorageProvider` interface which allows it to
@@ -88,12 +90,18 @@ export class StorageClient implements WalletStorageProvider {
    * @param params The array of parameters to pass to the method in order.
    */
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
+
+    let logger: WalletLoggerInterface | undefined = params[1]?.['logger']
+
     try {
       const id = this.nextId++
 
-      if (params[1]?.['logger']) {
-
+      if (logger) {
+        // Replace logger object with seed json object to continue logging on request server.
+        logger.group(`StorageClient ${method}`)
+        params[1]!['logger'] = { indent: (logger.indent || 0) }
       }
+
       const body = {
         jsonrpc: '2.0',
         method,
@@ -109,6 +117,7 @@ export class StorageClient implements WalletStorageProvider {
           body: JSON.stringify(body)
         })
       } catch (eu: unknown) {
+        logWalletError(eu, logger, 'error requesting remote service')
         throw eu
       }
 
@@ -118,12 +127,20 @@ export class StorageClient implements WalletStorageProvider {
 
       const json = await response.json()
       if (json.error) {
+        logWalletError(json.error, logger, 'error from remote service')
         const werr = WalletErrorFromJson(json.error)
         throw werr
       }
 
+      if (logger) {
+        // merge log data from request processing
+        logger.merge?.(json.result?.['log'])
+        logger.groupEnd()
+      }
+
       return json.result
     } catch (eu: unknown) {
+      logWalletError(eu, logger, 'error setting up request to remote service')
       throw eu
     }
   }
