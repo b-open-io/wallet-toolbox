@@ -1,4 +1,4 @@
-import { Beef, MerklePath, Transaction, WalletOutput, Validation } from '@bsv/sdk'
+import { Beef, MerklePath, Transaction, WalletOutput, Validation, Utils } from '@bsv/sdk'
 import { TableOutput, TableUser, verifyOne, verifyOneOrNone } from '../../../src'
 import { _tu, logger } from '../../utils/TestUtilsWalletStorage'
 import { specOpInvalidChange } from '../../../src/sdk'
@@ -297,7 +297,7 @@ describe('operations.man tests', () => {
     await storage.destroy()
   })
 
-  test('14 review inputs of tx utxo status', async () => {
+  test('14 review utxo status of inputs of tx', async () => {
     const { env, storage, services } = await _tu.createMainReviewSetup()
 
     const tx = Transaction.fromHex(testTxInputUtxoStatus)
@@ -323,6 +323,57 @@ describe('operations.man tests', () => {
       log += `${outpoint} ${or.isUtxo} ${or.status}\n`
     }
     logger(log)
+    await storage.destroy()
+  })
+
+  test('14a review utxo status of custom spentBy null spendable false outputs', async () => {
+    const { env, storage, services } = await _tu.createMainReviewSetup()
+
+    let offset = 0
+    const limit = 100
+
+    for (; ;) {
+      let validOutputIds: number[] = []
+
+      let log = `offset ${offset}\n`
+      // select count(*)
+      // and o.lockingScript is null
+      // and o.txid = '533e50fba3fca9b08845fc46ae3df81713129876faddf84f9d26d4185dea8324'
+      const outputs: { outputId: number, txid: string, vout: number, lockingScript: number[], scriptOffset: number, scriptLength: number }[] = (await storage.knex.raw(`
+      select o.outputId, o.txid, o.vout, o.lockingScript, o.scriptOffset, o.scriptLength
+      from outputs o, transactions t
+      where o.transactionId = t.transactionId
+      and o.type = 'custom' and o.spentBy is null and o.spendable = 0
+      and t.status = 'completed'
+      limit ${limit}
+      offset ${offset}
+      `))[0]
+
+      for (const { outputId, txid, vout, lockingScript, scriptOffset, scriptLength } of outputs) {
+        let script: number[] | null | undefined = lockingScript
+        if (!lockingScript) {
+          script = await storage.getRawTxOfKnownValidTransaction(txid, scriptOffset, scriptLength)
+        }
+        expect(script).toBeTruthy()
+        const hex = Utils.toHex(script!)
+        const hash = services.hashOutputScript(hex)
+        const outpoint = `${txid}.${vout}`
+        const or = await services.getUtxoStatus(hash, undefined, outpoint)
+        if (or.isUtxo && or.status === 'success') {
+          log += `${outpoint} ${or.isUtxo} ${or.status}\n`
+          validOutputIds.push(outputId)
+        }
+      }
+      log += `offset ${offset}\n`
+      logger(log)
+
+      for (const outputId of validOutputIds) {
+        await storage.updateOutput(outputId, { spendable: true })
+      }
+
+      if (outputs.length < limit) break;
+      offset += limit
+    }
     await storage.destroy()
   })
 
