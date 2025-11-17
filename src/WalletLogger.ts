@@ -108,13 +108,20 @@ export class WalletLogger implements WalletLoggerInterface {
   }
 
   flush(): object | undefined {
-    const trace = this.toLogString()
-    const log = this.flushFormat === 'json' ? JSON.stringify({
-      name: 'WalletLogger.flush',
-      trace 
-    }) : trace
-    if (this.isError) console.error(log)
-    else console.log(log)
+    if (this.logs.length > 0) {
+      const trace = this.toLogString()
+      const output = this.isError ? console.error : console.log
+      if (this.flushFormat === 'json') {
+        const name = this.logs[0].log
+        const log = {
+          name,
+          trace
+        }
+        output(JSON.stringify(log))
+      } else {
+        output(trace)
+      }
+    }
     const r = this.isOrigin ? undefined : this.toWalletLoggerJson()
     return r
   }
