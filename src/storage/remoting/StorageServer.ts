@@ -49,21 +49,6 @@ export class StorageServer {
   }
 
   private setupRoutes(): void {
-    this.app.use((req: Request, res: Response, next) => {
-      // Silently 200 any POST to exactly the root that looks like a crawler probe
-      if (
-        req.method === 'POST' &&
-        req.path === '/' &&
-        (
-          !req.headers['content-type']?.includes('application/json') ||
-          req.headers['content-length'] === '0' ||
-          (req.headers['content-length'] && Number(req.headers['content-length']) < 120)
-        )
-      ) {
-        return res.status(200).json({ jsonrpc: '2.0', result: null, id: null })
-      }
-      next()
-    })
 
     this.app.use(express.json({ limit: '30mb' }))
 
