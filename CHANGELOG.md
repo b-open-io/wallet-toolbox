@@ -4,6 +4,13 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.7.2
+
+- Add `WalletLogger` aggregate logger class for use by `Wallet`, `StorageClient` and `StorageServer`,
+  implementing the `WalletLoggerInterface` released in latest `@bsv/sdk`.
+- Delete `validationHelpers.ts` from `sdk` folder and update code to reference functions and types moved to
+  `Validation` namespace exported from `@bsv/sdk`.
+
 ## wallet-toolbox 1.7.1
 
 - Add optional skipInvalidProofs to StorageGetBeefOptions
