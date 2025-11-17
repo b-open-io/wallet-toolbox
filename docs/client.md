@@ -7014,6 +7014,8 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Interface: WalletArgs
 
+The preferred means of constructing a `Wallet` is with a `WalletArgs` instance.
+
 ```ts
 export interface WalletArgs {
     chain: Chain;
@@ -7029,6 +7031,20 @@ export interface WalletArgs {
 ```
 
 See also: [Chain](./client.md#type-chain), [Monitor](./monitor.md#class-monitor), [PrivilegedKeyManager](./client.md#class-privilegedkeymanager), [WalletServices](./client.md#interface-walletservices), [WalletSettingsManager](./client.md#class-walletsettingsmanager), [WalletStorageManager](./storage.md#class-walletstoragemanager)
+
+###### Property makeLogger
+
+Optional. Provide a function conforming to the `MakeWalletLogger` type to enable wallet request logging.
+
+For simple requests using `Console` may be adequate, initialize with
+`() => Console`
+
+Aggregate tracing and control over capturing all logged output in one place:
+`(log?: string | WalletLoggerInterface) => new WalletLogger(log)`
+
+```ts
+makeLogger?: MakeWalletLogger
+```
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
