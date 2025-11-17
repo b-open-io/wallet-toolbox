@@ -1,4 +1,4 @@
-import { WalletInterface, WalletLoggerInterface, WalletLoggerLog } from '@bsv/sdk'
+import { Beef, CreateActionArgs, WalletInterface, WalletLoggerInterface, WalletLoggerLog } from '@bsv/sdk'
 import { WalletError } from './sdk/WalletError'
 
 export class WalletLogger implements WalletLoggerInterface {
@@ -6,13 +6,15 @@ export class WalletLogger implements WalletLoggerInterface {
   logs: WalletLoggerLog[] = []
   isOrigin: boolean = true
   isError: boolean = false
+  level?: WalletLoggerLevel
 
   constructor(log?: string | WalletLoggerInterface) {
     if (log) {
-      const lo = typeof log ==='string' ? JSON.parse(log) : log
+      const lo = typeof log === 'string' ? JSON.parse(log) : log
       this.indent = lo.indent || 0
       this.logs = lo.logs || []
-      this.isOrigin = false
+      this.isOrigin = this.indent === 0
+      this.level = lo.level
     }
   }
 
@@ -112,7 +114,7 @@ export class WalletLogger implements WalletLoggerInterface {
     return r
   }
 
-  merge(log: WalletLoggerInterface) : void {
+  merge(log: WalletLoggerInterface): void {
     if (log.logs) {
       this.logs.push(...log.logs)
     }
@@ -123,3 +125,43 @@ export function logWalletError(eu: unknown, logger?: WalletLoggerInterface, labe
   if (!logger) return
   logger.error(label || 'WalletError', WalletError.unknownToJson(eu))
 }
+
+export function logCreateActionArgs(args: CreateActionArgs): object {
+  const o: any = {
+    description: args.description
+  }
+  if (args.labels) o.labels = args.labels
+  if (args.inputBEEF) o.inputBEEF = Beef.fromBinary(args.inputBEEF).toLogString()
+  if (args.lockTime !== undefined) o.lockTime = args.lockTime
+  if (args.version !== undefined) o.version = args.version
+  /*
+    if (args.inputs) {
+
+    }
+    if (args.outputs) {
+
+    }
+    options: validateCreateActionOptions(args.options),
+    isSendWith: false,
+    isDelayed: false,
+    isNoSend: false,
+    isNewTx: false,
+    isRemixChange: false,
+    isSignAction: false,
+    randomVals: undefined,
+    includeAllSourceTransactions: false,
+    isTestWerrReviewActions: false
+  */
+  return o
+}
+
+/**
+ * Optional. Logging levels that may influence what is logged.
+ *
+ * 'error' Only requests resulting in an exception should be logged.
+ * 'warn' Also log requests that succeed but with an abnormal condition.
+ * 'info' Also log normal successful requests.
+ * 'debug' Add input parm and result details where possible.
+ * 'trace' Instead of adding debug details, focus on execution path and timing.
+ */
+export type WalletLoggerLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace'

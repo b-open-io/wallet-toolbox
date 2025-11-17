@@ -85,7 +85,6 @@ async function createNewTx(wallet: Wallet, vargs: Validation.ValidCreateActionAr
   const { tx, amount, pdi } = buildSignableTransaction(dcr, vargs, wallet)
   logger?.log('built signable transaction')
 
-
   const prior: PendingSignAction = { reference, dcr, args: vargs, amount, tx, pdi }
 
   return prior
@@ -157,7 +156,8 @@ export async function processAction(
     reference: prior ? prior.reference : undefined,
     txid: prior ? prior.tx.id('hex') : undefined,
     rawTx: prior ? prior.tx.toBinary() : undefined,
-    sendWith: vargs.isSendWith ? vargs.options.sendWith : []
+    sendWith: vargs.isSendWith ? vargs.options.sendWith : [],
+    logger: vargs.logger
   }
   const r: StorageProcessActionResults = await wallet.storage.processAction(args)
 

@@ -14,7 +14,8 @@ import {
   RelinquishOutputArgs,
   SendWithResult,
   TXIDHexString,
-  Validation
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import {
   TableCertificate,
@@ -264,7 +265,7 @@ export interface StorageProcessActionArgs {
   txid?: string
   rawTx?: number[]
   sendWith: string[]
-  log?: string
+  logger?: WalletLoggerInterface
 }
 
 export interface StorageInternalizeActionResult extends InternalizeActionResult {

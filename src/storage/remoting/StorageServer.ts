@@ -5,7 +5,7 @@
  * and exposes it via a JSON-RPC POST endpoint using Express.
  */
 
-import { MakeLogger, WalletInterface, WalletLoggerInterface } from '@bsv/sdk'
+import { MakeWalletLogger, WalletInterface, WalletLoggerInterface } from '@bsv/sdk'
 import express, { Request, Response } from 'express'
 import { AuthMiddlewareOptions, createAuthMiddleware } from '@bsv/auth-express-middleware'
 import { createPaymentMiddleware } from '@bsv/payment-express-middleware'
@@ -23,6 +23,7 @@ export interface WalletStorageServerOptions {
   monetize: boolean
   calculateRequestPrice?: (req: Request) => number | Promise<number>
   adminIdentityKeys?: string[]
+  makeLogger?: MakeWalletLogger
 }
 
 export class StorageServer {
@@ -33,8 +34,7 @@ export class StorageServer {
   private monetize: boolean
   private calculateRequestPrice?: (req: Request) => number | Promise<number>
   private adminIdentityKeys?: string[]
-
-  makeLogger?: MakeLogger
+  private makeLogger?: MakeWalletLogger
 
   constructor(storage: StorageProvider, options: WalletStorageServerOptions) {
     this.storage = storage
@@ -43,6 +43,7 @@ export class StorageServer {
     this.monetize = options.monetize
     this.calculateRequestPrice = options.calculateRequestPrice
     this.adminIdentityKeys = options.adminIdentityKeys
+    this.makeLogger = options.makeLogger
 
     this.setupRoutes()
   }
@@ -167,7 +168,6 @@ export class StorageServer {
           }
 
           try {
-
             const result = await (this.storage as any)[method](...(params || []))
 
             if (logger) {
@@ -177,18 +177,16 @@ export class StorageServer {
                 // Potentially only flush if isOrigin...
               } else if (logger.logs && typeof result === 'object') {
                 // If not the start of logging, return logged data with result.
-                result['log'] = ({ logs: logger.logs })
+                result['log'] = { logs: logger.logs }
               }
             }
 
             return res.json({ jsonrpc: '2.0', result, id })
-
           } catch (eu: unknown) {
             logWalletError(eu, logger, 'error executing requested method')
             logger?.flush?.()
             throw eu
           }
-
         } else {
           // Unknown method
           return res.status(400).json({

@@ -332,14 +332,22 @@ describe('operations.man tests', () => {
     let offset = 0
     const limit = 100
 
-    for (; ;) {
+    for (;;) {
       let validOutputIds: number[] = []
 
       let log = `offset ${offset}\n`
       // select count(*)
       // and o.lockingScript is null
       // and o.txid = '533e50fba3fca9b08845fc46ae3df81713129876faddf84f9d26d4185dea8324'
-      const outputs: { outputId: number, txid: string, vout: number, lockingScript: number[], scriptOffset: number, scriptLength: number }[] = (await storage.knex.raw(`
+      const outputs: {
+        outputId: number
+        txid: string
+        vout: number
+        lockingScript: number[]
+        scriptOffset: number
+        scriptLength: number
+      }[] = (
+        await storage.knex.raw(`
       select o.outputId, o.txid, o.vout, o.lockingScript, o.scriptOffset, o.scriptLength
       from outputs o, transactions t
       where o.transactionId = t.transactionId
@@ -347,7 +355,8 @@ describe('operations.man tests', () => {
       and t.status = 'completed'
       limit ${limit}
       offset ${offset}
-      `))[0]
+      `)
+      )[0]
 
       for (const { outputId, txid, vout, lockingScript, scriptOffset, scriptLength } of outputs) {
         let script: number[] | null | undefined = lockingScript
@@ -371,7 +380,7 @@ describe('operations.man tests', () => {
         await storage.updateOutput(outputId, { spendable: true })
       }
 
-      if (outputs.length < limit) break;
+      if (outputs.length < limit) break
       offset += limit
     }
     await storage.destroy()

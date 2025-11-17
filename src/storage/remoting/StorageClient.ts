@@ -90,7 +90,6 @@ export class StorageClient implements WalletStorageProvider {
    * @param params The array of parameters to pass to the method in order.
    */
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
-
     let logger: WalletLoggerInterface | undefined = params[1]?.['logger']
 
     try {
@@ -99,7 +98,7 @@ export class StorageClient implements WalletStorageProvider {
       if (logger) {
         // Replace logger object with seed json object to continue logging on request server.
         logger.group(`StorageClient ${method}`)
-        params[1]!['logger'] = { indent: (logger.indent || 0) }
+        params[1]!['logger'] = { indent: logger.indent || 0 }
       }
 
       const body = {
@@ -142,6 +141,11 @@ export class StorageClient implements WalletStorageProvider {
     } catch (eu: unknown) {
       logWalletError(eu, logger, 'error setting up request to remote service')
       throw eu
+    } finally {
+      if (logger) {
+        // Restore original logger in params
+        params[1]!['logger'] = logger
+      }
     }
   }
 

@@ -1,4 +1,11 @@
-import { ArcConfig, Beef, Transaction as BsvTransaction, ChainTracker, MerklePath } from '@bsv/sdk'
+import {
+  ArcConfig,
+  Beef,
+  Transaction as BsvTransaction,
+  ChainTracker,
+  MerklePath,
+  WalletLoggerInterface
+} from '@bsv/sdk'
 import { Chain, ReqHistoryNote } from './types'
 import { WalletError } from './WalletError'
 import { TableOutput } from '../storage/schema/tables/TableOutput'
@@ -92,7 +99,7 @@ export interface WalletServices {
    * @param chain
    * @returns
    */
-  postBeef(beef: Beef, txids: string[]): Promise<PostBeefResult[]>
+  postBeef(beef: Beef, txids: string[], logger?: WalletLoggerInterface): Promise<PostBeefResult[]>
 
   /**
    * @param script Output script to be hashed for `getUtxoStatus` default `outputFormat`
@@ -143,7 +150,11 @@ export interface WalletServices {
     useNext?: boolean
   ): Promise<GetUtxoStatusResult>
 
-  getScriptHashHistory(hash: string, useNext?: boolean): Promise<GetScriptHashHistoryResult>
+  getScriptHashHistory(
+    hash: string,
+    useNext?: boolean,
+    logger?: WalletLoggerInterface
+  ): Promise<GetScriptHashHistoryResult>
 
   /**
    * @returns a block header

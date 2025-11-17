@@ -11,7 +11,8 @@ import {
   RelinquishCertificateArgs,
   RelinquishOutputArgs,
   AbortActionArgs,
-  Validation
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import { getBeefForTransaction } from './methods/getBeefForTransaction'
 import { GetReqsAndBeefDetail, GetReqsAndBeefResult, processAction } from './methods/processAction'
@@ -420,8 +421,12 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
     return await processAction(this, auth, args)
   }
 
-  async attemptToPostReqsToNetwork(reqs: EntityProvenTxReq[], trx?: TrxToken): Promise<PostReqsToNetworkResult> {
-    return await attemptToPostReqsToNetwork(this, reqs, trx)
+  async attemptToPostReqsToNetwork(
+    reqs: EntityProvenTxReq[],
+    trx?: TrxToken,
+    logger?: WalletLoggerInterface
+  ): Promise<PostReqsToNetworkResult> {
+    return await attemptToPostReqsToNetwork(this, reqs, trx, logger)
   }
 
   async listCertificates(auth: AuthId, args: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
