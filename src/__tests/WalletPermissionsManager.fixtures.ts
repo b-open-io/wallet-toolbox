@@ -1,3 +1,6 @@
+
+const { Validation } = jest.requireActual('@bsv/sdk');
+
 /**
  * A permissions manager testing mock/stub file for:
  *  1) The `@bsv/sdk` library: Transaction, LockingScript, PushDrop, Utils, Random, etc.
@@ -166,6 +169,15 @@ export const MockUtils = {
     return btoa(binaryStr)
   }
 }
+/*
+export const MockValidation = {
+  validateCreateActionArgs: (args: object) => {
+    return {
+      isSignAction: false
+    }
+  }
+}
+*/
 
 /**
  * Mocks for Random
@@ -183,7 +195,8 @@ export const MockedBSV_SDK = {
   PushDrop: MockPushDrop,
   Utils: MockUtils,
   Random: MockRandom,
-  Certificate: null
+  Certificate: null,
+  Validation: Validation
 }
 
 /* ---------------------------------------------------------------------------
