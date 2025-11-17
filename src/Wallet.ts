@@ -101,6 +101,9 @@ import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_REVIEW_ACTIONS } from './sd
 import { AuthId, StorageCreateActionResult, StorageInternalizeActionResult } from './sdk/WalletStorage.interfaces'
 import { WalletError } from './sdk/WalletError'
 
+/**
+ * The preferred means of constructing a `Wallet` is with a `WalletArgs` instance.
+ */
 export interface WalletArgs {
   chain: Chain
   keyDeriver: KeyDeriverApi
@@ -110,6 +113,15 @@ export interface WalletArgs {
   privilegedKeyManager?: PrivilegedKeyManager
   settingsManager?: WalletSettingsManager
   lookupResolver?: LookupResolver
+  /**
+   * Optional. Provide a function conforming to the `MakeWalletLogger` type to enable wallet request logging.
+   * 
+   * For simple requests using `Console` may be adequate, initialize with
+   * `() => Console`
+   * 
+   * Aggregate tracing and control over capturing all logged output in one place:
+   * `(log?: string | WalletLoggerInterface) => new WalletLogger(log)`
+   */
   makeLogger?: MakeWalletLogger
 }
 
