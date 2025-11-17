@@ -4,9 +4,13 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.7.6
+
+- Change `WalletLogger` json name from logs[0]
+
 ## wallet-toolbox 1.7.5
 
-- Really Add `WalletLogger` to package exports (client, and complete).
+- Add `WalletLogger` flushFormat property.
 
 ## wallet-toolbox 1.7.4
 
