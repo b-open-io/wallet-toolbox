@@ -57,7 +57,7 @@ export class StorageServer {
         (
           !req.headers['content-type']?.includes('application/json') ||
           req.headers['content-length'] === '0' ||
-          (req.headers['content-length'] && Number(req.headers['content-length']) < 50)
+          (req.headers['content-length'] && Number(req.headers['content-length']) < 120)
         )
       ) {
         return res.status(200).json({ jsonrpc: '2.0', result: null, id: null })
