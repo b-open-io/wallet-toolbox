@@ -272,9 +272,14 @@ export class StorageKnex extends StorageProvider implements WalletStorageProvide
 
   override async insertCertificate(certificate: TableCertificateX, trx?: TrxToken): Promise<number> {
     const e = await this.validateEntityForInsert(certificate, trx, undefined, ['isDeleted'])
+    if (e.certificateId === 0) delete e.certificateId
+
+    const logger = e.logger
+    if (e.logger) delete e.logger
+
     const fields = e.fields
     if (e.fields) delete e.fields
-    if (e.certificateId === 0) delete e.certificateId
+
     const [id] = await this.toDb(trx)<TableCertificate>('certificates').insert(e)
     certificate.certificateId = id
 
