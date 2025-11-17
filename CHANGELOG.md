@@ -6,6 +6,12 @@ attention to changes that materially alter behavior or extend functionality.
 
 ## wallet-toolbox 1.7.3
 
+- Really Add `WalletLogger` to package exports (client, and complete).
+
+(Still have to update top level index.all importing index.client importing index.mobile).
+
+## wallet-toolbox 1.7.3
+
 - Add `WalletLogger` to package exports (mobile, client, and complete).
 
 ## wallet-toolbox 1.7.2
