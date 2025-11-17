@@ -7,6 +7,7 @@ export class WalletLogger implements WalletLoggerInterface {
   isOrigin: boolean = true
   isError: boolean = false
   level?: WalletLoggerLevel
+  flushFormat?: 'json'
 
   constructor(log?: string | WalletLoggerInterface) {
     if (log) {
@@ -107,7 +108,11 @@ export class WalletLogger implements WalletLoggerInterface {
   }
 
   flush(): object | undefined {
-    const log = this.toLogString()
+    const trace = this.toLogString()
+    const log = this.flushFormat === 'json' ? JSON.stringify({
+      name: 'WalletLogger.flush',
+      trace: 
+    }) : trace
     if (this.isError) console.error(log)
     else console.log(log)
     const r = this.isOrigin ? undefined : this.toWalletLoggerJson()
@@ -165,3 +170,37 @@ export function logCreateActionArgs(args: CreateActionArgs): object {
  * 'trace' Instead of adding debug details, focus on execution path and timing.
  */
 export type WalletLoggerLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace'
+
+/**
+ * Constructor properties available to `WalletLogger`
+ */
+export interface WalletLoggerArgs {
+  /**
+   * Optional. Logging levels that may influence what is logged.
+   *
+   * 'error' Only requests resulting in an exception should be logged.
+   * 'warn' Also log requests that succeed but with an abnormal condition.
+   * 'info' Also log normal successful requests.
+   * 'debug' Add input parm and result details where possible.
+   * 'trace' Instead of adding debug details, focus on execution path and timing.
+   */
+  level?: 'error' | 'warn' | 'info' | 'debug' | 'trace'
+
+  /**
+   * Valid if an accumulating logger. Count of `group` calls without matching `groupEnd`.
+   */
+  indent?: number
+  /**
+   * True if this is an accumulating logger and the logger belongs to the object servicing the initial request.
+   */
+  isOrigin?: boolean
+  /**
+   * True if this is an accumulating logger and an error was logged.
+   */
+  isError?: boolean
+
+  /**
+   * Optional array of accumulated logged data and errors.
+   */
+  logs?: WalletLoggerLog[]
+}
