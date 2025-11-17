@@ -165,6 +165,10 @@ export class StorageServer {
             logger = this.makeLogger(params[1]['logger'])
             params[1]['logger'] = logger
             logger.group(`StorageSever ${method}`)
+            const userId = params[0]?.['identityKey']
+            const identityKey = params[0]?.['identityKey']
+            if (userId) logger.log(`userId: ${userId}`)
+            if (identityKey) logger.log(`identityKey: ${identityKey}`)
           }
 
           try {
