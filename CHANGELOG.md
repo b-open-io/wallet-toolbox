@@ -4,7 +4,11 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
-## wallet-toolbox 1.7.3
+## wallet-toolbox 1.7.5
+
+- Really Add `WalletLogger` to package exports (client, and complete).
+
+## wallet-toolbox 1.7.4
 
 - Really Add `WalletLogger` to package exports (client, and complete).
 

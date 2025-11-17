@@ -111,7 +111,7 @@ export class WalletLogger implements WalletLoggerInterface {
     const trace = this.toLogString()
     const log = this.flushFormat === 'json' ? JSON.stringify({
       name: 'WalletLogger.flush',
-      trace: 
+      trace 
     }) : trace
     if (this.isError) console.error(log)
     else console.log(log)
