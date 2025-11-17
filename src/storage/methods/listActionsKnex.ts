@@ -4,12 +4,12 @@ import {
   ListActionsResult,
   WalletAction,
   WalletActionOutput,
-  WalletActionInput
+  WalletActionInput,
+  Validation
 } from '@bsv/sdk'
 import { StorageKnex } from '../StorageKnex'
 import { getLabelToSpecOp, ListActionsSpecOp } from './ListActionsSpecOp'
 import { AuthId } from '../../sdk/WalletStorage.interfaces'
-import { ValidListActionsArgs } from '../../sdk/validationHelpers'
 import { isListActionsSpecOp } from '../../sdk/types'
 import { TableTxLabel } from '../schema/tables/TableTxLabel'
 import { TableTransaction } from '../schema/tables/TableTransaction'
@@ -20,7 +20,7 @@ import { asString } from '../../utility/utilityHelpers.noBuffer'
 export async function listActions(
   storage: StorageKnex,
   auth: AuthId,
-  vargs: ValidListActionsArgs
+  vargs: Validation.ValidListActionsArgs
 ): Promise<ListActionsResult> {
   const limit = vargs.limit
   const offset = vargs.offset

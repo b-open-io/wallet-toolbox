@@ -74,98 +74,102 @@ describe('WalletPermissionsManager - Regression & Integration with Underlying Wa
    * ----------------------------------------------------------------------- */
 
   it('should pass createAction calls through, label them, handle metadata encryption, and check spending authorization', async () => {
-    // We'll mock the "netSpent" scenario to be >0 by returning some mock input & output satoshis from the signableTransaction.
-    // The underlying mock createAction returns a signableTransaction with tx = []
-    // We can stub out the mock so that the manager sees inputs/outputs with certain sat amounts.
-    // But we have to remember the manager is parsing the signableTransaction via fromAtomicBEEF(…).
-    // We'll control that by adjusting the mock signableTransaction in the underlying.
+    try {
+      // We'll mock the "netSpent" scenario to be >0 by returning some mock input & output satoshis from the signableTransaction.
+      // The underlying mock createAction returns a signableTransaction with tx = []
+      // We can stub out the mock so that the manager sees inputs/outputs with certain sat amounts.
+      // But we have to remember the manager is parsing the signableTransaction via fromAtomicBEEF(…).
+      // We'll control that by adjusting the mock signableTransaction in the underlying.
 
-    // let's set a custom signableTransaction that returns 500 sat in inputs, 1000 in outputs, and 100 in fee
-    underlying.createAction.mockResolvedValueOnce({
-      signableTransaction: {
-        // The manager calls Transaction.fromAtomicBEEF() on this
-        tx: [0xde, 0xad], // not used in detail, but let's just pass some array
-        reference: 'test-ref'
-      }
-    })
-
-    // We also need to configure the fromAtomicBEEF mock so it returns a transaction with the specified inputs/outputs
-    const mockTx = new MockTransaction()
-    mockTx.fee = 100
-    // We'll define exactly one input we consider "originator-provided" with 500 sat
-    mockTx.inputs = [
-      {
-        sourceTXID: 'aaa',
-        sourceOutputIndex: 0,
-        sourceTransaction: {
-          outputs: [{ satoshis: 500 }]
+      // let's set a custom signableTransaction that returns 500 sat in inputs, 1000 in outputs, and 100 in fee
+      underlying.createAction.mockResolvedValueOnce({
+        signableTransaction: {
+          // The manager calls Transaction.fromAtomicBEEF() on this
+          tx: [0xde, 0xad], // not used in detail, but let's just pass some array
+          reference: 'test-ref'
         }
+      })
+
+      // We also need to configure the fromAtomicBEEF mock so it returns a transaction with the specified inputs/outputs
+      const mockTx = new MockTransaction()
+      mockTx.fee = 100
+      // We'll define exactly one input we consider "originator-provided" with 500 sat
+      mockTx.inputs = [
+        {
+          sourceTXID: 'aaa',
+          sourceOutputIndex: 0,
+          sourceTransaction: {
+            outputs: [{ satoshis: 500 }]
+          }
+        }
+      ]
+      // We'll define 2 outputs. The manager will read the output amounts from the createAction call's "args.outputs" too,
+      // but we also set them here in case it cross-references them. We'll keep it consistent (2 outputs with total 1000).
+      mockTx.outputs = [{ satoshis: 600 }, { satoshis: 400 }]
+
+        // Now override fromAtomicBEEF to return our mockTx:
+        ; (MockedBSV_SDK.Transaction.fromAtomicBEEF as jest.Mock).mockReturnValue(mockTx)
+
+      // Attempt to create an action from a non-admin origin
+      await manager.createAction(
+        {
+          description: 'User purchase',
+          inputs: [
+            {
+              outpoint: 'aaa.0',
+              unlockingScriptLength: 73,
+              inputDescription: 'My input'
+            }
+          ],
+          outputs: [
+            {
+              lockingScript: '00abcd',
+              satoshis: 1000,
+              outputDescription: 'Purchase output',
+              basket: 'my-basket'
+            }
+          ],
+          labels: ['user-label', 'something-else']
+        },
+        'shop.example.com'
+      )
+
+      // The manager should have:
+      // 1) Called underlying.createAction
+      // 2) Inserted "admin originator shop.example.com" & "admin month YYYY-MM" into labels
+      // 3) Encrypted the metadata fields (description, inputDescription, outputDescription)
+      // 4) Ensured we needed spending permission for netSpent= (1000 + fee100) - 500 = 600
+      //    The onSpendingAuthorizationRequested callback ephemeral-granted it.
+      expect(underlying.createAction).toHaveBeenCalledTimes(1)
+      const callArgs = underlying.createAction.mock.calls[0][0]
+      expect(callArgs.labels).toContain('admin originator shop.example.com')
+      expect(callArgs.labels).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('admin month'),
+          'user-label',
+          'something-else',
+          'admin originator shop.example.com'
+        ])
+      )
+      // Confirm the metadata was replaced with some ciphertext array in createAction call
+      expect(callArgs.description).not.toBe('User purchase') // manager encrypts it
+      if (callArgs.inputs[0].inputDescription) {
+        expect(callArgs.inputs[0].inputDescription).not.toBe('My input')
       }
-    ]
-    // We'll define 2 outputs. The manager will read the output amounts from the createAction call's "args.outputs" too,
-    // but we also set them here in case it cross-references them. We'll keep it consistent (2 outputs with total 1000).
-    mockTx.outputs = [{ satoshis: 600 }, { satoshis: 400 }]
+      if (callArgs.outputs[0].outputDescription) {
+        expect(callArgs.outputs[0].outputDescription).not.toBe('Purchase output')
+      }
 
-    // Now override fromAtomicBEEF to return our mockTx:
-    ;(MockedBSV_SDK.Transaction.fromAtomicBEEF as jest.Mock).mockReturnValue(mockTx)
+      // Also confirm we set signAndProcess to false if origin is non-admin
+      expect(callArgs.options.signAndProcess).toBe(false)
 
-    // Attempt to create an action from a non-admin origin
-    await manager.createAction(
-      {
-        description: 'User purchase',
-        inputs: [
-          {
-            outpoint: 'aaa.0',
-            unlockingScriptLength: 73,
-            inputDescription: 'My input'
-          }
-        ],
-        outputs: [
-          {
-            lockingScript: '00abcd',
-            satoshis: 1000,
-            outputDescription: 'Purchase output',
-            basket: 'my-basket'
-          }
-        ],
-        labels: ['user-label', 'something-else']
-      },
-      'shop.example.com'
-    )
-
-    // The manager should have:
-    // 1) Called underlying.createAction
-    // 2) Inserted "admin originator shop.example.com" & "admin month YYYY-MM" into labels
-    // 3) Encrypted the metadata fields (description, inputDescription, outputDescription)
-    // 4) Ensured we needed spending permission for netSpent= (1000 + fee100) - 500 = 600
-    //    The onSpendingAuthorizationRequested callback ephemeral-granted it.
-    expect(underlying.createAction).toHaveBeenCalledTimes(1)
-    const callArgs = underlying.createAction.mock.calls[0][0]
-    expect(callArgs.labels).toContain('admin originator shop.example.com')
-    expect(callArgs.labels).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('admin month'),
-        'user-label',
-        'something-else',
-        'admin originator shop.example.com'
-      ])
-    )
-    // Confirm the metadata was replaced with some ciphertext array in createAction call
-    expect(callArgs.description).not.toBe('User purchase') // manager encrypts it
-    if (callArgs.inputs[0].inputDescription) {
-      expect(callArgs.inputs[0].inputDescription).not.toBe('My input')
+      // The manager will parse the resulting signableTransaction, see netSpent=600, and request spending permission.
+      // Our callback ephemeral-granted.  So everything should proceed with no error.
+      // The manager returns the partial result from underlying
+      // We don't have a final sign call from the manager because signAndProcess is forcibly false.
+    } catch (eu) {
+      expect(true).toBe(false)
     }
-    if (callArgs.outputs[0].outputDescription) {
-      expect(callArgs.outputs[0].outputDescription).not.toBe('Purchase output')
-    }
-
-    // Also confirm we set signAndProcess to false if origin is non-admin
-    expect(callArgs.options.signAndProcess).toBe(false)
-
-    // The manager will parse the resulting signableTransaction, see netSpent=600, and request spending permission.
-    // Our callback ephemeral-granted.  So everything should proceed with no error.
-    // The manager returns the partial result from underlying
-    // We don't have a final sign call from the manager because signAndProcess is forcibly false.
   })
 
   it('should abort the action if spending permission is denied', async () => {

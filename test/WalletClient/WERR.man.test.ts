@@ -1,8 +1,8 @@
-import { CreateActionArgs, WalletClient } from '@bsv/sdk'
+import { Validation as V, CreateActionArgs, WalletClient } from '@bsv/sdk'
 import { specOpThrowReviewActions } from '../../src/sdk/types'
 import { WalletError } from '../../src/sdk/WalletError'
 import { WERR_REVIEW_ACTIONS } from '../../src/sdk/WERR_errors'
-import { validateCreateActionArgs, WalletErrorFromJson } from '../../src/sdk'
+import { WalletErrorFromJson } from '../../src/sdk'
 
 describe('WERR.man tests', () => {
   jest.setTimeout(99999999)
@@ -14,7 +14,7 @@ describe('WERR.man tests', () => {
       labels: [specOpThrowReviewActions],
       description: 'must throw'
     }
-    const vargs = validateCreateActionArgs(args)
+    const vargs = V.validateCreateActionArgs(args)
 
     try {
       const r = await wallet.createAction(args)

@@ -1,4 +1,4 @@
-import { Beef, Transaction } from '@bsv/sdk'
+import { Beef, Transaction, WalletLoggerInterface } from '@bsv/sdk'
 import { StorageProvider } from '../StorageProvider'
 import { EntityProvenTxReq } from '../schema/entities'
 import * as sdk from '../../sdk'
@@ -14,15 +14,17 @@ import { wait } from '../../utility/utilityHelpers'
 export async function attemptToPostReqsToNetwork(
   storage: StorageProvider,
   reqs: EntityProvenTxReq[],
-  trx?: sdk.TrxToken
+  trx?: sdk.TrxToken,
+  logger?: WalletLoggerInterface
 ): Promise<PostReqsToNetworkResult> {
   // initialize results, validate reqs ready to post, txids are of the transactions in the beef that we care about.
 
   const { r, vreqs, txids } = await validateReqsAndMergeBeefs(storage, reqs, trx)
+  logger?.log(`validated request and merged beefs`)
 
   const services = storage.getServices()
 
-  const pbrs = await services.postBeef(r.beef, txids)
+  const pbrs = await services.postBeef(r.beef, txids, logger)
 
   // post beef results (pbrs) is an array by service provider
   // for each service provider, there's an aggregate result and individual results by txid.
@@ -31,7 +33,7 @@ export async function attemptToPostReqsToNetwork(
 
   const apbrs = aggregatePostBeefResultsByTxid(txids, vreqs, pbrs)
 
-  await updateReqsFromAggregateResults(txids, r, apbrs, storage, services, trx)
+  await updateReqsFromAggregateResults(txids, r, apbrs, storage, services, trx, logger)
 
   return r
 }
@@ -192,8 +194,10 @@ async function updateReqsFromAggregateResults(
   apbrs: Record<string, AggregatePostBeefTxResult>,
   storage: StorageProvider,
   services?: sdk.WalletServices,
-  trx?: sdk.TrxToken
+  trx?: sdk.TrxToken,
+  logger?: WalletLoggerInterface
 ): Promise<void> {
+  logger?.group('update storage from aggregate results')
   for (const txid of txids) {
     const ar = apbrs[txid]!
     const req = ar.vreq.req
@@ -216,7 +220,7 @@ async function updateReqsFromAggregateResults(
       // However it happened, don't degrade status if it is somehow already beyond broadcast stage
       continue
 
-    if (ar.status === 'doubleSpend' && services && !trx) await confirmDoubleSpend(ar, r.beef, storage, services)
+    if (ar.status === 'doubleSpend' && services && !trx) await confirmDoubleSpend(ar, r.beef, storage, services, logger)
 
     let newReqStatus: sdk.ProvenTxReqStatus | undefined = undefined
     let newTxStatus: sdk.TransactionStatus | undefined = undefined
@@ -263,7 +267,9 @@ async function updateReqsFromAggregateResults(
     const details = r.details.find(d => d.txid === txid)!
     details.status = ar.status
     details.competingTxs = ar.competingTxs
+    logger?.log(`updated ${txid}`)
   }
+  logger?.group('update storage from aggregate results')
 }
 
 /**
@@ -281,7 +287,8 @@ async function confirmDoubleSpend(
   ar: AggregatePostBeefTxResult,
   beef: Beef,
   storage: StorageProvider,
-  services: sdk.WalletServices
+  services: sdk.WalletServices,
+  logger?: WalletLoggerInterface
 ): Promise<void> {
   const req = ar.vreq.req
   const note: ReqHistoryNote = { when: new Date().toISOString(), what: 'confirmDoubleSpend' }
@@ -312,7 +319,7 @@ async function confirmDoubleSpend(
       if (!sourceTx) throw new sdk.WERR_INTERNAL(`beef lacks tx for ${input.sourceTXID}`)
       const lockingScript = sourceTx.outputs[input.sourceOutputIndex].lockingScript.toHex()
       const hash = services.hashOutputScript(lockingScript)
-      const shhrs = await services.getScriptHashHistory(hash)
+      const shhrs = await services.getScriptHashHistory(hash, undefined, logger)
       if (shhrs.status === 'success') {
         for (const h of shhrs.history) {
           // Neither the source of the input nor the current transaction are competition.

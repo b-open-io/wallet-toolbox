@@ -9,7 +9,8 @@ import {
   Script,
   SignActionArgs,
   SignActionOptions,
-  SignActionResult
+  SignActionResult,
+  Validation
 } from '@bsv/sdk'
 import {
   EntityProvenTxReq,
@@ -23,7 +24,6 @@ import {
   wait
 } from '../../src'
 import { _tu, logger, TestWalletNoSetup, TuEnv } from './TestUtilsWalletStorage'
-import { validateCreateActionArgs, ValidCreateActionArgs } from '../../src/sdk'
 import { setDisableDoubleSpendCheckForTest } from '../../src/storage/methods/createAction'
 
 export interface LocalWalletTestOptions {
@@ -133,7 +133,7 @@ export async function createOneSatTestOutput(
 
   let noSendChange: OutpointString[] | undefined = undefined
   let txids: string[] = []
-  let vargs: ValidCreateActionArgs
+  let vargs: Validation.ValidCreateActionArgs
 
   for (let i = 0; i < howMany; i++) {
     const args: CreateActionArgs = {
@@ -155,7 +155,7 @@ export async function createOneSatTestOutput(
         noSendChange
       }
     }
-    vargs = validateCreateActionArgs(args)
+    vargs = Validation.validateCreateActionArgs(args)
     car = await setup.wallet.createAction(args)
     expect(car.txid)
     txids.push(car.txid!)
@@ -187,7 +187,7 @@ export async function createOneSatTestOutput(
         sendWith: txids
       }
     }
-    vargs = validateCreateActionArgs(args)
+    vargs = Validation.validateCreateActionArgs(args)
     car = await setup.wallet.createAction(args)
   }
 

@@ -1,12 +1,10 @@
-import { Beef, ListActionsResult, ListOutputsResult } from '@bsv/sdk'
+import { Beef, ListActionsResult, ListOutputsResult, Validation } from '@bsv/sdk'
 import {
   TrxToken,
   PurgeParams,
   PurgeResults,
   ProvenOrRawTx,
   AuthId,
-  ValidListActionsArgs,
-  ValidListOutputsArgs,
   FindCertificatesArgs,
   FindOutputBasketsArgs,
   FindOutputsArgs,
@@ -114,10 +112,10 @@ class ServicesOnlyStorageProvider extends StorageProvider {
   override getTagsForOutputId(outputId: number, trx?: TrxToken): Promise<TableOutputTag[]> {
     throw this.nip
   }
-  override listActions(auth: AuthId, args: ValidListActionsArgs): Promise<ListActionsResult> {
+  override listActions(auth: AuthId, args: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     throw this.nip
   }
-  override listOutputs(auth: AuthId, args: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  override listOutputs(auth: AuthId, args: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     throw this.nip
   }
   override countChangeInputs(userId: number, basketId: number, excludeSending: boolean): Promise<number> {

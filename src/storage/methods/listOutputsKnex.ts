@@ -1,8 +1,7 @@
-import { Beef, ListOutputsResult, OriginatorDomainNameStringUnder250Bytes, WalletOutput } from '@bsv/sdk'
+import { Beef, ListOutputsResult, OriginatorDomainNameStringUnder250Bytes, WalletOutput, Validation } from '@bsv/sdk'
 import { StorageKnex } from '../StorageKnex'
 import { getBasketToSpecOp, ListOutputsSpecOp } from './ListOutputsSpecOp'
 import { AuthId, TrxToken } from '../../sdk/WalletStorage.interfaces'
-import { ValidListOutputsArgs } from '../../sdk/validationHelpers'
 import { verifyId, verifyOne } from '../../utility/utilityHelpers'
 import { TableOutputBasket } from '../schema/tables/TableOutputBasket'
 import { TableOutputTag } from '../schema/tables/TableOutputTag'
@@ -12,7 +11,7 @@ import { asString } from '../../utility/utilityHelpers.noBuffer'
 export async function listOutputs(
   dsk: StorageKnex,
   auth: AuthId,
-  vargs: ValidListOutputsArgs,
+  vargs: Validation.ValidListOutputsArgs,
   originator?: OriginatorDomainNameStringUnder250Bytes
 ): Promise<ListOutputsResult> {
   const trx: TrxToken | undefined = undefined

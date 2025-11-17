@@ -1,4 +1,4 @@
-import { validateInteger, validateOptionalInteger, validateSatoshis } from '../../sdk/validationHelpers'
+import { Validation } from '@bsv/sdk'
 import { WalletError } from '../../sdk/WalletError'
 import { StorageFeeModel } from '../../sdk/WalletStorage.interfaces'
 import { WERR_INSUFFICIENT_FUNDS, WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
@@ -445,14 +445,14 @@ export function validateGenerateChangeSdkParams(
   const r: ValidateGenerateChangeSdkParamsResult = {}
 
   params.fixedInputs.forEach((x, i) => {
-    validateSatoshis(x.satoshis, `fixedInputs[${i}].satoshis`)
-    validateInteger(x.unlockingScriptLength, `fixedInputs[${i}].unlockingScriptLength`, undefined, 0)
+    Validation.validateSatoshis(x.satoshis, `fixedInputs[${i}].satoshis`)
+    Validation.validateInteger(x.unlockingScriptLength, `fixedInputs[${i}].unlockingScriptLength`, undefined, 0)
   })
 
   if (!Array.isArray(params.fixedOutputs)) throw new WERR_INVALID_PARAMETER('fixedOutputs', 'an array of objects')
   params.fixedOutputs.forEach((x, i) => {
-    validateSatoshis(x.satoshis, `fixedOutputs[${i}].satoshis`)
-    validateInteger(x.lockingScriptLength, `fixedOutputs[${i}].lockingScriptLength`, undefined, 0)
+    Validation.validateSatoshis(x.satoshis, `fixedOutputs[${i}].satoshis`)
+    Validation.validateInteger(x.lockingScriptLength, `fixedOutputs[${i}].lockingScriptLength`, undefined, 0)
     if (x.satoshis === maxPossibleSatoshis) {
       if (r.hasMaxPossibleOutput !== undefined)
         throw new WERR_INVALID_PARAMETER(
@@ -466,13 +466,13 @@ export function validateGenerateChangeSdkParams(
   params.feeModel = validateStorageFeeModel(params.feeModel)
   if (params.feeModel.model !== 'sat/kb') throw new WERR_INVALID_PARAMETER('feeModel.model', `'sat/kb'`)
 
-  validateOptionalInteger(params.targetNetCount, `targetNetCount`)
+  Validation.validateOptionalInteger(params.targetNetCount, `targetNetCount`)
 
-  validateSatoshis(params.changeFirstSatoshis, 'changeFirstSatoshis', 1)
-  validateSatoshis(params.changeInitialSatoshis, 'changeInitialSatoshis', 1)
+  Validation.validateSatoshis(params.changeFirstSatoshis, 'changeFirstSatoshis', 1)
+  Validation.validateSatoshis(params.changeInitialSatoshis, 'changeInitialSatoshis', 1)
 
-  validateInteger(params.changeLockingScriptLength, `changeLockingScriptLength`)
-  validateInteger(params.changeUnlockingScriptLength, `changeUnlockingScriptLength`)
+  Validation.validateInteger(params.changeLockingScriptLength, `changeLockingScriptLength`)
+  Validation.validateInteger(params.changeUnlockingScriptLength, `changeUnlockingScriptLength`)
 
   return r
 }

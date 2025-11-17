@@ -8,10 +8,11 @@ import {
   Transaction,
   TransactionSignature,
   UnlockingScript,
-  Utils
+  Utils,
+  Validation
 } from '@bsv/sdk'
 import { Setup, verifyInteger, verifyTruthy, Wallet } from '../../../src'
-import { parseWalletOutpoint } from '../../../src/sdk'
+const parseWalletOutpoint = Validation.parseWalletOutpoint
 
 describe('mountaintop tests', () => {
   jest.setTimeout(99999999)

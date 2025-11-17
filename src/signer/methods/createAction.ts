@@ -7,24 +7,19 @@ import {
   SignableTransaction,
   TXIDHexString,
   Script,
-  Transaction
+  Transaction,
+  Validation
 } from '@bsv/sdk'
 import { buildSignableTransaction } from './buildSignableTransaction'
 import {
   AuthId,
   ReviewActionResult,
-  StorageCreateActionResult,
-  StorageCreateTransactionSdkOutput,
   StorageProcessActionArgs,
   StorageProcessActionResults
 } from '../../sdk/WalletStorage.interfaces'
 import { completeSignedTransaction, verifyUnlockScripts } from './completeSignedTransaction'
 import { PendingSignAction, Wallet } from '../../Wallet'
-import { ValidCreateActionArgs, ValidCreateActionInput, ValidProcessActionArgs } from '../../sdk/validationHelpers'
 import { WERR_INTERNAL } from '../../sdk/WERR_errors'
-import { KeyPair } from '../../sdk/types'
-import { verifyTruthy } from '../../utility/utilityHelpers'
-import { ScriptTemplateBRC29 } from '../../utility/ScriptTemplateBRC29'
 
 export interface CreateActionResultX extends CreateActionResult {
   txid?: TXIDHexString
@@ -38,33 +33,41 @@ export interface CreateActionResultX extends CreateActionResult {
 export async function createAction(
   wallet: Wallet,
   auth: AuthId,
-  vargs: ValidCreateActionArgs
+  vargs: Validation.ValidCreateActionArgs
 ): Promise<CreateActionResultX> {
   const r: CreateActionResultX = {}
+  const logger = vargs.logger
 
   let prior: PendingSignAction | undefined = undefined
 
   if (vargs.isNewTx || vargs.isTestWerrReviewActions) {
     prior = await createNewTx(wallet, vargs)
+    logger?.log('created new transaction')
 
     if (vargs.isSignAction) {
-      return makeSignableTransactionResult(prior, wallet, vargs)
+      const r = makeSignableTransactionResult(prior, wallet, vargs)
+      logger?.log('created signable transaction result')
+      return r
     }
 
     prior.tx = await completeSignedTransaction(prior, {}, wallet)
+    logger?.log('completed signed transaction')
 
     r.txid = prior.tx.id('hex')
     const beef = new Beef()
     if (prior.dcr.inputBeef) beef.mergeBeef(prior.dcr.inputBeef)
     beef.mergeTransaction(prior.tx)
+    logger?.log('merged beef')
 
     verifyUnlockScripts(r.txid, beef)
+    logger?.log('verified unlock scripts')
 
     r.noSendChange = prior.dcr.noSendChangeOutputVouts?.map(vout => `${r.txid}.${vout}`)
     if (!vargs.options.returnTXIDOnly) r.tx = beef.toBinaryAtomic(r.txid)
   }
 
   const { sendWithResults, notDelayedResults } = await processAction(prior, wallet, auth, vargs)
+  logger?.log('processed transaction')
 
   r.sendWithResults = sendWithResults
   r.notDelayedResults = notDelayedResults
@@ -72,15 +75,17 @@ export async function createAction(
   return r
 }
 
-async function createNewTx(wallet: Wallet, args: ValidCreateActionArgs): Promise<PendingSignAction> {
-  const storageArgs = removeUnlockScripts(args)
+async function createNewTx(wallet: Wallet, vargs: Validation.ValidCreateActionArgs): Promise<PendingSignAction> {
+  const logger = vargs.logger
+  const storageArgs = removeUnlockScripts(vargs)
   const dcr = await wallet.storage.createAction(storageArgs)
 
   const reference = dcr.reference
 
-  const { tx, amount, pdi } = buildSignableTransaction(dcr, args, wallet)
+  const { tx, amount, pdi } = buildSignableTransaction(dcr, vargs, wallet)
+  logger?.log('built signable transaction')
 
-  const prior: PendingSignAction = { reference, dcr, args, amount, tx, pdi }
+  const prior: PendingSignAction = { reference, dcr, args: vargs, amount, tx, pdi }
 
   return prior
 }
@@ -88,7 +93,7 @@ async function createNewTx(wallet: Wallet, args: ValidCreateActionArgs): Promise
 function makeSignableTransactionResult(
   prior: PendingSignAction,
   wallet: Wallet,
-  args: ValidCreateActionArgs
+  args: Validation.ValidCreateActionArgs
 ): CreateActionResult {
   if (!prior.dcr.inputBeef) throw new WERR_INTERNAL('prior.dcr.inputBeef must be valid')
 
@@ -120,13 +125,13 @@ function makeSignableTransactionBeef(tx: Transaction, inputBEEF: number[]): numb
   return beef.toBinaryAtomic(tx.id('hex'))
 }
 
-function removeUnlockScripts(args: ValidCreateActionArgs) {
+function removeUnlockScripts(args: Validation.ValidCreateActionArgs) {
   let storageArgs = args
   if (!storageArgs.inputs.every(i => i.unlockingScript === undefined)) {
     // Never send unlocking scripts to storage, all it needs is the script length.
     storageArgs = { ...args, inputs: [] }
     for (const i of args.inputs) {
-      const di: ValidCreateActionInput = {
+      const di: Validation.ValidCreateActionInput = {
         ...i,
         unlockingScriptLength: i.unlockingScript !== undefined ? i.unlockingScript.length : i.unlockingScriptLength
       }
@@ -141,7 +146,7 @@ export async function processAction(
   prior: PendingSignAction | undefined,
   wallet: Wallet,
   auth: AuthId,
-  vargs: ValidProcessActionArgs
+  vargs: Validation.ValidProcessActionArgs
 ): Promise<StorageProcessActionResults> {
   const args: StorageProcessActionArgs = {
     isNewTx: vargs.isNewTx,
@@ -151,7 +156,8 @@ export async function processAction(
     reference: prior ? prior.reference : undefined,
     txid: prior ? prior.tx.id('hex') : undefined,
     rawTx: prior ? prior.tx.toBinary() : undefined,
-    sendWith: vargs.isSendWith ? vargs.options.sendWith : []
+    sendWith: vargs.isSendWith ? vargs.options.sendWith : [],
+    logger: vargs.logger
   }
   const r: StorageProcessActionResults = await wallet.storage.processAction(args)
 

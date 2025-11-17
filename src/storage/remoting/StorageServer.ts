@@ -5,7 +5,7 @@
  * and exposes it via a JSON-RPC POST endpoint using Express.
  */
 
-import { WalletInterface } from '@bsv/sdk'
+import { MakeWalletLogger, WalletInterface, WalletLoggerInterface } from '@bsv/sdk'
 import express, { Request, Response } from 'express'
 import { AuthMiddlewareOptions, createAuthMiddleware } from '@bsv/auth-express-middleware'
 import { createPaymentMiddleware } from '@bsv/payment-express-middleware'
@@ -15,6 +15,7 @@ import { WERR_UNAUTHORIZED } from '../../sdk/WERR_errors'
 import { SyncChunk } from '../../sdk/WalletStorage.interfaces'
 import { EntityTimeStamp } from '../../sdk/types'
 import { WalletError } from '../../sdk/WalletError'
+import { logWalletError } from '../../WalletLogger'
 
 export interface WalletStorageServerOptions {
   port: number
@@ -22,6 +23,7 @@ export interface WalletStorageServerOptions {
   monetize: boolean
   calculateRequestPrice?: (req: Request) => number | Promise<number>
   adminIdentityKeys?: string[]
+  makeLogger?: MakeWalletLogger
 }
 
 export class StorageServer {
@@ -32,6 +34,7 @@ export class StorageServer {
   private monetize: boolean
   private calculateRequestPrice?: (req: Request) => number | Promise<number>
   private adminIdentityKeys?: string[]
+  private makeLogger?: MakeWalletLogger
 
   constructor(storage: StorageProvider, options: WalletStorageServerOptions) {
     this.storage = storage
@@ -40,6 +43,7 @@ export class StorageServer {
     this.monetize = options.monetize
     this.calculateRequestPrice = options.calculateRequestPrice
     this.adminIdentityKeys = options.adminIdentityKeys
+    this.makeLogger = options.makeLogger
 
     this.setupRoutes()
   }
@@ -154,10 +158,35 @@ export class StorageServer {
               }
               break
           }
-          console.log(`StorageServer: method=${method} params=${JSON.stringify(params).slice(0, 512)}`)
-          const result = await (this.storage as any)[method](...(params || []))
-          console.log(`StorageServer: method=${method} result=${JSON.stringify(result || 'void').slice(0, 512)}`)
-          return res.json({ jsonrpc: '2.0', result, id })
+
+          // If makeLogger is valid, setup and potentially initialize to return data
+          let logger: WalletLoggerInterface | undefined
+          if (this.makeLogger && typeof params[1] === 'object') {
+            logger = this.makeLogger(params[1]['logger'])
+            params[1]['logger'] = logger
+            logger.group(`StorageSever ${method}`)
+          }
+
+          try {
+            const result = await (this.storage as any)[method](...(params || []))
+
+            if (logger) {
+              logger.groupEnd()
+              logger.flush?.()
+              if (logger.isOrigin) {
+                // Potentially only flush if isOrigin...
+              } else if (logger.logs && typeof result === 'object') {
+                // If not the start of logging, return logged data with result.
+                result['log'] = { logs: logger.logs }
+              }
+            }
+
+            return res.json({ jsonrpc: '2.0', result, id })
+          } catch (eu: unknown) {
+            logWalletError(eu, logger, 'error executing requested method')
+            logger?.flush?.()
+            throw eu
+          }
         } else {
           // Unknown method
           return res.status(400).json({
@@ -198,10 +227,20 @@ export class StorageServer {
     if (params[0]['identityKey']) params[0].userId = user.userId
   }
 
+  server: any
+
   public start(): void {
-    this.app.listen(this.port, () => {
+    this.server = this.app.listen(this.port, () => {
       console.log(`WalletStorageServer listening at http://localhost:${this.port}`)
     })
+  }
+
+  public async close(): Promise<void> {
+    if (this.server) {
+      await this.server.close(() => {
+        console.log('WalletStorageServer closed')
+      })
+    }
   }
 
   validateDate(date: Date | string | number): Date {

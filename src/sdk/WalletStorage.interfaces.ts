@@ -13,7 +13,9 @@ import {
   RelinquishCertificateArgs,
   RelinquishOutputArgs,
   SendWithResult,
-  TXIDHexString
+  TXIDHexString,
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import {
   TableCertificate,
@@ -35,13 +37,6 @@ import {
   TableUser
 } from '../storage/schema/tables'
 import { WalletServices } from './WalletServices.interfaces'
-import {
-  ValidCreateActionArgs,
-  ValidCreateActionOutput,
-  ValidListActionsArgs,
-  ValidListCertificatesArgs,
-  ValidListOutputsArgs
-} from './validationHelpers'
 import { Chain, Paged, ProvenTxReqStatus, TransactionStatus } from './types'
 import { WalletError } from './WalletError'
 
@@ -72,7 +67,7 @@ export interface WalletStorage {
   findOrInsertUser(identityKey: string): Promise<{ user: TableUser; isNew: boolean }>
 
   abortAction(args: AbortActionArgs): Promise<AbortActionResult>
-  createAction(args: ValidCreateActionArgs): Promise<StorageCreateActionResult>
+  createAction(args: Validation.ValidCreateActionArgs): Promise<StorageCreateActionResult>
   processAction(args: StorageProcessActionArgs): Promise<StorageProcessActionResults>
   internalizeAction(args: InternalizeActionArgs): Promise<InternalizeActionResult>
 
@@ -82,7 +77,7 @@ export interface WalletStorage {
   findProvenTxReqs(args: FindProvenTxReqsArgs): Promise<TableProvenTxReq[]>
 
   listActions(args: ListActionsArgs): Promise<ListActionsResult>
-  listCertificates(args: ValidListCertificatesArgs): Promise<ListCertificatesResult>
+  listCertificates(args: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult>
   listOutputs(args: ListOutputsArgs): Promise<ListOutputsResult>
 
   insertCertificate(certificate: TableCertificateX): Promise<number>
@@ -154,7 +149,7 @@ export interface WalletStorageWriter extends WalletStorageReader {
   findOrInsertUser(identityKey: string): Promise<{ user: TableUser; isNew: boolean }>
 
   abortAction(auth: AuthId, args: AbortActionArgs): Promise<AbortActionResult>
-  createAction(auth: AuthId, args: ValidCreateActionArgs): Promise<StorageCreateActionResult>
+  createAction(auth: AuthId, args: Validation.ValidCreateActionArgs): Promise<StorageCreateActionResult>
   processAction(auth: AuthId, args: StorageProcessActionArgs): Promise<StorageProcessActionResults>
   internalizeAction(auth: AuthId, args: InternalizeActionArgs): Promise<StorageInternalizeActionResult>
 
@@ -175,9 +170,9 @@ export interface WalletStorageReader {
   findOutputsAuth(auth: AuthId, args: FindOutputsArgs): Promise<TableOutput[]>
   findProvenTxReqs(args: FindProvenTxReqsArgs): Promise<TableProvenTxReq[]>
 
-  listActions(auth: AuthId, vargs: ValidListActionsArgs): Promise<ListActionsResult>
-  listCertificates(auth: AuthId, vargs: ValidListCertificatesArgs): Promise<ListCertificatesResult>
-  listOutputs(auth: AuthId, vargs: ValidListOutputsArgs): Promise<ListOutputsResult>
+  listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult>
+  listCertificates(auth: AuthId, vargs: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult>
+  listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult>
 }
 
 export interface AuthId {
@@ -243,7 +238,7 @@ export interface StorageCreateTransactionSdkInput {
   senderIdentityKey?: string
 }
 
-export interface StorageCreateTransactionSdkOutput extends ValidCreateActionOutput {
+export interface StorageCreateTransactionSdkOutput extends Validation.ValidCreateActionOutput {
   vout: number
   providedBy: StorageProvidedBy
   purpose?: string
@@ -270,7 +265,7 @@ export interface StorageProcessActionArgs {
   txid?: string
   rawTx?: number[]
   sendWith: string[]
-  log?: string
+  logger?: WalletLoggerInterface
 }
 
 export interface StorageInternalizeActionResult extends InternalizeActionResult {

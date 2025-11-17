@@ -2,14 +2,15 @@ import {
   AbortActionArgs,
   AbortActionResult,
   InternalizeActionArgs,
-  InternalizeActionResult,
   ListActionsResult,
   ListCertificatesResult,
   ListOutputsResult,
   RelinquishCertificateArgs,
   RelinquishOutputArgs,
   WalletInterface,
-  AuthFetch
+  AuthFetch,
+  Validation,
+  WalletLoggerInterface
 } from '@bsv/sdk'
 import {
   AuthId,
@@ -31,12 +32,6 @@ import {
 import { TableSettings } from '../schema/tables/TableSettings'
 import { WERR_INVALID_OPERATION } from '../../sdk/WERR_errors'
 import { WalletServices } from '../../sdk/WalletServices.interfaces'
-import {
-  ValidCreateActionArgs,
-  ValidListActionsArgs,
-  ValidListCertificatesArgs,
-  ValidListOutputsArgs
-} from '../../sdk/validationHelpers'
 import { TableUser } from '../schema/tables/TableUser'
 import { TableSyncState } from '../schema/tables/TableSyncState'
 import { TableCertificateX } from '../schema/tables/TableCertificate'
@@ -46,6 +41,7 @@ import { TableProvenTxReq } from '../schema/tables/TableProvenTxReq'
 import { EntityTimeStamp } from '../../sdk/types'
 import { WalletError } from '../../sdk/WalletError'
 import { WalletErrorFromJson } from '../../sdk/WalletErrorFromJson'
+import { logWalletError } from '../../WalletLogger'
 
 /**
  * `StorageClient` implements the `WalletStorageProvider` interface which allows it to
@@ -94,8 +90,17 @@ export class StorageClient implements WalletStorageProvider {
    * @param params The array of parameters to pass to the method in order.
    */
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
+    let logger: WalletLoggerInterface | undefined = params[1]?.['logger']
+
     try {
       const id = this.nextId++
+
+      if (logger) {
+        // Replace logger object with seed json object to continue logging on request server.
+        logger.group(`StorageClient ${method}`)
+        params[1]!['logger'] = { indent: logger.indent || 0 }
+      }
+
       const body = {
         jsonrpc: '2.0',
         method,
@@ -111,6 +116,7 @@ export class StorageClient implements WalletStorageProvider {
           body: JSON.stringify(body)
         })
       } catch (eu: unknown) {
+        logWalletError(eu, logger, 'error requesting remote service')
         throw eu
       }
 
@@ -120,13 +126,26 @@ export class StorageClient implements WalletStorageProvider {
 
       const json = await response.json()
       if (json.error) {
+        logWalletError(json.error, logger, 'error from remote service')
         const werr = WalletErrorFromJson(json.error)
         throw werr
       }
 
+      if (logger) {
+        // merge log data from request processing
+        logger.merge?.(json.result?.['log'])
+        logger.groupEnd()
+      }
+
       return json.result
     } catch (eu: unknown) {
+      logWalletError(eu, logger, 'error setting up request to remote service')
       throw eu
+    } finally {
+      if (logger) {
+        // Restore original logger in params
+        params[1]!['logger'] = logger
+      }
     }
   }
 
@@ -227,7 +246,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `createAction` arguments.
    * @returns `StorageCreateActionResults` supporting additional wallet processing to yield `createAction` results.
    */
-  async createAction(auth: AuthId, args: ValidCreateActionArgs): Promise<StorageCreateActionResult> {
+  async createAction(auth: AuthId, args: Validation.ValidCreateActionArgs): Promise<StorageCreateActionResult> {
     return this.rpcCall<StorageCreateActionResult>('createAction', [auth, args])
   }
 
@@ -307,7 +326,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listActions` arguments.
    * @returns `listActions` results.
    */
-  async listActions(auth: AuthId, vargs: ValidListActionsArgs): Promise<ListActionsResult> {
+  async listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     const r = await this.rpcCall<ListActionsResult>('listActions', [auth, vargs])
     return r
   }
@@ -319,7 +338,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listOutputs` arguments.
    * @returns `listOutputs` results.
    */
-  async listOutputs(auth: AuthId, vargs: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  async listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     const r = await this.rpcCall<ListOutputsResult>('listOutputs', [auth, vargs])
     return r
   }
@@ -331,7 +350,7 @@ export class StorageClient implements WalletStorageProvider {
    * @param args Validated extension of original wallet `listCertificates` arguments.
    * @returns `listCertificates` results.
    */
-  async listCertificates(auth: AuthId, vargs: ValidListCertificatesArgs): Promise<ListCertificatesResult> {
+  async listCertificates(auth: AuthId, vargs: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult> {
     const r = await this.rpcCall<ListCertificatesResult>('listCertificates', [auth, vargs])
     return r
   }

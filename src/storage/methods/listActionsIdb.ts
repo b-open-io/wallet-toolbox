@@ -4,12 +4,12 @@ import {
   ListActionsResult,
   WalletAction,
   WalletActionOutput,
-  WalletActionInput
+  WalletActionInput,
+  Validation
 } from '@bsv/sdk'
 import { StorageIdb } from '../StorageIdb'
 import { getLabelToSpecOp, ListActionsSpecOp } from './ListActionsSpecOp'
 import { AuthId } from '../../sdk/WalletStorage.interfaces'
-import { ValidListActionsArgs } from '../../sdk/validationHelpers'
 import { isListActionsSpecOp, TransactionStatus } from '../../sdk/types'
 import { TableOutputX } from '../schema/tables/TableOutput'
 import { asString } from '../../utility/utilityHelpers.noBuffer'
@@ -17,7 +17,7 @@ import { asString } from '../../utility/utilityHelpers.noBuffer'
 export async function listActionsIdb(
   storage: StorageIdb,
   auth: AuthId,
-  vargs: ValidListActionsArgs
+  vargs: Validation.ValidListActionsArgs
 ): Promise<ListActionsResult> {
   const limit = vargs.limit
   const offset = vargs.offset

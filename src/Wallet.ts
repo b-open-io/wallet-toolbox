@@ -24,7 +24,6 @@ import {
   GetVersionResult,
   InternalizeActionArgs,
   InternalizeActionResult,
-  KeyDeriver,
   ListActionsArgs,
   ListActionsResult,
   ListCertificatesArgs,
@@ -66,7 +65,10 @@ import {
   LookupResolver,
   AtomicBEEF,
   BEEF,
-  KeyDeriverApi
+  KeyDeriverApi,
+  Validation,
+  WalletLoggerInterface,
+  MakeWalletLogger
 } from '@bsv/sdk'
 import { acquireDirectCertificate } from './signer/methods/acquireDirectCertificate'
 import { proveCertificate } from './signer/methods/proveCertificate'
@@ -96,28 +98,12 @@ import {
 import { WalletServices } from './sdk/WalletServices.interfaces'
 import { PrivilegedKeyManager } from './sdk/PrivilegedKeyManager'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER, WERR_REVIEW_ACTIONS } from './sdk/WERR_errors'
-import {
-  validateAbortActionArgs,
-  validateAcquireDirectCertificateArgs,
-  validateAcquireIssuanceCertificateArgs,
-  validateCreateActionArgs,
-  validateDiscoverByAttributesArgs,
-  validateDiscoverByIdentityKeyArgs,
-  validateInternalizeActionArgs,
-  validateListActionsArgs,
-  validateListCertificatesArgs,
-  validateListOutputsArgs,
-  validateOriginator,
-  validateProveCertificateArgs,
-  validateRelinquishCertificateArgs,
-  validateRelinquishOutputArgs,
-  validateSignActionArgs,
-  ValidCreateActionArgs,
-  ValidWalletSignerArgs
-} from './sdk/validationHelpers'
 import { AuthId, StorageCreateActionResult, StorageInternalizeActionResult } from './sdk/WalletStorage.interfaces'
 import { WalletError } from './sdk/WalletError'
 
+/**
+ * The preferred means of constructing a `Wallet` is with a `WalletArgs` instance.
+ */
 export interface WalletArgs {
   chain: Chain
   keyDeriver: KeyDeriverApi
@@ -127,6 +113,16 @@ export interface WalletArgs {
   privilegedKeyManager?: PrivilegedKeyManager
   settingsManager?: WalletSettingsManager
   lookupResolver?: LookupResolver
+  /**
+   * Optional. Provide a function conforming to the `MakeWalletLogger` type to enable wallet request logging.
+   * 
+   * For simple requests using `Console` may be adequate, initialize with
+   * `() => Console`
+   * 
+   * Aggregate tracing and control over capturing all logged output in one place:
+   * `(log?: string | WalletLoggerInterface) => new WalletLogger(log)`
+   */
+  makeLogger?: MakeWalletLogger
 }
 
 function isWalletSigner(args: WalletArgs | WalletSigner): args is WalletSigner {
@@ -174,6 +170,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
   userParty: string
   proto: ProtoWallet
   privilegedKeyManager?: PrivilegedKeyManager
+  makeLogger?: MakeWalletLogger
 
   pendingSignActions: Record<string, PendingSignAction>
 
@@ -186,7 +183,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     argsOrSigner: WalletArgs | WalletSigner,
     services?: WalletServices,
     monitor?: Monitor,
-    privilegedKeyManager?: PrivilegedKeyManager
+    privilegedKeyManager?: PrivilegedKeyManager,
+    makeLogger?: MakeWalletLogger
   ) {
     const args: WalletArgs = !isWalletSigner(argsOrSigner)
       ? argsOrSigner
@@ -196,7 +194,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
           storage: argsOrSigner.storage,
           services,
           monitor,
-          privilegedKeyManager
+          privilegedKeyManager,
+          makeLogger
         }
 
     if (args.storage._authId.identityKey != args.keyDeriver.identityKey)
@@ -218,6 +217,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
     this.services = args.services
     this.monitor = args.monitor
     this.privilegedKeyManager = args.privilegedKeyManager
+    this.makeLogger = args.makeLogger
 
     this.identityKey = this.keyDeriver.identityKey
 
@@ -374,11 +374,12 @@ export class Wallet implements WalletInterface, ProtoWallet {
     }
   }
 
-  private validateAuthAndArgs<A, T extends ValidWalletSignerArgs>(
+  private validateAuthAndArgs<A, T extends Validation.ValidWalletSignerArgs>(
     args: A,
-    validate: (args: A) => T
+    validate: (args: A, logger?: WalletLoggerInterface) => T,
+    logger?: WalletLoggerInterface
   ): { vargs: T; auth: AuthId } {
-    const vargs = validate(args)
+    const vargs = validate(args, logger)
     const auth: AuthId = { identityKey: this.identityKey }
     return { vargs, auth }
   }
@@ -391,8 +392,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: ListActionsArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<ListActionsResult> {
-    validateOriginator(originator)
-    const { vargs } = this.validateAuthAndArgs(args, validateListActionsArgs)
+    Validation.validateOriginator(originator)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateListActionsArgs)
     const r = await this.storage.listActions(vargs)
     return r
   }
@@ -405,8 +406,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: ListOutputsArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<ListOutputsResult> {
-    validateOriginator(originator)
-    const { vargs } = this.validateAuthAndArgs(args, validateListOutputsArgs)
+    Validation.validateOriginator(originator)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateListOutputsArgs)
     if (this.autoKnownTxids && !vargs.knownTxids) {
       vargs.knownTxids = this.getKnownTxids()
     }
@@ -422,8 +423,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: ListCertificatesArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<ListCertificatesResult> {
-    validateOriginator(originator)
-    const { vargs } = this.validateAuthAndArgs(args, validateListCertificatesArgs)
+    Validation.validateOriginator(originator)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateListCertificatesArgs)
     const r = await this.storage.listCertificates(vargs)
     return r
   }
@@ -436,9 +437,9 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: AcquireCertificateArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<AcquireCertificateResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     if (args.acquisitionProtocol === 'direct') {
-      const { auth, vargs } = this.validateAuthAndArgs(args, validateAcquireDirectCertificateArgs)
+      const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateAcquireDirectCertificateArgs)
       vargs.subject = (
         await this.getPublicKey({
           identityKey: true,
@@ -483,7 +484,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
     }
 
     if (args.acquisitionProtocol === 'issuance') {
-      const { auth, vargs } = this.validateAuthAndArgs(args, validateAcquireIssuanceCertificateArgs)
+      const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateAcquireIssuanceCertificateArgs)
       // Create a random nonce that the server can verify
       const clientNonce = await createNonce(this, vargs.certifier)
       // TODO: Consider adding support to request certificates from a certifier before acquiring a certificate.
@@ -599,8 +600,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: RelinquishCertificateArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<RelinquishCertificateResult> {
-    validateOriginator(originator)
-    this.validateAuthAndArgs(args, validateRelinquishCertificateArgs)
+    Validation.validateOriginator(originator)
+    this.validateAuthAndArgs(args, Validation.validateRelinquishCertificateArgs)
     const r = await this.storage.relinquishCertificate(args)
     return { relinquished: true }
   }
@@ -609,8 +610,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: ProveCertificateArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<ProveCertificateResult> {
-    originator = validateOriginator(originator)
-    const { auth, vargs } = this.validateAuthAndArgs(args, validateProveCertificateArgs)
+    originator = Validation.validateOriginator(originator)
+    const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateProveCertificateArgs)
     const r = await proveCertificate(this, auth, vargs)
     return r
   }
@@ -628,8 +629,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: DiscoverByIdentityKeyArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<DiscoverCertificatesResult> {
-    validateOriginator(originator)
-    this.validateAuthAndArgs(args, validateDiscoverByIdentityKeyArgs)
+    Validation.validateOriginator(originator)
+    this.validateAuthAndArgs(args, Validation.validateDiscoverByIdentityKeyArgs)
 
     const TTL_MS = 2 * 60 * 1000
     const now = Date.now()
@@ -673,8 +674,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: DiscoverByAttributesArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<DiscoverCertificatesResult> {
-    validateOriginator(originator)
-    this.validateAuthAndArgs(args, validateDiscoverByAttributesArgs)
+    Validation.validateOriginator(originator)
+    this.validateAuthAndArgs(args, Validation.validateDiscoverByAttributesArgs)
 
     const TTL_MS = 2 * 60 * 1000
     const now = Date.now()
@@ -752,6 +753,28 @@ export class Wallet implements WalletInterface, ProtoWallet {
     return this.verifyReturnedTxidOnly(b).toBinary()
   }
 
+  logMakeLogger(method: string, args: any): WalletLoggerInterface | undefined {
+    const logger = this.makeLogger?.(args['log'])
+    this.logMethodStart(method, logger)
+    return logger
+  }
+
+  logMethodStart(method: string, logger?: WalletLoggerInterface): void {
+    logger?.group(`Wallet ${method}`)
+  }
+
+  logResult(r: any, logger?: WalletLoggerInterface): void {
+    if (!logger) return
+    logger.groupEnd()
+    r['log'] = logger.flush?.()
+  }
+
+  logWalletError(eu: unknown, logger?: WalletLoggerInterface): void {
+    if (!logger) return
+    logger.error('WalletError:', WalletError.unknownToJson(eu))
+    logger.flush?.()
+  }
+
   //////////////////
   // Actions
   //////////////////
@@ -760,41 +783,53 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: CreateActionArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<CreateActionResult> {
-    validateOriginator(originator)
+    const logger = this.logMakeLogger(`createAction`, args)
+    try {
+      Validation.validateOriginator(originator)
 
-    if (!args.options) args.options = {}
-    args.options.trustSelf ||= this.trustSelf
-    if (this.autoKnownTxids && !args.options.knownTxids) {
-      args.options.knownTxids = this.getKnownTxids(args.options.knownTxids)
+      if (!args.options) args.options = {}
+      args.options.trustSelf ||= this.trustSelf
+      if (this.autoKnownTxids && !args.options.knownTxids) {
+        args.options.knownTxids = this.getKnownTxids(args.options.knownTxids)
+      }
+
+      const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateCreateActionArgs, logger)
+      logger?.log('validated args')
+
+      vargs.includeAllSourceTransactions = this.includeAllSourceTransactions
+      if (this.randomVals && this.randomVals.length > 1) {
+        vargs.randomVals = [...this.randomVals]
+      }
+
+      const r = await createAction(this, auth, vargs)
+      logger?.log('action created')
+
+      if (r.tx) {
+        this.beef.mergeBeefFromParty(this.storageParty, r.tx)
+      }
+
+      if (r.tx) {
+        r.tx = this.verifyReturnedTxidOnlyAtomicBEEF(r.tx, args.options?.knownTxids)
+        logger?.log('verify returned AtomicBEEF')
+      }
+
+      if (!vargs.isDelayed) throwIfAnyUnsuccessfulCreateActions(r)
+
+      this.logResult(r, logger)
+      return r
+    } catch (eu: unknown) {
+      this.logWalletError(eu, logger)
+      throw eu
     }
-
-    const { auth, vargs } = this.validateAuthAndArgs(args, validateCreateActionArgs)
-
-    vargs.includeAllSourceTransactions = this.includeAllSourceTransactions
-    if (this.randomVals && this.randomVals.length > 1) {
-      vargs.randomVals = [...this.randomVals]
-    }
-
-    const r = await createAction(this, auth, vargs)
-
-    if (r.tx) {
-      this.beef.mergeBeefFromParty(this.storageParty, r.tx)
-    }
-
-    if (r.tx) r.tx = this.verifyReturnedTxidOnlyAtomicBEEF(r.tx, args.options?.knownTxids)
-
-    if (!vargs.isDelayed) throwIfAnyUnsuccessfulCreateActions(r)
-
-    return r
   }
 
   async signAction(
     args: SignActionArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<SignActionResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
 
-    const { auth, vargs } = this.validateAuthAndArgs(args, validateSignActionArgs)
+    const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateSignActionArgs)
     // createAction options are merged with undefined signAction options before validation...
     const r = await signAction(this, auth, args)
 
@@ -810,8 +845,8 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: InternalizeActionArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<InternalizeActionResult> {
-    validateOriginator(originator)
-    const { auth, vargs } = this.validateAuthAndArgs(args, validateInternalizeActionArgs)
+    Validation.validateOriginator(originator)
+    const { auth, vargs } = this.validateAuthAndArgs(args, Validation.validateInternalizeActionArgs)
 
     if (vargs.labels.indexOf(specOpThrowReviewActions) >= 0) throwDummyReviewActions()
 
@@ -826,9 +861,9 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: AbortActionArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<AbortActionResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
 
-    const { auth } = this.validateAuthAndArgs(args, validateAbortActionArgs)
+    const { auth } = this.validateAuthAndArgs(args, Validation.validateAbortActionArgs)
     const r = await this.storage.abortAction(args)
     return r
   }
@@ -837,14 +872,14 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: RelinquishOutputArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<RelinquishOutputResult> {
-    validateOriginator(originator)
-    const { vargs } = this.validateAuthAndArgs(args, validateRelinquishOutputArgs)
+    Validation.validateOriginator(originator)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateRelinquishOutputArgs)
     const r = await this.storage.relinquishOutput(args)
     return { relinquished: true }
   }
 
   async isAuthenticated(args: {}, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<AuthenticatedResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     const r: { authenticated: true } = {
       authenticated: true
     }
@@ -855,12 +890,12 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: {},
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<AuthenticatedResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     return { authenticated: true }
   }
 
   async getHeight(args: {}, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<GetHeightResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     const height = await this.getServices().getHeight()
     return { height }
   }
@@ -869,18 +904,18 @@ export class Wallet implements WalletInterface, ProtoWallet {
     args: GetHeaderArgs,
     originator?: OriginatorDomainNameStringUnder250Bytes
   ): Promise<GetHeaderResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     const serializedHeader = await this.getServices().getHeaderForHeight(args.height)
     return { header: Utils.toHex(serializedHeader) }
   }
 
   async getNetwork(args: {}, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<GetNetworkResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     return { network: toWalletNetwork(this.chain) }
   }
 
   async getVersion(args: {}, originator?: OriginatorDomainNameStringUnder250Bytes): Promise<GetVersionResult> {
-    validateOriginator(originator)
+    Validation.validateOriginator(originator)
     return { version: 'wallet-brc100-1.0.0' }
   }
 
@@ -1033,7 +1068,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
    * @returns {ListActionsResult} start `listActions` result restricted to 'nosend' (or 'failed' if aborted) actions.
    */
   async listNoSendActions(args: ListActionsArgs, abort = false): Promise<ListActionsResult> {
-    const { vargs } = this.validateAuthAndArgs(args, validateListActionsArgs)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateListActionsArgs)
     vargs.labels.push(specOpNoSendActions)
     if (abort) vargs.labels.push('abort')
     const r = await this.storage.listActions(vargs)
@@ -1047,7 +1082,7 @@ export class Wallet implements WalletInterface, ProtoWallet {
    * @returns {ListActionsResult} start `listActions` result restricted to 'failed' status actions.
    */
   async listFailedActions(args: ListActionsArgs, unfail = false): Promise<ListActionsResult> {
-    const { vargs } = this.validateAuthAndArgs(args, validateListActionsArgs)
+    const { vargs } = this.validateAuthAndArgs(args, Validation.validateListActionsArgs)
     vargs.labels.push(specOpFailedActions)
     if (unfail) vargs.labels.push('unfail')
     const r = await this.storage.listActions(vargs)
@@ -1067,7 +1102,7 @@ export interface PendingStorageInput {
 export interface PendingSignAction {
   reference: string
   dcr: StorageCreateActionResult
-  args: ValidCreateActionArgs
+  args: Validation.ValidCreateActionArgs
   tx: BsvTransaction
   amount: number
   pdi: PendingStorageInput[]

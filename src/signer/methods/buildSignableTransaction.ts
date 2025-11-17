@@ -1,11 +1,10 @@
-import { Beef, Script, Transaction, TransactionInput, TransactionOutput } from '@bsv/sdk'
+import { Beef, Script, Transaction, TransactionInput, TransactionOutput, Validation } from '@bsv/sdk'
 import { Wallet, PendingStorageInput } from '../../Wallet'
 import {
   StorageCreateActionResult,
   StorageCreateTransactionSdkInput,
   StorageCreateTransactionSdkOutput
 } from '../../sdk/WalletStorage.interfaces'
-import { validateSatoshis, ValidCreateActionArgs, ValidCreateActionInput } from '../../sdk/validationHelpers'
 import { WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { asBsvSdkScript, verifyTruthy } from '../../utility/utilityHelpers'
 import { KeyPair } from '../../sdk/types'
@@ -13,7 +12,7 @@ import { ScriptTemplateBRC29 } from '../../utility/ScriptTemplateBRC29'
 
 export function buildSignableTransaction(
   dctr: StorageCreateActionResult,
-  args: ValidCreateActionArgs,
+  args: Validation.ValidCreateActionArgs,
   wallet: Wallet
 ): {
   tx: Transaction
@@ -78,7 +77,7 @@ export function buildSignableTransaction(
   // Merge and sort INPUTS info by vin order.
   /////////////
   const inputs: {
-    argsInput: ValidCreateActionInput | undefined
+    argsInput: Validation.ValidCreateActionInput | undefined
     storageInput: StorageCreateTransactionSdkInput
   }[] = []
   for (const storageInput of storageInputs) {
@@ -143,7 +142,7 @@ export function buildSignableTransaction(
         sequence: 0xffffffff
       }
       tx.addInput(inputToAdd)
-      totalChangeInputs += validateSatoshis(storageInput.sourceSatoshis, 'storageInput.sourceSatoshis')
+      totalChangeInputs += Validation.validateSatoshis(storageInput.sourceSatoshis, 'storageInput.sourceSatoshis')
     }
   }
 
@@ -168,7 +167,7 @@ export function buildSignableTransaction(
 export function makeChangeLock(
   out: StorageCreateTransactionSdkOutput,
   dctr: StorageCreateActionResult,
-  args: ValidCreateActionArgs,
+  args: Validation.ValidCreateActionArgs,
   changeKeys: KeyPair,
   wallet: Wallet
 ): Script {

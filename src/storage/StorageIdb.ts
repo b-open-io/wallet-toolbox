@@ -1,5 +1,5 @@
 import { deleteDB, IDBPCursorWithValue, IDBPDatabase, IDBPTransaction, openDB } from 'idb'
-import { ListActionsResult, ListOutputsResult } from '@bsv/sdk'
+import { ListActionsResult, ListOutputsResult, Validation } from '@bsv/sdk'
 import {
   TableCertificate,
   TableCertificateField,
@@ -53,7 +53,6 @@ import {
 } from '../sdk/WalletStorage.interfaces'
 import { WERR_INTERNAL, WERR_INVALID_OPERATION, WERR_INVALID_PARAMETER, WERR_UNAUTHORIZED } from '../sdk/WERR_errors'
 import { EntityTimeStamp, TransactionStatus } from '../sdk/types'
-import { ValidListActionsArgs, ValidListOutputsArgs } from '../sdk/validationHelpers'
 
 export interface StorageIdbOptions extends StorageProviderOptions {}
 
@@ -464,12 +463,12 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     return tags
   }
 
-  async listActions(auth: AuthId, vargs: ValidListActionsArgs): Promise<ListActionsResult> {
+  async listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult> {
     if (!auth.userId) throw new WERR_UNAUTHORIZED()
     return await listActionsIdb(this, auth, vargs)
   }
 
-  async listOutputs(auth: AuthId, vargs: ValidListOutputsArgs): Promise<ListOutputsResult> {
+  async listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult> {
     if (!auth.userId) throw new WERR_UNAUTHORIZED()
     return await listOutputsIdb(this, auth, vargs)
   }

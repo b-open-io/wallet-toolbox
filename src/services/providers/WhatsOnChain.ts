@@ -1,4 +1,4 @@
-import { Beef, HexString, Utils, WhatsOnChainConfig } from '@bsv/sdk'
+import { Beef, HexString, Utils, WhatsOnChainConfig, Validation } from '@bsv/sdk'
 import { convertProofToMerklePath } from '../../utility/tscProofToMerklePath'
 import SdkWhatsOnChain from './SdkWhatsOnChain'
 import { Chain, ReqHistoryNote } from '../../sdk/types'
@@ -20,7 +20,6 @@ import { WalletError } from '../../sdk/WalletError'
 import { doubleSha256BE, wait } from '../../utility/utilityHelpers'
 import { asArray, asString } from '../../utility/utilityHelpers.noBuffer'
 import { Services, validateScriptHash } from '../Services'
-import { parseWalletOutpoint } from '../../sdk/validationHelpers'
 
 export class WhatsOnChainNoServices extends SdkWhatsOnChain {
   constructor(chain: Chain = 'main', config: WhatsOnChainConfig = {}) {
@@ -405,7 +404,7 @@ export class WhatsOnChainNoServices extends SdkWhatsOnChain {
             })
           }
           if (outpoint) {
-            const { txid, vout } = parseWalletOutpoint(outpoint)
+            const { txid, vout } = Validation.parseWalletOutpoint(outpoint)
             r.isUtxo = r.details.find(d => d.txid === txid && d.index === vout) !== undefined
           } else r.isUtxo = r.details.length > 0
         }

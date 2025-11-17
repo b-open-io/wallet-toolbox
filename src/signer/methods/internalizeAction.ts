@@ -1,7 +1,6 @@
-import { Beef, InternalizeActionArgs, InternalizeOutput, P2PKH, WalletProtocol } from '@bsv/sdk'
+import { Beef, InternalizeActionArgs, InternalizeOutput, P2PKH, WalletProtocol, Validation } from '@bsv/sdk'
 import { Wallet } from '../../Wallet'
 import { AuthId, StorageInternalizeActionResult } from '../../sdk/WalletStorage.interfaces'
-import { validateInternalizeActionArgs, ValidInternalizeActionArgs } from '../../sdk/validationHelpers'
 import { WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 
 /**
@@ -36,7 +35,7 @@ export async function internalizeAction(
   auth: AuthId,
   args: InternalizeActionArgs
 ): Promise<StorageInternalizeActionResult> {
-  const vargs = validateInternalizeActionArgs(args)
+  const vargs = Validation.validateInternalizeActionArgs(args)
 
   const { ab, tx, txid } = await validateAtomicBeef()
   const brc29ProtocolID: WalletProtocol = [2, '3241645161d8']
@@ -60,7 +59,7 @@ export async function internalizeAction(
 
   return r
 
-  function setupWalletPaymentForOutput(o: InternalizeOutput, dargs: ValidInternalizeActionArgs) {
+  function setupWalletPaymentForOutput(o: InternalizeOutput, dargs: Validation.ValidInternalizeActionArgs) {
     const p = o.paymentRemittance
     const output = tx.outputs[o.outputIndex]
     if (!p) throw new WERR_INVALID_PARAMETER('paymentRemittance', `valid for protocol ${o.protocol}`)
@@ -73,7 +72,7 @@ export async function internalizeAction(
       throw new WERR_INVALID_PARAMETER('paymentRemittance', `locked by script conforming to BRC-29`)
   }
 
-  function setupBasketInsertionForOutput(o: InternalizeOutput, dargs: ValidInternalizeActionArgs) {
+  function setupBasketInsertionForOutput(o: InternalizeOutput, dargs: Validation.ValidInternalizeActionArgs) {
     /*
     No additional validations...
     */

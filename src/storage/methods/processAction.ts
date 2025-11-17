@@ -1,5 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Beef, Transaction as BsvTransaction, SendWithResult, SendWithResultStatus } from '@bsv/sdk'
+import {
+  Beef,
+  Transaction as BsvTransaction,
+  SendWithResult,
+  SendWithResultStatus,
+  WalletLoggerInterface
+} from '@bsv/sdk'
 import { aggregateActionResults } from '../../utility/aggregateResults'
 import { StorageProvider } from '../StorageProvider'
 import {
@@ -33,7 +39,8 @@ export async function processAction(
   auth: AuthId,
   args: StorageProcessActionArgs
 ): Promise<StorageProcessActionResults> {
-  stampLog(args.log, `start storage processActionSdk`)
+  const logger = args.logger
+  logger?.group('storage processAction')
 
   const userId = verifyId(auth.userId)
   const r: StorageProcessActionResults = {
@@ -45,22 +52,32 @@ export async function processAction(
 
   if (args.isNewTx) {
     const vargs = await validateCommitNewTxToStorageArgs(storage, userId, args)
-    ;({ req, log: args.log } = await commitNewTxToStorage(storage, userId, vargs))
+    logger?.log(`validated new tx updates to storage`)
+    ;({ req } = await commitNewTxToStorage(storage, userId, vargs))
+    logger?.log(`committed new tx updates to storage `)
     if (!req) throw new WERR_INTERNAL()
     // Add the new txid to sendWith unless there are no others to send and the noSend option is set.
-    if (args.isNoSend && !args.isSendWith) stampLog(args.log, `... storage processActionSdk newTx committed noSend`)
-    else {
+    if (args.isNoSend && !args.isSendWith) {
+      logger?.log(`noSend txid ${req.txid}`)
+    } else {
       txidsOfReqsToShareWithWorld.push(req.txid)
-      stampLog(args.log, `... storage processActionSdk newTx committed sendWith ${req.txid}`)
+      logger?.log(`sending txid ${req.txid}`)
     }
   }
 
-  const { swr, ndr } = await shareReqsWithWorld(storage, userId, txidsOfReqsToShareWithWorld, args.isDelayed)
+  const { swr, ndr } = await shareReqsWithWorld(
+    storage,
+    userId,
+    txidsOfReqsToShareWithWorld,
+    args.isDelayed,
+    undefined,
+    logger
+  )
 
   r.sendWithResults = swr
   r.notDelayedResults = ndr
 
-  stampLog(args.log, `end storage processActionSdk`)
+  logger?.groupEnd()
 
   return r
 }
@@ -114,7 +131,8 @@ export async function shareReqsWithWorld(
   userId: number,
   txids: string[],
   isDelayed: boolean,
-  r?: GetReqsAndBeefResult
+  r?: GetReqsAndBeefResult,
+  logger?: WalletLoggerInterface
 ): Promise<{ swr: SendWithResult[]; ndr: ReviewActionResult[] | undefined }> {
   let swr: SendWithResult[] = []
   let ndr: ReviewActionResult[] | undefined = undefined
@@ -147,9 +165,10 @@ export async function shareReqsWithWorld(
   if (readyToSendReqs.length > 0) {
     const beefIsValid = await r.beef.verify(await storage.getServices().getChainTracker())
     if (!beefIsValid) {
-      console.log(`VERIFY FALSE BEEF: ${r.beef.toLogString()}`)
+      logger?.error(`VERIFY FALSE BEEF: ${r.beef.toLogString()}`)
       throw new WERR_INTERNAL(`merged Beef failed validation.`)
     }
+    logger?.log(`beef is valid`)
   }
 
   // Set req batch property for the reqs being sent
@@ -179,7 +198,7 @@ export async function shareReqsWithWorld(
   //
   // Handle the NON-DELAYED-SEND-NOW case
   //
-  const prtn = await storage.attemptToPostReqsToNetwork(readyToSendReqs)
+  const prtn = await storage.attemptToPostReqsToNetwork(readyToSendReqs, undefined, logger)
 
   const { swr: swrRes, rar } = await aggregateActionResults(storage, swr, prtn)
   return { swr: swrRes, ndr: rar }

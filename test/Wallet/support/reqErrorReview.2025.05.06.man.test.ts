@@ -1,18 +1,6 @@
-import { Beef, Transaction, WalletOutput } from '@bsv/sdk'
-import {
-  EntityProvenTxReq,
-  sdk,
-  Services,
-  Setup,
-  StorageKnex,
-  TableOutput,
-  TableProvenTxReq,
-  TableUser,
-  verifyOne,
-  verifyOneOrNone
-} from '../../../src'
+import { Beef, Transaction } from '@bsv/sdk'
+import { EntityProvenTxReq, sdk, TableProvenTxReq, verifyOneOrNone } from '../../../src'
 import { _tu, TuEnv } from '../../utils/TestUtilsWalletStorage'
-import { specOpInvalidChange, ValidListOutputsArgs } from '../../../src/sdk'
 import { LocalWalletTestOptions } from '../../utils/localWalletMethods'
 import { Format } from '../../../src/utility/Format'
 

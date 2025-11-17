@@ -1,4 +1,4 @@
-import { Transaction as BsvTransaction, Beef, ChainTracker, Utils } from '@bsv/sdk'
+import { Transaction as BsvTransaction, Beef, ChainTracker, Utils, WalletLoggerInterface } from '@bsv/sdk'
 import { ServiceCollection, ServiceToCall } from './ServiceCollection'
 import { createDefaultWalletServicesOptions } from './createDefaultWalletServicesOptions'
 import { WhatsOnChain } from './providers/WhatsOnChain'
@@ -216,7 +216,8 @@ export class Services implements WalletServices {
     output: string,
     outputFormat?: GetUtxoStatusOutputFormat,
     outpoint?: string,
-    useNext?: boolean
+    useNext?: boolean,
+    logger?: WalletLoggerInterface
   ): Promise<GetUtxoStatusResult> {
     const services = this.getUtxoStatusServices
     if (useNext) services.next()
@@ -228,11 +229,13 @@ export class Services implements WalletServices {
       details: []
     }
 
+    logger?.group(`services getUtxoStatus`)
     for (let retry = 0; retry < 2; retry++) {
       for (let tries = 0; tries < services.count; tries++) {
         const stc = services.serviceToCall
         try {
           const r = await stc.service(output, outputFormat, outpoint)
+          logger?.log(`${stc.providerName} status ${r.status}`)
           if (r.status === 'success') {
             services.addServiceCallSuccess(stc)
             r0 = r
@@ -250,10 +253,15 @@ export class Services implements WalletServices {
       if (r0.status === 'success') break
       await wait(2000)
     }
+    logger?.groupEnd()
     return r0
   }
 
-  async getScriptHashHistory(hash: string, useNext?: boolean): Promise<GetScriptHashHistoryResult> {
+  async getScriptHashHistory(
+    hash: string,
+    useNext?: boolean,
+    logger?: WalletLoggerInterface
+  ): Promise<GetScriptHashHistoryResult> {
     const services = this.getScriptHashHistoryServices
     if (useNext) services.next()
 
@@ -264,10 +272,12 @@ export class Services implements WalletServices {
       history: []
     }
 
+    logger?.group(`services getScriptHashHistory`)
     for (let tries = 0; tries < services.count; tries++) {
       const stc = services.serviceToCall
       try {
         const r = await stc.service(hash)
+        logger?.log(`${stc.providerName} status ${r.status}`)
         if (r.status === 'success') {
           r0 = r
           break
@@ -281,6 +291,7 @@ export class Services implements WalletServices {
       }
       services.next()
     }
+    logger?.groupEnd()
     return r0
   }
 
@@ -292,15 +303,17 @@ export class Services implements WalletServices {
    * @param chain
    * @returns
    */
-  async postBeef(beef: Beef, txids: string[]): Promise<PostBeefResult[]> {
+  async postBeef(beef: Beef, txids: string[], logger?: WalletLoggerInterface): Promise<PostBeefResult[]> {
     let rs: PostBeefResult[] = []
     const services = this.postBeefServices
     const stcs = services.allServicesToCall
+    logger?.group(`services postBeef`)
     switch (this.postBeefMode) {
       case 'UntilSuccess':
         {
           for (const stc of stcs) {
             const r = await callService(stc)
+            logger?.log(`${stc.providerName} status ${r.status}`)
             rs.push(r)
             if (r.status === 'success') break
             if (r.txidResults && r.txidResults.every(txr => txr.serviceError)) {
@@ -321,6 +334,7 @@ export class Services implements WalletServices {
         }
         break
     }
+    logger?.groupEnd()
     return rs
 
     async function callService(stc: ServiceToCall<PostBeefService>) {
@@ -423,12 +437,13 @@ export class Services implements WalletServices {
     return header
   }
 
-  async getMerklePath(txid: string, useNext?: boolean): Promise<GetMerklePathResult> {
+  async getMerklePath(txid: string, useNext?: boolean, logger?: WalletLoggerInterface): Promise<GetMerklePathResult> {
     const services = this.getMerklePathServices
     if (useNext) services.next()
 
     const r0: GetMerklePathResult = { notes: [] }
 
+    logger?.group(`services getMerklePath`)
     for (let tries = 0; tries < services.count; tries++) {
       const stc = services.serviceToCall
       try {
@@ -436,6 +451,7 @@ export class Services implements WalletServices {
         if (r.notes) r0.notes!.push(...r.notes)
         if (!r0.name) r0.name = r.name
         if (r.merklePath) {
+          logger?.log(`${stc.providerName} has merklePath`)
           // If we have a proof, call it done.
           r0.merklePath = r.merklePath
           r0.header = r.header
@@ -443,6 +459,8 @@ export class Services implements WalletServices {
           r0.error = undefined
           services.addServiceCallSuccess(stc)
           break
+        } else {
+          logger?.log(`${stc.providerName} no merklePath`)
         }
 
         if (r.error) services.addServiceCallError(stc, r.error)
