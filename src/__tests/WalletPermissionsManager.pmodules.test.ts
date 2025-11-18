@@ -277,31 +277,74 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       expect(testModule.onResponse).toHaveBeenCalled()
     })
 
-    it('should chain multiple P-modules when multiple P-baskets are used', async () => {
+    it('should chain multiple P-modules in correct order: req1->req2->req3 then res3->res2->res1', async () => {
+      const callOrder: string[] = []
+
       const module1: PermissionsModule = {
         onRequest: jest.fn(async (req) => {
-          return { ...req, transformedBy: 'module1' }
+          callOrder.push('req1')
+          // First module receives original args without any processing markers
+          expect((req.args[0] as any).req1Processed).toBeUndefined()
+          expect((req.args[0] as any).req2Processed).toBeUndefined()
+          // Transform args - add marker to track this module processed them
+          return {
+            ...req,
+            args: [{ ...req.args[0], req1Processed: true }, req.args[1]]
+          }
         }),
         onResponse: jest.fn(async (res) => {
-          return { ...res, processedBy: 'module1' }
+          callOrder.push('res1')
+          // Last module in response chain should see transformations from res2 and res3
+          expect((res as any).processedBy).toBe('module2')
+          return { ...res, finalProcessedBy: 'module1' }
         })
       }
 
       const module2: PermissionsModule = {
         onRequest: jest.fn(async (req) => {
-          // Modules are called independently per P-basket, not chained in request
-          return { ...req, transformedBy: 'module2' }
+          callOrder.push('req2')
+          // Second module receives args transformed by module1
+          // (each module gets fresh request object, but args are chained)
+          expect((req.args[0] as any).req1Processed).toBe(true)
+          expect((req.args[0] as any).req2Processed).toBeUndefined()
+          return {
+            ...req,
+            args: [{ ...req.args[0], req2Processed: true }, req.args[1]]
+          }
         }),
         onResponse: jest.fn(async (res) => {
-          // Response chaining works
+          callOrder.push('res2')
+          // Second-to-last in response chain should see transformation from res3
+          expect((res as any).processedBy).toBe('module3')
           return { ...res, processedBy: 'module2' }
+        })
+      }
+
+      const module3: PermissionsModule = {
+        onRequest: jest.fn(async (req) => {
+          callOrder.push('req3')
+          // Third module receives args with transformations from both module1 and module2
+          expect((req.args[0] as any).req1Processed).toBe(true)
+          expect((req.args[0] as any).req2Processed).toBe(true)
+          expect((req.args[0] as any).req3Processed).toBeUndefined()
+          return {
+            ...req,
+            args: [{ ...req.args[0], req3Processed: true }, req.args[1]]
+          }
+        }),
+        onResponse: jest.fn(async (res) => {
+          callOrder.push('res3')
+          // First module in response chain receives raw response from underlying wallet
+          expect((res as any).processedBy).toBeUndefined()
+          return { ...res, processedBy: 'module3' }
         })
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
           'scheme1': module1,
-          'scheme2': module2
+          'scheme2': module2,
+          'scheme3': module3
         },
         seekSpendingPermissions: false,
         seekBasketInsertionPermissions: false
@@ -313,22 +356,29 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const result = await manager.createAction(
         {
-          description: 'Multi-module test',
+          description: 'Multi-module chain test',
           outputs: [
             { lockingScript: '1234', satoshis: 100, basket: 'p scheme1 data1', outputDescription: 'Output 1' },
-            { lockingScript: '5678', satoshis: 200, basket: 'p scheme2 data2', outputDescription: 'Output 2' }
+            { lockingScript: '5678', satoshis: 200, basket: 'p scheme2 data2', outputDescription: 'Output 2' },
+            { lockingScript: '9abc', satoshis: 300, basket: 'p scheme3 data3', outputDescription: 'Output 3' }
           ]
         },
         'app.com'
       )
 
-      // Verify both modules were called
-      expect(module1.onRequest).toHaveBeenCalled()
-      expect(module2.onRequest).toHaveBeenCalled()
+      // Verify all modules were called
+      expect(module1.onRequest).toHaveBeenCalledTimes(1)
+      expect(module2.onRequest).toHaveBeenCalledTimes(1)
+      expect(module3.onRequest).toHaveBeenCalledTimes(1)
+      expect(module1.onResponse).toHaveBeenCalledTimes(1)
+      expect(module2.onResponse).toHaveBeenCalledTimes(1)
+      expect(module3.onResponse).toHaveBeenCalledTimes(1)
 
-      // Verify responses were processed
-      expect(module2.onResponse).toHaveBeenCalled()
-      expect(module1.onResponse).toHaveBeenCalled()
+      // Verify correct order: req1 -> req2 -> req3 then res3 -> res2 -> res1
+      expect(callOrder).toEqual(['req1', 'req2', 'req3', 'res3', 'res2', 'res1'])
+
+      // Verify final result has the complete chain of transformations
+      expect((result as any).finalProcessedBy).toBe('module1')
     })
   })
 
@@ -742,13 +792,14 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       const config: PermissionsManagerConfig = {
         permissionModules: {
           'myscheme': testModule
-        }
+        },
+        seekBasketListingPermissions: false
       }
 
       const manager = new WalletPermissionsManager(underlying, 'customToken.domain.com', config)
 
       // Try to access admin basket with non-admin originator
-      // Admin baskets don't have "p " prefix in this test - they're defined by the admin originator domain
+      // Admin baskets are prefixed with 'admin_' by convention
       await expect(
         manager.listOutputs(
           { basket: 'admin_someAdminBasket' },
@@ -756,7 +807,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
         )
       ).rejects.toThrow(/admin-only/)
 
-      // P-module should NOT have been called since admin check happens first
+      // P-module should NOT have been called since admin check happens before P-module delegation
       expect(testModule.onRequest).not.toHaveBeenCalled()
     })
   })
