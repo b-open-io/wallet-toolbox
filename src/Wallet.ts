@@ -115,10 +115,10 @@ export interface WalletArgs {
   lookupResolver?: LookupResolver
   /**
    * Optional. Provide a function conforming to the `MakeWalletLogger` type to enable wallet request logging.
-   * 
+   *
    * For simple requests using `Console` may be adequate, initialize with
    * `() => Console`
-   * 
+   *
    * Aggregate tracing and control over capturing all logged output in one place:
    * `(log?: string | WalletLoggerInterface) => new WalletLogger(log)`
    */

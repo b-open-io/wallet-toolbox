@@ -1,5 +1,4 @@
-
-const { Validation } = jest.requireActual('@bsv/sdk');
+const { Validation } = jest.requireActual('@bsv/sdk')
 
 /**
  * A permissions manager testing mock/stub file for:

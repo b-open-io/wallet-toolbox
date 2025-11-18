@@ -4,6 +4,13 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.7.12
+
+- Add pluggable permissions module system (`PermissionsModule` interface) for custom P-basket and P-protocol handlers
+- Add `permissionModules` config option to `WalletPermissionsManager` for registering scheme-specific modules
+- Support request/response transformation chaining across multiple modules
+- Add comprehensive test suite covering P-module delegation, chaining, and error handling
+
 ## wallet-toolbox 1.7.6
 
 - Change `WalletLogger` json name from logs[0]
