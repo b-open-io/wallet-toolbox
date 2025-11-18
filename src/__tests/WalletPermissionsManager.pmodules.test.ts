@@ -4,10 +4,10 @@ import { WalletPermissionsManager, PermissionsManagerConfig, PermissionsModule }
 jest.mock('@bsv/sdk', () => MockedBSV_SDK)
 
 /**
- * Test suite for P-module (Pluggable module) functionality.
+ * Test suite for Permission Modules
  * Tests both P-basket and P-protocol delegation to custom permission modules.
  */
-describe('WalletPermissionsManager - P-Module Support', () => {
+describe('WalletPermissionsManager - Permission Module Support', () => {
   let underlying: jest.Mocked<any>
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
     jest.clearAllMocks()
   })
 
-  describe('P-Basket Module Registration', () => {
+  describe('Permission Module Registration', () => {
     it('should accept permissionModules in config', () => {
       const testModule: PermissionsModule = {
         onRequest: jest.fn(async req => req),
@@ -39,7 +39,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       expect(storedConfig.permissionModules?.['test-scheme']).toBe(testModule)
     })
 
-    it('should support multiple P-modules for different schemes', () => {
+    it('should support multiple permission modules for different schemes', () => {
       const module1: PermissionsModule = {
         onRequest: jest.fn(async req => req),
         onResponse: jest.fn(async res => res)
@@ -67,7 +67,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   })
 
   describe('P-Basket Delegation - listOutputs', () => {
-    it('should delegate to P-module when basket starts with "p "', async () => {
+    it('should delegate to permission when basket starts with "p "', async () => {
       const testModule: PermissionsModule = {
         onRequest: jest.fn(async req => {
           // Module can inspect and transform the request
@@ -122,7 +122,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       const manager = new WalletPermissionsManager(underlying, 'customToken.domain.com')
 
       await expect(manager.listOutputs({ basket: 'p unregistered-scheme data' }, 'app.com')).rejects.toThrow(
-        /Unsupported P-basket scheme/
+        /Unsupported P-module scheme: p unregistered-scheme/
       )
     })
 
