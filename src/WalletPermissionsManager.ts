@@ -43,6 +43,40 @@ function isObject(object: any): boolean {
 }
 
 /**
+ * A permissions module handles request/response transformation for a specific P-basket scheme.
+ * Modules are registered in the config mapped by their scheme ID.
+ */
+export interface PermissionsModule {
+  /**
+   * Transforms the request before it's passed to the underlying wallet.
+   * Can modify method name, args, or originator as needed.
+   *
+   * @param req - The incoming request with method, args, and originator
+   * @returns Transformed request that will be passed to the underlying wallet
+   */
+  onRequest(req: { method: string; args: any[]; originator: string }): Promise<{
+    method: string
+    args: any[]
+    originator: string
+  }>
+
+  /**
+   * Transforms the response from the underlying wallet before returning to caller.
+   *
+   * @param res - The response from the underlying wallet
+   * @param context - Metadata about the original request (method, originator)
+   * @returns Transformed response to return to the caller
+   */
+  onResponse(
+    res: any,
+    context: {
+      method: string
+      originator: string
+    }
+  ): Promise<any>
+}
+
+/**
  * Describes a group of permissions that can be requested together.
  * This structure is based on BRC-73.
  */
@@ -234,6 +268,21 @@ export interface WalletPermissionsManagerCallbacks {
  * By default, all of these are `true` unless specified otherwise. This is the most secure configuration.
  */
 export interface PermissionsManagerConfig {
+  /**
+   * A map of P-basket permission scheme modules.
+   *
+   * Keys are scheme IDs (e.g., "btms"), values are PermissionsModule instances.
+   *
+   * Each module handles basket IDs of the form: `p <schemeID> <rest...>`
+   *
+   * The WalletPermissionManager detects P-prefix baskets and delegates
+   * request/response transformation to the corresponding module.
+   *
+   * If no module exists for a given schemeID, the wallet MUST reject access
+   * according to the P-Baskets specification.
+   */
+  permissionModules?: Record<string, PermissionsModule>
+
   /**
    * For `createSignature` and `verifySignature`,
    * require a "protocol usage" permission check?
@@ -464,6 +513,121 @@ export class WalletPermissionsManager implements WalletInterface {
       differentiatePrivilegedOperations: true,
       ...config // override with user-specified config
     }
+  }
+
+  /* ---------------------------------------------------------------------
+   *  HELPER METHODS FOR P-BASKET MODULE DELEGATION
+   * --------------------------------------------------------------------- */
+
+  /**
+   * Delegates a wallet method call to a P-basket module if the basket uses a P-scheme.
+   * Handles the full request/response transformation flow.
+   *
+   * @param basket - The basket name to check (e.g., "p btms data")
+   * @param method - The wallet method name being called
+   * @param args - The original args passed to the method
+   * @param originator - The originator of the request
+   * @param underlyingCall - Callback that executes the underlying wallet method with transformed args
+   * @returns The transformed response, or null if not a P-basket (caller should continue normal flow)
+   */
+  private async delegateToPModuleIfNeeded<T>(
+    basket: string,
+    method: string,
+    args: any[],
+    originator: string,
+    underlyingCall: (transformedArgs: any[], transformedOriginator: string) => Promise<T>
+  ): Promise<T | null> {
+    // Check if this is a P-basket
+    if (!basket.startsWith('p ')) {
+      return null // Not a P-basket, caller should continue normal flow
+    }
+
+    const schemeID = basket.split(' ')[1]
+    const module = this.config.permissionModules?.[schemeID]
+
+    if (!module) {
+      throw new Error(`Unsupported P-basket scheme: p ${schemeID}`)
+    }
+
+    // Transform request with module
+    const transformedReq = await module.onRequest({
+      method,
+      args,
+      originator
+    })
+
+    // Call underlying method with transformed request
+    const results = await underlyingCall(transformedReq.args, transformedReq.originator)
+
+    // Transform response with module
+    return await module.onResponse(results, {
+      method,
+      originator
+    })
+  }
+
+  /**
+   * Delegates a wallet method call to a P-protocol module if the protocol uses a P-scheme.
+   * Handles the full request/response transformation flow.
+   *
+   * @param protocolID - The protocol ID tuple to check (e.g., [2, "p btms data"])
+   * @param method - The wallet method name being called
+   * @param args - The original args passed to the method
+   * @param originator - The originator of the request
+   * @param underlyingCall - Callback that executes the underlying wallet method with transformed args
+   * @returns The transformed response, or null if not a P-protocol (caller should continue normal flow)
+   */
+  private async delegateToPProtocolModuleIfNeeded<T>(
+    protocolID: WalletProtocol,
+    method: string,
+    args: any[],
+    originator: string,
+    underlyingCall: (transformedArgs: any[], transformedOriginator: string) => Promise<T>
+  ): Promise<T | null> {
+    // Check if this is a P-protocol (protocol name starts with "p ")
+    const protocolName = protocolID[1]
+    if (!protocolName.startsWith('p ')) {
+      return null // Not a P-protocol, caller should continue normal flow
+    }
+
+    const schemeID = protocolName.split(' ')[1]
+    const module = this.config.permissionModules?.[schemeID]
+
+    if (!module) {
+      throw new Error(`Unsupported P-protocol scheme: p ${schemeID}`)
+    }
+
+    // Transform request with module
+    const transformedReq = await module.onRequest({
+      method,
+      args,
+      originator
+    })
+
+    // Call underlying method with transformed request
+    const results = await underlyingCall(transformedReq.args, transformedReq.originator)
+
+    // Transform response with module
+    return await module.onResponse(results, {
+      method,
+      originator
+    })
+  }
+
+  /**
+   * Decrypts custom instructions in listOutputs results if encryption is configured.
+   */
+  private async decryptListOutputsMetadata(results: any): Promise<any> {
+    if (results.outputs) {
+      for (let i = 0; i < results.outputs.length; i++) {
+        if (results.outputs[i].customInstructions) {
+          results.outputs[i].customInstructions = await this.maybeDecryptMetadata(
+            results.outputs[i].customInstructions!
+          )
+        }
+      }
+    }
+    return results
   }
 
   /* ---------------------------------------------------------------------
@@ -913,6 +1077,7 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isRecentlyGranted(cacheKey)) {
       return true
     }
+
     const token = await this.findBasketToken(originator, basket, true, lookupValues)
     if (token) {
       if (!this.isTokenExpired(token.expiry)) {
@@ -991,6 +1156,7 @@ export class WalletPermissionsManager implements WalletInterface {
     if (this.isRecentlyGranted(cacheKey)) {
       return true
     }
+
     const token = await this.findCertificateToken(
       originator,
       privileged,
@@ -2474,19 +2640,40 @@ export class WalletPermissionsManager implements WalletInterface {
     args: Parameters<WalletInterface['createAction']>[0],
     originator?: string
   ): ReturnType<WalletInterface['createAction']> {
-    // 1) Ensure basket and label permissions
+    // 1) Identify unique P-modules involved (one per schemeID)
+    const pModulesByScheme = new Map<string, PermissionsModule>()
+    const nonPBaskets: string[] = []
+
     if (args.outputs) {
       for (const out of args.outputs) {
         if (out.basket) {
-          await this.ensureBasketAccess({
-            originator: originator!,
-            basket: out.basket,
-            reason: args.description,
-            usageType: 'insertion'
-          })
+          if (out.basket.startsWith('p ')) {
+            const schemeID = out.basket.split(' ')[1]
+            if (!pModulesByScheme.has(schemeID)) {
+              const module = this.config.permissionModules?.[schemeID]
+              if (!module) {
+                throw new Error(`Unsupported P-basket scheme: p ${schemeID}`)
+              }
+              pModulesByScheme.set(schemeID, module)
+            }
+          } else {
+            // Track non-P baskets for normal permission checks
+            nonPBaskets.push(out.basket)
+          }
         }
       }
     }
+
+    // 2) Check permissions for non-P baskets (P-baskets handled by modules)
+    for (const basket of nonPBaskets) {
+      await this.ensureBasketAccess({
+        originator: originator!,
+        basket,
+        reason: args.description,
+        usageType: 'insertion'
+      })
+    }
+
     if (args.labels) {
       for (const lbl of args.labels) {
         await this.ensureLabelAccess({
@@ -2499,7 +2686,7 @@ export class WalletPermissionsManager implements WalletInterface {
     }
 
     /**
-     * 2) Force signAndProcess=false unless the originator is admin and explicitly sets it to true.
+     * 4) Force signAndProcess=false unless the originator is admin and explicitly sets it to true.
      *    This ensures the underlying wallet returns a signableTransaction, letting us parse the transaction
      *    to determine net spending and request authorization if needed.
      */
@@ -2510,7 +2697,7 @@ export class WalletPermissionsManager implements WalletInterface {
       throw new Error('Only the admin originator can set signAndProcess=true explicitly.')
     }
 
-    // 3) Encrypt transaction metadata, saving originals for use in permissions and line items.
+    // 5) Encrypt transaction metadata, saving originals for use in permissions and line items.
     const originalDescription = args.description
     const originalInputDescriptions = {}
     const originalOutputDescriptions = {}
@@ -2532,23 +2719,50 @@ export class WalletPermissionsManager implements WalletInterface {
     }
 
     /**
-     * 4) Call the underlying wallet’s createAction. We add two “admin” labels:
-     *    - "admin originator <domain>"
-     *    - "admin month YYYY-MM"
-     *    These labels help track the originator’s monthly spending.
+     * 6) Call the underlying wallet's createAction.
+     *    - If P-modules are involved, chain request transformations through them first
+     *    - Add two "admin" labels for tracking: "admin originator <domain>" and "admin month YYYY-MM"
+     *    - If P-modules are involved, chain response transformations back through them
      */
-    const createResult = await this.underlying.createAction(
-      {
-        ...args,
-        options: modifiedOptions,
-        labels: [
-          ...(args.labels || []),
-          `admin originator ${originator}`,
-          `admin month ${this.getCurrentMonthYearUTC()}`
-        ]
-      },
-      originator
-    )
+    const finalArgs = {
+      ...args,
+      options: modifiedOptions,
+      labels: [...(args.labels || []), `admin originator ${originator}`, `admin month ${this.getCurrentMonthYearUTC()}`]
+    }
+
+    let createResult: Awaited<ReturnType<WalletInterface['createAction']>>
+
+    if (pModulesByScheme.size > 0) {
+      // P-modules are involved - chain transformations
+      const pModules = Array.from(pModulesByScheme.values())
+
+      // Chain onRequest calls through all modules
+      let transformedArgs = finalArgs
+      let transformedOriginator = originator!
+      for (const module of pModules) {
+        const transformed = await module.onRequest({
+          method: 'createAction',
+          args: [transformedArgs, transformedOriginator],
+          originator: transformedOriginator
+        })
+        transformedArgs = transformed.args[0]
+        transformedOriginator = transformed.originator
+      }
+
+      // Call underlying wallet with transformed args
+      createResult = await this.underlying.createAction(transformedArgs, transformedOriginator)
+
+      // Chain onResponse calls in reverse order
+      for (let i = pModules.length - 1; i >= 0; i--) {
+        createResult = await pModules[i].onResponse(createResult, {
+          method: 'createAction',
+          originator: originator!
+        })
+      }
+    } else {
+      // No P-modules - call underlying wallet directly
+      createResult = await this.underlying.createAction(finalArgs, originator)
+    }
 
     // If there's no signableTransaction, the underlying wallet must have fully finalized it. Return as is.
     if (!createResult.signableTransaction) {
@@ -2556,7 +2770,7 @@ export class WalletPermissionsManager implements WalletInterface {
     }
 
     /**
-     * 5) We have a signable transaction. Parse it to determine how much the originator is actually spending.
+     * 7) We have a signable transaction. Parse it to determine how much the originator is actually spending.
      *    We only consider inputs the originator explicitly listed in args.inputs.
      *    netSpent = (sum of originator-requested outputs) - (sum of matching originator inputs).
      *    If netSpent > 0, we need spending authorization.
@@ -2626,7 +2840,7 @@ export class WalletPermissionsManager implements WalletInterface {
      */
     netSpent = totalOutputSatoshis + tx.getFee() - totalInputSatoshis
 
-    // 6) If netSpent > 0, require spending authorization. Abort if denied.
+    // 8) If netSpent > 0, require spending authorization. Abort if denied.
     if (netSpent > 0) {
       try {
         await this.ensureSpendingAuthorization({
@@ -2642,7 +2856,7 @@ export class WalletPermissionsManager implements WalletInterface {
     }
 
     /**
-     * 7) Decide whether to finalize the transaction automatically or return the signableTransaction:
+     * 9) Decide whether to finalize the transaction automatically or return the signableTransaction:
      *    - If the user originally wanted signAndProcess (the default when undefined), we forcibly set it to false earlier, so check if we should now finalize it.
      *    - If the transaction still needs more signatures, we must return the signableTransaction.
      */
@@ -2730,6 +2944,25 @@ export class WalletPermissionsManager implements WalletInterface {
     for (const outIndex in requestArgs.outputs) {
       const out = requestArgs.outputs[outIndex]
       if (out.protocol === 'basket insertion') {
+        // Delegate to P-basket module if needed
+        const pModuleResult = await this.delegateToPModuleIfNeeded(
+          out.insertionRemittance!.basket,
+          'internalizeAction',
+          args,
+          originator!,
+          async (transformedArgs, transformedOriginator) => {
+            const [transformedRequestArgs] = transformedArgs
+            if (out.insertionRemittance!.customInstructions) {
+              transformedRequestArgs.outputs[outIndex].insertionRemittance!.customInstructions =
+                await this.maybeEncryptMetadata(out.insertionRemittance!.customInstructions)
+            }
+            return await this.underlying.internalizeAction(transformedRequestArgs, transformedOriginator)
+          }
+        )
+        if (pModuleResult !== null) {
+          return pModuleResult
+        }
+
         await this.ensureBasketAccess({
           originator: originator!,
           basket: out.insertionRemittance!.basket,
@@ -2750,6 +2983,24 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['listOutputs']>
   ): ReturnType<WalletInterface['listOutputs']> {
     const [requestArgs, originator] = args
+
+    // Delegate to P-basket module if needed
+    const pModuleResult = await this.delegateToPModuleIfNeeded(
+      requestArgs.basket,
+      'listOutputs',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        const result = await this.underlying.listOutputs(transformedRequestArgs, transformedOriginator)
+        // Apply metadata decryption to P-basket module response
+        return await this.decryptListOutputsMetadata(result)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
+
     // Ensure the originator has permission for the basket.
     await this.ensureBasketAccess({
       originator: originator!,
@@ -2758,23 +3009,31 @@ export class WalletPermissionsManager implements WalletInterface {
       usageType: 'listing'
     })
     const results = await this.underlying.listOutputs(...args)
-    // Transparently decrypt transaction metadata, if configured to do so.
-    if (results.outputs) {
-      for (let i = 0; i < results.outputs.length; i++) {
-        if (results.outputs[i].customInstructions) {
-          results.outputs[i].customInstructions = await this.maybeDecryptMetadata(
-            results.outputs[i].customInstructions!
-          )
-        }
-      }
-    }
-    return results
+
+    // Apply metadata decryption to regular response
+    return await this.decryptListOutputsMetadata(results)
   }
 
   public async relinquishOutput(
     ...args: Parameters<WalletInterface['relinquishOutput']>
   ): ReturnType<WalletInterface['relinquishOutput']> {
     const [requestArgs, originator] = args
+
+    // Delegate to P-basket module if needed
+    const pModuleResult = await this.delegateToPModuleIfNeeded(
+      requestArgs.basket,
+      'relinquishOutput',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.relinquishOutput(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
+
     await this.ensureBasketAccess({
       originator: originator!,
       basket: requestArgs.basket,
@@ -2788,7 +3047,24 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['getPublicKey']>
   ): ReturnType<WalletInterface['getPublicKey']> {
     const [requestArgs, originator] = args
+
     if (requestArgs.protocolID) {
+      // Delegate to P-protocol module if needed
+      const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+        requestArgs.protocolID,
+        'getPublicKey',
+        args,
+        originator!,
+        async (transformedArgs, transformedOriginator) => {
+          const [transformedRequestArgs] = transformedArgs
+          return await this.underlying.getPublicKey(transformedRequestArgs, transformedOriginator)
+        }
+      )
+      if (pModuleResult !== null) {
+        return pModuleResult
+      }
+
+      // Not a P-protocol, continue with normal permission flow
       await this.ensureProtocolPermission({
         originator: originator!,
         privileged: requestArgs.privileged!,
@@ -2798,6 +3074,7 @@ export class WalletPermissionsManager implements WalletInterface {
         usageType: 'publicKey'
       })
     }
+
     if (requestArgs.identityKey) {
       // We also require a minimal protocol permission to retrieve the user's identity key
       await this.ensureProtocolPermission({
@@ -2809,6 +3086,7 @@ export class WalletPermissionsManager implements WalletInterface {
         usageType: 'identityKey'
       })
     }
+
     return this.underlying.getPublicKey(...args)
   }
 
@@ -2847,6 +3125,20 @@ export class WalletPermissionsManager implements WalletInterface {
 
   public async encrypt(...args: Parameters<WalletInterface['encrypt']>): ReturnType<WalletInterface['encrypt']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'encrypt',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.encrypt(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       protocolID: requestArgs.protocolID,
@@ -2860,6 +3152,20 @@ export class WalletPermissionsManager implements WalletInterface {
 
   public async decrypt(...args: Parameters<WalletInterface['decrypt']>): ReturnType<WalletInterface['decrypt']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'decrypt',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.decrypt(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       privileged: requestArgs.privileged!,
@@ -2875,6 +3181,20 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['createHmac']>
   ): ReturnType<WalletInterface['createHmac']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'createHmac',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.createHmac(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       privileged: requestArgs.privileged!,
@@ -2890,6 +3210,20 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['verifyHmac']>
   ): ReturnType<WalletInterface['verifyHmac']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'verifyHmac',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.verifyHmac(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       privileged: requestArgs.privileged!,
@@ -2905,6 +3239,20 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['createSignature']>
   ): ReturnType<WalletInterface['createSignature']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'createSignature',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.createSignature(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       privileged: requestArgs.privileged!,
@@ -2920,6 +3268,20 @@ export class WalletPermissionsManager implements WalletInterface {
     ...args: Parameters<WalletInterface['verifySignature']>
   ): ReturnType<WalletInterface['verifySignature']> {
     const [requestArgs, originator] = args
+    // Delegate to P-protocol module if needed
+    const pModuleResult = await this.delegateToPProtocolModuleIfNeeded(
+      requestArgs.protocolID,
+      'verifySignature',
+      args,
+      originator!,
+      async (transformedArgs, transformedOriginator) => {
+        const [transformedRequestArgs] = transformedArgs
+        return await this.underlying.verifySignature(transformedRequestArgs, transformedOriginator)
+      }
+    )
+    if (pModuleResult !== null) {
+      return pModuleResult
+    }
     await this.ensureProtocolPermission({
       originator: originator!,
       privileged: requestArgs.privileged!,
@@ -3196,7 +3558,7 @@ export class WalletPermissionsManager implements WalletInterface {
    */
   private isAdminProtocol(proto: WalletProtocol): boolean {
     const protocolName = proto[1]
-    if (protocolName.startsWith('admin') || protocolName.startsWith('p ')) {
+    if (protocolName.startsWith('admin')) {
       return true
     }
     return false
@@ -3226,7 +3588,6 @@ export class WalletPermissionsManager implements WalletInterface {
   private isAdminBasket(basket: string): boolean {
     if (basket === 'default') return true
     if (basket.startsWith('admin')) return true
-    if (basket.startsWith('p ')) return true
     return false
   }
 
