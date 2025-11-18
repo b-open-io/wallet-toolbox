@@ -21,8 +21,8 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Basket Module Registration', () => {
     it('should accept permissionModules in config', () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
@@ -41,19 +41,19 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should support multiple P-modules for different schemes', () => {
       const module1: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const module2: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'scheme1': module1,
-          'scheme2': module2
+          scheme1: module1,
+          scheme2: module2
         }
       }
 
@@ -69,7 +69,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Basket Delegation - listOutputs', () => {
     it('should delegate to P-module when basket starts with "p "', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           // Module can inspect and transform the request
           expect(req.method).toBe('listOutputs')
           expect(req.args[0].basket).toBe('p myscheme some-data')
@@ -79,7 +79,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
             args: [{ ...req.args[0], basket: 'transformed-basket' }]
           }
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           // Module can transform the response
           return { ...res, transformedByModule: true }
         })
@@ -87,7 +87,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         }
       }
 
@@ -96,10 +96,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       // Mock underlying response
       underlying.listOutputs.mockResolvedValue({ outputs: [] })
 
-      const result = await manager.listOutputs(
-        { basket: 'p myscheme some-data' },
-        'app.com'
-      )
+      const result = await manager.listOutputs({ basket: 'p myscheme some-data' }, 'app.com')
 
       // Verify module's onRequest was called
       expect(testModule.onRequest).toHaveBeenCalledTimes(1)
@@ -112,10 +109,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       // Verify underlying was called with transformed basket
       // Note: originator stays as 'app.com' not changed to admin
-      expect(underlying.listOutputs).toHaveBeenCalledWith(
-        { basket: 'transformed-basket' },
-        'app.com'
-      )
+      expect(underlying.listOutputs).toHaveBeenCalledWith({ basket: 'transformed-basket' }, 'app.com')
 
       // Verify module's onResponse was called
       expect(testModule.onResponse).toHaveBeenCalledTimes(1)
@@ -127,20 +121,20 @@ describe('WalletPermissionsManager - P-Module Support', () => {
     it('should throw error if P-basket scheme has no registered module', async () => {
       const manager = new WalletPermissionsManager(underlying, 'customToken.domain.com')
 
-      await expect(
-        manager.listOutputs({ basket: 'p unregistered-scheme data' }, 'app.com')
-      ).rejects.toThrow(/Unsupported P-basket scheme/)
+      await expect(manager.listOutputs({ basket: 'p unregistered-scheme data' }, 'app.com')).rejects.toThrow(
+        /Unsupported P-basket scheme/
+      )
     })
 
     it('should handle normal baskets without delegation', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         },
         seekBasketListingPermissions: false
       }
@@ -156,21 +150,18 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       expect(testModule.onResponse).not.toHaveBeenCalled()
 
       // Underlying should be called with original basket
-      expect(underlying.listOutputs).toHaveBeenCalledWith(
-        { basket: 'normal-basket' },
-        'app.com'
-      )
+      expect(underlying.listOutputs).toHaveBeenCalledWith({ basket: 'normal-basket' }, 'app.com')
     })
 
     it('should decrypt metadata in P-basket responses', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         },
         encryptWalletMetadata: true
       }
@@ -179,7 +170,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       // Mock decryption
       const decryptMetadata = jest.spyOn(manager as any, 'decryptListOutputsMetadata')
-      decryptMetadata.mockImplementation(async (outputs) => outputs)
+      decryptMetadata.mockImplementation(async outputs => outputs)
 
       underlying.listOutputs.mockResolvedValue({
         outputs: [{ outpoint: 'txid.0', satoshis: 100 }]
@@ -195,7 +186,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Basket Delegation - relinquishOutput', () => {
     it('should delegate to P-module when basket starts with "p "', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('relinquishOutput')
           expect(req.args[0].basket).toBe('p token admin-basket-data')
           return {
@@ -203,12 +194,12 @@ describe('WalletPermissionsManager - P-Module Support', () => {
             args: [{ ...req.args[0], basket: 'admin-real-basket' }]
           }
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'token': testModule
+          token: testModule
         }
       }
 
@@ -216,10 +207,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       underlying.relinquishOutput.mockResolvedValue(undefined)
 
-      await manager.relinquishOutput(
-        { basket: 'p token admin-basket-data', output: 'txid.0' },
-        'app.com'
-      )
+      await manager.relinquishOutput({ basket: 'p token admin-basket-data', output: 'txid.0' }, 'app.com')
 
       expect(testModule.onRequest).toHaveBeenCalledTimes(1)
       // Note: originator remains 'app.com' - only basket is transformed
@@ -233,12 +221,12 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Basket Delegation - createAction', () => {
     it('should delegate to P-module for outputs with P-baskets', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           // Verify we receive createAction request
           expect(req.method).toBe('createAction')
           return req
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           // Module can inspect the transaction result
           return res
         })
@@ -246,7 +234,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'bottle': testModule
+          bottle: testModule
         },
         seekSpendingPermissions: false,
         seekBasketInsertionPermissions: false
@@ -262,12 +250,14 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       await manager.createAction(
         {
           description: 'Test action',
-          outputs: [{
-            lockingScript: 'abcd',
-            satoshis: 1000,
-            basket: 'p bottle token-data',
-            outputDescription: 'Test output'
-          }]
+          outputs: [
+            {
+              lockingScript: 'abcd',
+              satoshis: 1000,
+              basket: 'p bottle token-data',
+              outputDescription: 'Test output'
+            }
+          ]
         },
         'app.com'
       )
@@ -281,7 +271,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       const callOrder: string[] = []
 
       const module1: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           callOrder.push('req1')
           // First module receives original args without any processing markers
           expect((req.args[0] as any).req1Processed).toBeUndefined()
@@ -292,7 +282,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
             args: [{ ...req.args[0], req1Processed: true }, req.args[1]]
           }
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           callOrder.push('res1')
           // Last module in response chain should see transformations from res2 and res3
           expect((res as any).processedBy).toBe('module2')
@@ -301,7 +291,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       }
 
       const module2: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           callOrder.push('req2')
           // Second module receives args transformed by module1
           // (each module gets fresh request object, but args are chained)
@@ -312,7 +302,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
             args: [{ ...req.args[0], req2Processed: true }, req.args[1]]
           }
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           callOrder.push('res2')
           // Second-to-last in response chain should see transformation from res3
           expect((res as any).processedBy).toBe('module3')
@@ -321,7 +311,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
       }
 
       const module3: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           callOrder.push('req3')
           // Third module receives args with transformations from both module1 and module2
           expect((req.args[0] as any).req1Processed).toBe(true)
@@ -332,7 +322,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
             args: [{ ...req.args[0], req3Processed: true }, req.args[1]]
           }
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           callOrder.push('res3')
           // First module in response chain receives raw response from underlying wallet
           expect((res as any).processedBy).toBeUndefined()
@@ -342,9 +332,9 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'scheme1': module1,
-          'scheme2': module2,
-          'scheme3': module3
+          scheme1: module1,
+          scheme2: module2,
+          scheme3: module3
         },
         seekSpendingPermissions: false,
         seekBasketInsertionPermissions: false
@@ -385,16 +375,16 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Basket Delegation - internalizeAction', () => {
     it('should delegate to P-module when P-basket is specified in insertionRemittance', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('internalizeAction')
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         },
         encryptWalletMetadata: false
       }
@@ -407,15 +397,17 @@ describe('WalletPermissionsManager - P-Module Support', () => {
         {
           tx: [],
           description: 'Test internalize action',
-          outputs: [{
-            outputIndex: 0,
-            protocol: 'basket insertion',
-            paymentRemittance: { derivationPrefix: '', derivationSuffix: '', senderIdentityKey: '' },
-            insertionRemittance: {
-              basket: 'p myscheme data',
-              customInstructions: ''
-            }
-          } as any] // Use 'as any' to avoid strict type checking in test
+          outputs: [
+            {
+              outputIndex: 0,
+              protocol: 'basket insertion',
+              paymentRemittance: { derivationPrefix: '', derivationSuffix: '', senderIdentityKey: '' },
+              insertionRemittance: {
+                basket: 'p myscheme data',
+                customInstructions: ''
+              }
+            } as any
+          ] // Use 'as any' to avoid strict type checking in test
         },
         'app.com'
       )
@@ -428,12 +420,12 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Protocol Delegation', () => {
     it('should delegate getPublicKey to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('getPublicKey')
           expect(req.args[0].protocolID).toEqual([0, 'p bottle test'])
           return req
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           // Module can verify the key or add metadata
           return { ...res, verifiedByModule: true }
         })
@@ -441,7 +433,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'bottle': testModule
+          bottle: testModule
         },
         seekPermissionsForPublicKeyRevelation: false
       }
@@ -466,18 +458,18 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate createSignature to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('createSignature')
           expect(req.args[0].protocolID).toEqual([1, 'p token spend'])
           // Module can validate spend amounts, check limits, etc.
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'token': testModule
+          token: testModule
         },
         seekProtocolPermissionsForSigning: false
       }
@@ -501,16 +493,16 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate verifySignature to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('verifySignature')
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'secure': testModule
+          secure: testModule
         }
       }
 
@@ -533,17 +525,17 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate encrypt to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('encrypt')
           expect(req.args[0].protocolID).toEqual([2, 'p secure encrypt'])
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'secure': testModule
+          secure: testModule
         },
         seekProtocolPermissionsForEncrypting: false
       }
@@ -566,11 +558,11 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate decrypt to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('decrypt')
           return req
         }),
-        onResponse: jest.fn(async (res) => {
+        onResponse: jest.fn(async res => {
           // Module could verify decrypted content
           return res
         })
@@ -578,7 +570,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'secure': testModule
+          secure: testModule
         },
         seekProtocolPermissionsForEncrypting: false
       }
@@ -602,16 +594,16 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate createHmac to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('createHmac')
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'hmac': testModule
+          hmac: testModule
         },
         seekProtocolPermissionsForHMAC: false
       }
@@ -634,16 +626,16 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should delegate verifyHmac to P-protocol module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           expect(req.method).toBe('verifyHmac')
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'hmac': testModule
+          hmac: testModule
         }
       }
 
@@ -671,20 +663,20 @@ describe('WalletPermissionsManager - P-Module Support', () => {
         onRequest: jest.fn(async () => {
           throw new Error('Module validation failed')
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'failing': testModule
+          failing: testModule
         }
       }
 
       const manager = new WalletPermissionsManager(underlying, 'customToken.domain.com', config)
 
-      await expect(
-        manager.listOutputs({ basket: 'p failing data' }, 'app.com')
-      ).rejects.toThrow('Module validation failed')
+      await expect(manager.listOutputs({ basket: 'p failing data' }, 'app.com')).rejects.toThrow(
+        'Module validation failed'
+      )
 
       // Underlying should not be called if module fails
       expect(underlying.listOutputs).not.toHaveBeenCalled()
@@ -692,7 +684,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should throw if P-module onResponse throws', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
+        onRequest: jest.fn(async req => req),
         onResponse: jest.fn(async () => {
           throw new Error('Module response processing failed')
         })
@@ -700,7 +692,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'failing': testModule
+          failing: testModule
         }
       }
 
@@ -708,9 +700,9 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       underlying.listOutputs.mockResolvedValue({ outputs: [] })
 
-      await expect(
-        manager.listOutputs({ basket: 'p failing data' }, 'app.com')
-      ).rejects.toThrow('Module response processing failed')
+      await expect(manager.listOutputs({ basket: 'p failing data' }, 'app.com')).rejects.toThrow(
+        'Module response processing failed'
+      )
 
       // Underlying was called, but response processing failed
       expect(underlying.listOutputs).toHaveBeenCalled()
@@ -718,16 +710,16 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should call P-module onRequest even when permission checks are enabled', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           // Module validation happens before permission checks
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         },
         seekProtocolPermissionsForSigning: false // Disable to simplify test
       }
@@ -755,17 +747,17 @@ describe('WalletPermissionsManager - P-Module Support', () => {
   describe('P-Module Admin Bypass', () => {
     it('should still use P-module even for admin originator', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => {
+        onRequest: jest.fn(async req => {
           // Module should be called even for admin
           expect(req.originator).toBe('admin.com')
           return req
         }),
-        onResponse: jest.fn(async (res) => res)
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         }
       }
 
@@ -773,10 +765,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       underlying.listOutputs.mockResolvedValue({ outputs: [] })
 
-      await manager.listOutputs(
-        { basket: 'p myscheme data' },
-        'admin.com'
-      )
+      await manager.listOutputs({ basket: 'p myscheme data' }, 'admin.com')
 
       // Module should be invoked even for admin calls
       expect(testModule.onRequest).toHaveBeenCalledTimes(1)
@@ -785,13 +774,13 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
     it('should still block non-admin access to admin baskets even with P-module', async () => {
       const testModule: PermissionsModule = {
-        onRequest: jest.fn(async (req) => req),
-        onResponse: jest.fn(async (res) => res)
+        onRequest: jest.fn(async req => req),
+        onResponse: jest.fn(async res => res)
       }
 
       const config: PermissionsManagerConfig = {
         permissionModules: {
-          'myscheme': testModule
+          myscheme: testModule
         },
         seekBasketListingPermissions: false
       }
@@ -800,12 +789,7 @@ describe('WalletPermissionsManager - P-Module Support', () => {
 
       // Try to access admin basket with non-admin originator
       // Admin baskets are prefixed with 'admin_' by convention
-      await expect(
-        manager.listOutputs(
-          { basket: 'admin_someAdminBasket' },
-          'app.com'
-        )
-      ).rejects.toThrow(/admin-only/)
+      await expect(manager.listOutputs({ basket: 'admin_someAdminBasket' }, 'app.com')).rejects.toThrow(/admin-only/)
 
       // P-module should NOT have been called since admin check happens before P-module delegation
       expect(testModule.onRequest).not.toHaveBeenCalled()
