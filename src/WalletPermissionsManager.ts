@@ -18,7 +18,8 @@ import {
   InternalizeActionArgs,
   ListOutputsArgs,
   RelinquishOutputArgs,
-  GetPublicKeyArgs
+  GetPublicKeyArgs,
+  CreateActionArgs
 } from '@bsv/sdk'
 
 ////// TODO: ADD SUPPORT FOR ADMIN COUNTERPARTIES BASED ON WALLET STORAGE
@@ -2694,18 +2695,18 @@ export class WalletPermissionsManager implements WalletInterface {
       const pModules = Array.from(pModulesByScheme.values())
 
       // Chain onRequest calls through all modules
-      let transformedArgs = finalArgs
+      let transformedArgs: object = finalArgs
       for (const module of pModules) {
         const transformed = await module.onRequest({
           method: 'createAction',
-          args: [transformedArgs, originator!],
+          args: transformedArgs,
           originator: originator!
         })
-        transformedArgs = transformed.args[0]
+        transformedArgs = transformed.args
       }
 
       // Call underlying wallet with transformed args
-      createResult = await this.underlying.createAction(transformedArgs, originator!)
+      createResult = await this.underlying.createAction(transformedArgs as CreateActionArgs, originator!)
 
       // Chain onResponse calls in reverse order
       for (let i = pModules.length - 1; i >= 0; i--) {
