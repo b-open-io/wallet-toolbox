@@ -8,7 +8,17 @@ import {
   Base64String,
   PubKeyHex,
   Beef,
-  Validation
+  Validation,
+  WalletEncryptArgs,
+  WalletDecryptArgs,
+  CreateHmacArgs,
+  VerifyHmacArgs,
+  CreateSignatureArgs,
+  VerifySignatureArgs,
+  InternalizeActionArgs,
+  ListOutputsArgs,
+  RelinquishOutputArgs,
+  GetPublicKeyArgs
 } from '@bsv/sdk'
 
 ////// TODO: ADD SUPPORT FOR ADMIN COUNTERPARTIES BASED ON WALLET STORAGE
@@ -54,7 +64,7 @@ export interface PermissionsModule {
    * @param req - The incoming request with method, args, and originator
    * @returns Transformed arguments that will be passed to the underlying wallet
    */
-  onRequest(req: { method: string; args: any[]; originator: string }): Promise<{ args: any[] }>
+  onRequest(req: { method: string; args: object; originator: string }): Promise<{ args: object }>
 
   /**
    * Transforms the response from the underlying wallet before returning to caller.
@@ -528,9 +538,9 @@ export class WalletPermissionsManager implements WalletInterface {
   private async delegateToPModuleIfNeeded<T>(
     basketOrProtocolName: string,
     method: string,
-    args: any[],
+    args: object,
     originator: string,
-    underlyingCall: (transformedArgs: any[], originator: string) => Promise<T>
+    underlyingCall: (transformedArgs: object, originator: string) => Promise<T>
   ): Promise<T | null> {
     // Check if this is a P-protocol/basket
     if (!basketOrProtocolName.startsWith('p ')) {
@@ -2893,15 +2903,14 @@ export class WalletPermissionsManager implements WalletInterface {
         const pModuleResult = await this.delegateToPModuleIfNeeded(
           out.insertionRemittance!.basket,
           'internalizeAction',
-          args,
+          requestArgs,
           originator!,
           async transformedArgs => {
-            const [transformedRequestArgs] = transformedArgs
             if (out.insertionRemittance!.customInstructions) {
-              transformedRequestArgs.outputs[outIndex].insertionRemittance!.customInstructions =
+              ;(transformedArgs as InternalizeActionArgs).outputs[outIndex].insertionRemittance!.customInstructions =
                 await this.maybeEncryptMetadata(out.insertionRemittance!.customInstructions)
             }
-            return await this.underlying.internalizeAction(transformedRequestArgs, originator!)
+            return await this.underlying.internalizeAction(transformedArgs as InternalizeActionArgs, originator!)
           }
         )
         if (pModuleResult !== null) {
@@ -2933,11 +2942,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.basket,
       'listOutputs',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        const result = await this.underlying.listOutputs(transformedRequestArgs, originator!)
+        const result = await this.underlying.listOutputs(transformedArgs as ListOutputsArgs, originator!)
         // Apply metadata decryption to permission module response
         return await this.decryptListOutputsMetadata(result)
       }
@@ -2968,11 +2976,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.basket,
       'relinquishOutput',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.relinquishOutput(transformedRequestArgs, originator!)
+        return await this.underlying.relinquishOutput(transformedArgs as RelinquishOutputArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -2998,11 +3005,10 @@ export class WalletPermissionsManager implements WalletInterface {
       const pModuleResult = await this.delegateToPModuleIfNeeded(
         requestArgs.protocolID[1],
         'getPublicKey',
-        args,
+        requestArgs,
         originator!,
         async transformedArgs => {
-          const [transformedRequestArgs] = transformedArgs
-          return await this.underlying.getPublicKey(transformedRequestArgs, originator!)
+          return await this.underlying.getPublicKey(transformedArgs as GetPublicKeyArgs, originator!)
         }
       )
       if (pModuleResult !== null) {
@@ -3074,11 +3080,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'encrypt',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.encrypt(transformedRequestArgs, originator!)
+        return await this.underlying.encrypt(transformedArgs as WalletEncryptArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -3101,11 +3106,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'decrypt',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.decrypt(transformedRequestArgs, originator!)
+        return await this.underlying.decrypt(transformedArgs as WalletDecryptArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -3130,11 +3134,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'createHmac',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.createHmac(transformedRequestArgs, originator!)
+        return await this.underlying.createHmac(transformedArgs as CreateHmacArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -3159,11 +3162,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'verifyHmac',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.verifyHmac(transformedRequestArgs, originator!)
+        return await this.underlying.verifyHmac(transformedArgs as VerifyHmacArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -3188,11 +3190,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'createSignature',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.createSignature(transformedRequestArgs, originator!)
+        return await this.underlying.createSignature(transformedArgs as CreateSignatureArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
@@ -3217,11 +3218,10 @@ export class WalletPermissionsManager implements WalletInterface {
     const pModuleResult = await this.delegateToPModuleIfNeeded(
       requestArgs.protocolID[1],
       'verifySignature',
-      args,
+      requestArgs,
       originator!,
       async transformedArgs => {
-        const [transformedRequestArgs] = transformedArgs
-        return await this.underlying.verifySignature(transformedRequestArgs, originator!)
+        return await this.underlying.verifySignature(transformedArgs as VerifySignatureArgs, originator!)
       }
     )
     if (pModuleResult !== null) {
