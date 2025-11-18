@@ -19,7 +19,8 @@ import {
   ListOutputsArgs,
   RelinquishOutputArgs,
   GetPublicKeyArgs,
-  CreateActionArgs
+  CreateActionArgs,
+  ListOutputsResult
 } from '@bsv/sdk'
 
 ////// TODO: ADD SUPPORT FOR ADMIN COUNTERPARTIES BASED ON WALLET STORAGE
@@ -575,7 +576,7 @@ export class WalletPermissionsManager implements WalletInterface {
   /**
    * Decrypts custom instructions in listOutputs results if encryption is configured.
    */
-  private async decryptListOutputsMetadata(results: any): Promise<any> {
+  private async decryptListOutputsMetadata(results: ListOutputsResult): Promise<ListOutputsResult> {
     if (results.outputs) {
       for (let i = 0; i < results.outputs.length; i++) {
         if (results.outputs[i].customInstructions) {
