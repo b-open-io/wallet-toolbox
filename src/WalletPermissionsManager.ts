@@ -43,16 +43,15 @@ function isObject(object: any): boolean {
 }
 
 /**
- * A permissions module handles request/response transformation for a specific P-basket scheme.
- * Modules are registered in the config mapped by their scheme ID.
+ * A permissions module handles request/response transformation for a specific P-protocol or P-basket scheme under BRC-98/99.
  */
 export interface PermissionsModule {
   /**
    * Transforms the request before it's passed to the underlying wallet.
-   * Can modify method name, args, or originator as needed.
+   * Can check and enforce permissions, throw errors, or modify any arguments as needed prior to invocation.
    *
    * @param req - The incoming request with method, args, and originator
-   * @returns Transformed request that will be passed to the underlying wallet
+   * @returns Transformed arguments that will be passed to the underlying wallet
    */
   onRequest(req: { method: string; args: any[]; originator: string }): Promise<{ args: any[] }>
 
