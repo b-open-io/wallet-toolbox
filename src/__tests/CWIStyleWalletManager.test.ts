@@ -386,6 +386,8 @@ describe('CWIStyleWalletManager Tests', () => {
     })
   })
 
+  
+
   describe('Change Recovery Key', () => {
     test('Prompts to save the new key, updates the token', async () => {
       ;(mockUMPTokenInteractor.findByPresentationKeyHash as any).mockResolvedValueOnce(undefined)
@@ -430,6 +432,77 @@ describe('CWIStyleWalletManager Tests', () => {
       const newPresKey = Array.from({ length: 32 }, () => 0xee)
       await manager.changePresentationKey(newPresKey)
       expect(mockUMPTokenInteractor.buildAndSend).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('Profile management', () => {
+    test('addProfile adds a new profile and updates the UMP token', async () => {
+      ;(mockUMPTokenInteractor.findByPresentationKeyHash as any).mockResolvedValueOnce(undefined)
+      await manager.providePresentationKey(presentationKey)
+      await manager.providePassword('test-password')
+      expect(manager.authenticated).toBe(true)
+
+      const initialProfiles = manager.listProfiles()
+      expect(initialProfiles).toHaveLength(1)
+      expect(initialProfiles[0].name).toBe('default')
+
+      const getFactorSpy = jest
+        .spyOn(manager as any, 'getFactor')
+        .mockImplementation(async () => Random(32))
+
+      ;(mockUMPTokenInteractor.buildAndSend as any).mockClear()
+
+      const newProfileId = await manager.addProfile('Work')
+      expect(Array.isArray(newProfileId)).toBe(true)
+      expect(newProfileId.length).toBe(16)
+
+      const updatedProfiles = manager.listProfiles()
+      expect(updatedProfiles).toHaveLength(2)
+      const workProfile = updatedProfiles.find(p => p.name === 'Work')
+      expect(workProfile).toBeDefined()
+      expect(workProfile!.active).toBe(false)
+
+      expect(mockUMPTokenInteractor.buildAndSend).toHaveBeenCalledTimes(1)
+
+      getFactorSpy.mockRestore()
+    })
+
+    test('syncUMPToken refreshes UMP token and profiles from overlay when newer token exists', async () => {
+      ;(mockUMPTokenInteractor.findByPresentationKeyHash as any).mockResolvedValueOnce(undefined)
+      await manager.providePresentationKey(presentationKey)
+      await manager.providePassword('test-password')
+      expect(manager.authenticated).toBe(true)
+
+      const originalToken = (manager as any).currentUMPToken as UMPToken
+      const rootPrimaryKey = (manager as any).rootPrimaryKey as number[]
+
+      const extraProfile = {
+        name: 'overlay-profile',
+        id: Random(16),
+        primaryPad: Random(32),
+        privilegedPad: Random(32),
+        createdAt: Math.floor(Date.now() / 1000)
+      }
+      const profilesJson = JSON.stringify([extraProfile])
+      const profilesBytes = Utils.toArray(profilesJson, 'utf8')
+      const profilesEncrypted = new SymmetricKey(rootPrimaryKey).encrypt(profilesBytes) as number[]
+
+      const updatedToken: UMPToken = {
+        ...originalToken,
+        currentOutpoint: makeOutpoint('overlay-tx', 0),
+        profilesEncrypted
+      }
+
+      const saveSnapshotSpy = jest.spyOn(manager, 'saveSnapshot')
+      ;(mockUMPTokenInteractor.findByPresentationKeyHash as any).mockResolvedValueOnce(updatedToken)
+
+      const result = await manager.syncUMPToken()
+      expect(result).toBe(true)
+      expect(saveSnapshotSpy).toHaveBeenCalled()
+      saveSnapshotSpy.mockRestore()
+
+      const profiles = manager.listProfiles()
+      expect(profiles.some(p => p.name === 'overlay-profile')).toBe(true)
     })
   })
 
