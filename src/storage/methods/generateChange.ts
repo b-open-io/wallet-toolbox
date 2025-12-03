@@ -1,9 +1,10 @@
-import { Validation } from '@bsv/sdk'
+import { Validation, WalletLoggerInterface } from '@bsv/sdk'
 import { WalletError } from '../../sdk/WalletError'
 import { StorageFeeModel } from '../../sdk/WalletStorage.interfaces'
 import { WERR_INSUFFICIENT_FUNDS, WERR_INTERNAL, WERR_INVALID_PARAMETER } from '../../sdk/WERR_errors'
 import { validateStorageFeeModel } from '../StorageProvider'
 import { transactionSize } from './utils'
+import { Wallet, WalletLogger } from '../../index.client'
 
 /**
  * An output of this satoshis amount will be adjusted to the largest fundable amount.
@@ -38,7 +39,8 @@ export async function generateChangeSdk(
     targetSatoshis: number,
     exactSatoshis?: number
   ) => Promise<GenerateChangeSdkChangeInput | undefined>,
-  releaseChangeInput: (outputId: number) => Promise<void>
+  releaseChangeInput: (outputId: number) => Promise<void>,
+  logger?: WalletLoggerInterface
 ): Promise<GenerateChangeSdkResult> {
   if (params.noLogging === false) logGenerateChangeSdkParams(params)
 
@@ -275,8 +277,10 @@ export async function generateChangeSdk(
      * Trigger an account funding event if we don't have enough to cover this transaction.
      */
     if (feeExcess() < 0) {
+      const werr = new WERR_INSUFFICIENT_FUNDS(spending() + feeTarget(), -feeExcessNow)
+      logger?.error(`throwing WERR_INSUFFICIENT_FUNDS moreSatoshisNeeded ${werr.moreSatoshisNeeded}`)
       await releaseAllocatedChangeInputs()
-      throw new WERR_INSUFFICIENT_FUNDS(spending() + feeTarget(), -feeExcessNow)
+      throw werr
     }
 
     /**
