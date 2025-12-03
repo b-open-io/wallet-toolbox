@@ -386,8 +386,6 @@ describe('CWIStyleWalletManager Tests', () => {
     })
   })
 
-  
-
   describe('Change Recovery Key', () => {
     test('Prompts to save the new key, updates the token', async () => {
       ;(mockUMPTokenInteractor.findByPresentationKeyHash as any).mockResolvedValueOnce(undefined)
@@ -446,9 +444,7 @@ describe('CWIStyleWalletManager Tests', () => {
       expect(initialProfiles).toHaveLength(1)
       expect(initialProfiles[0].name).toBe('default')
 
-      const getFactorSpy = jest
-        .spyOn(manager as any, 'getFactor')
-        .mockImplementation(async () => Random(32))
+      const getFactorSpy = jest.spyOn(manager as any, 'getFactor').mockImplementation(async () => Random(32))
 
       ;(mockUMPTokenInteractor.buildAndSend as any).mockClear()
 
