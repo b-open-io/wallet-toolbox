@@ -1044,6 +1044,40 @@ export class CWIStyleWalletManager implements WalletInterface {
     }
   }
 
+  async syncUMPToken(): Promise<boolean> {
+    if (!this.authenticated || !this.currentUMPToken || !this.rootPrimaryKey) {
+      throw new Error('Wallet not authenticated or missing UMP token.')
+    }
+
+    const currentToken = this.currentUMPToken
+    let refreshed: UMPToken | undefined
+
+    if (currentToken.presentationHash && currentToken.presentationHash.length) {
+      refreshed = await this.UMPTokenInteractor.findByPresentationKeyHash(currentToken.presentationHash)
+    }
+
+    if (!refreshed && currentToken.recoveryHash && currentToken.recoveryHash.length) {
+      refreshed = await this.UMPTokenInteractor.findByRecoveryKeyHash(currentToken.recoveryHash)
+    }
+
+    if (!refreshed) {
+      return false
+    }
+
+    if (
+      refreshed.currentOutpoint &&
+      currentToken.currentOutpoint &&
+      refreshed.currentOutpoint === currentToken.currentOutpoint
+    ) {
+      return false
+    }
+
+    this.currentUMPToken = refreshed
+    await this.setupRootInfrastructure(this.rootPrimaryKey)
+    this.saveSnapshot()
+    return true
+  }
+
   /**
    * Destroys the wallet state, clearing keys, tokens, and profiles.
    */
