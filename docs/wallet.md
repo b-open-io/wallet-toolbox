@@ -4003,17 +4003,16 @@ encryptWalletMetadata?: boolean
 
 ###### Property permissionModules
 
-A map of P-basket permission scheme modules.
+A map of P-basket/protocol permission scheme modules.
 
 Keys are scheme IDs (e.g., "btms"), values are PermissionsModule instances.
 
-Each module handles basket IDs of the form: `p <schemeID> <rest...>`
+Each module handles basket/protocol names of the form: `p <schemeID> <rest...>`
 
-The WalletPermissionManager detects P-prefix baskets and delegates
+The WalletPermissionManager detects P-prefix baskets/protocols and delegates
 request/response transformation to the corresponding module.
 
-If no module exists for a given schemeID, the wallet MUST reject access
-according to the P-Baskets specification.
+If no module exists for a given schemeID, the wallet will reject access.
 
 ```ts
 permissionModules?: Record<string, PermissionsModule>
@@ -4178,19 +4177,17 @@ Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](
 ---
 ##### Interface: PermissionsModule
 
-A permissions module handles request/response transformation for a specific P-basket scheme.
+A permissions module handles request/response transformation for a specific P-protocol or P-basket scheme under BRC-98/99.
 Modules are registered in the config mapped by their scheme ID.
 
 ```ts
 export interface PermissionsModule {
     onRequest(req: {
         method: string;
-        args: any[];
+        args: object;
         originator: string;
     }): Promise<{
-        method: string;
-        args: any[];
-        originator: string;
+        args: object;
     }>;
     onResponse(res: any, context: {
         method: string;
@@ -4202,23 +4199,21 @@ export interface PermissionsModule {
 ###### Method onRequest
 
 Transforms the request before it's passed to the underlying wallet.
-Can modify method name, args, or originator as needed.
+Can check and enforce permissions, throw errors, or modify any arguments as needed prior to invocation.
 
 ```ts
 onRequest(req: {
     method: string;
-    args: any[];
+    args: object;
     originator: string;
 }): Promise<{
-    method: string;
-    args: any[];
-    originator: string;
+    args: object;
 }>
 ```
 
 Returns
 
-Transformed request that will be passed to the underlying wallet
+Transformed arguments that will be passed to the underlying wallet
 
 Argument Details
 
@@ -16739,10 +16734,10 @@ Simplifications:
 Confirms for each availbleChange output that it remains available as they are allocated and selects alternate if not.
 
 ```ts
-export async function generateChangeSdk(params: GenerateChangeSdkParams, allocateChangeInput: (targetSatoshis: number, exactSatoshis?: number) => Promise<GenerateChangeSdkChangeInput | undefined>, releaseChangeInput: (outputId: number) => Promise<void>): Promise<GenerateChangeSdkResult> 
+export async function generateChangeSdk(params: GenerateChangeSdkParams, allocateChangeInput: (targetSatoshis: number, exactSatoshis?: number) => Promise<GenerateChangeSdkChangeInput | undefined>, releaseChangeInput: (outputId: number) => Promise<void>, logger?: WalletLoggerInterface): Promise<GenerateChangeSdkResult> 
 ```
 
-See also: [GenerateChangeSdkChangeInput](./storage.md#interface-generatechangesdkchangeinput), [GenerateChangeSdkParams](./storage.md#interface-generatechangesdkparams), [GenerateChangeSdkResult](./storage.md#interface-generatechangesdkresult)
+See also: [GenerateChangeSdkChangeInput](./storage.md#interface-generatechangesdkchangeinput), [GenerateChangeSdkParams](./storage.md#interface-generatechangesdkparams), [GenerateChangeSdkResult](./storage.md#interface-generatechangesdkresult), [logger](./client.md#variable-logger)
 
 Links: [API](#api), [Interfaces](#interfaces), [Classes](#classes), [Functions](#functions), [Types](#types), [Variables](#variables)
 
