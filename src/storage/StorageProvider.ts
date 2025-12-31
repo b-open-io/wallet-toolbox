@@ -146,6 +146,49 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
     return this._services
   }
 
+  /**
+   * Gets the total spendable balance (in satoshis) for a specific output basket.
+   * This method provides a clear, dedicated interface for querying wallet balance
+   * without relying on special operation basket names.
+   *
+   * @param auth Identifies client by identity key and storage identity key
+   * @param basket Optional basket name, defaults to 'default' (the wallet's change basket)
+   * @returns The total satoshis available in the specified basket
+   */
+  async getBalance(auth: AuthId, basket: string = 'default'): Promise<number> {
+    if (!auth.userId) throw new WERR_UNAUTHORIZED()
+
+    // Find all spendable outputs in the specified basket and sum their satoshis
+    const outputs = await this.findOutputsAuth(auth, {
+      partial: {
+        userId: auth.userId,
+        spendable: true
+      }
+    })
+
+    // Filter by basket if we have basket information
+    const basketRecord = await verifyOneOrNone(
+      await this.findOutputBasketsAuth(auth, {
+        partial: { userId: auth.userId, name: basket }
+      })
+    )
+
+    if (!basketRecord) {
+      // Basket doesn't exist, return 0
+      return 0
+    }
+
+    // Sum satoshis for outputs in this basket
+    let total = 0
+    for (const output of outputs) {
+      if (output.basketId === basketRecord.basketId) {
+        total += output.satoshis
+      }
+    }
+
+    return total
+  }
+
   async abortAction(auth: AuthId, args: AbortActionArgs): Promise<AbortActionResult> {
     if (!auth.userId) throw new WERR_INVALID_PARAMETER('auth.userId', 'valid')
 

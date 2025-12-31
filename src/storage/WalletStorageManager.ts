@@ -495,6 +495,14 @@ export class WalletStorageManager implements sdk.WalletStorage {
       return await reader.listOutputs(auth, vargs)
     })
   }
+  
+  async getBalance(basket: string = 'default'): Promise<number> {
+    const auth = await this.getAuth()
+    return await this.runAsReader(async reader => {
+      return await reader.getBalance(auth, basket)
+    })
+  }
+
   async findCertificates(args: sdk.FindCertificatesArgs): Promise<TableCertificateX[]> {
     const auth = await this.getAuth()
     return await this.runAsReader(async reader => {

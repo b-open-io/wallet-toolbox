@@ -80,6 +80,16 @@ export interface WalletStorage {
   listCertificates(args: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult>
   listOutputs(args: ListOutputsArgs): Promise<ListOutputsResult>
 
+  /**
+   * Gets the total spendable balance (in satoshis) for a specific output basket.
+   * This is a dedicated method that replaces the need for special operation basket names
+   * when querying wallet balance.
+   *
+   * @param basket Optional basket name, defaults to 'default' (the wallet's change basket)
+   * @returns The total satoshis available in the specified basket
+   */
+  getBalance(basket?: string): Promise<number>
+
   insertCertificate(certificate: TableCertificateX): Promise<number>
 
   relinquishCertificate(args: RelinquishCertificateArgs): Promise<number>
@@ -173,6 +183,7 @@ export interface WalletStorageReader {
   listActions(auth: AuthId, vargs: Validation.ValidListActionsArgs): Promise<ListActionsResult>
   listCertificates(auth: AuthId, vargs: Validation.ValidListCertificatesArgs): Promise<ListCertificatesResult>
   listOutputs(auth: AuthId, vargs: Validation.ValidListOutputsArgs): Promise<ListOutputsResult>
+  getBalance(auth: AuthId, basket?: string): Promise<number>
 }
 
 export interface AuthId {

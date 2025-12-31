@@ -91,7 +91,6 @@ import {
   specOpNoSendActions,
   specOpSetWalletChangeParams,
   specOpThrowReviewActions,
-  specOpWalletBalance,
   StorageIdentity,
   WalletBalance
 } from './sdk/types'
@@ -1006,17 +1005,15 @@ export class Wallet implements WalletInterface, ProtoWallet {
   }
 
   /**
-   * Uses `listOutputs` special operation to compute the total value (of satoshis) for
-   * all spendable outputs in the 'default' basket.
+   * Gets the total spendable balance (in satoshis) for the wallet's default basket.
    *
-   * @returns {number} sum of output satoshis
+   * This method now uses a dedicated storage method instead of the legacy special operation pattern,
+   * making it more readable and easier to understand for third parties implementing remote storage clients.
+   *
+   * @returns {number} sum of spendable output satoshis in the 'default' basket
    */
   async balance(): Promise<number> {
-    const args: ListOutputsArgs = {
-      basket: specOpWalletBalance
-    }
-    const r = await this.listOutputs(args)
-    return r.totalOutputs
+    return await this.storage.getBalance()
   }
 
   /**

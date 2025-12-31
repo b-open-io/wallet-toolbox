@@ -344,6 +344,20 @@ export class StorageClient implements WalletStorageProvider {
   }
 
   /**
+   * Gets the total spendable balance (in satoshis) for a specific output basket.
+   * This method provides a clear, dedicated interface for querying wallet balance
+   * without relying on special operation basket names.
+   *
+   * @param auth Identifies client by identity key and storage identity key
+   * @param basket Optional basket name, defaults to 'default' (the wallet's change basket)
+   * @returns The total satoshis available in the specified basket
+   */
+  async getBalance(auth: AuthId, basket: string = 'default'): Promise<number> {
+    const r = await this.rpcCall<number>('getBalance', [auth, basket])
+    return r
+  }
+
+  /**
    * Storage level processing for wallet `listCertificates`.
    * @param auth Identifies client by identity key and the storage identity key of their currently active storage.
    * This must match the `AuthFetch` identity securing the remote conneciton.

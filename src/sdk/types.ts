@@ -150,6 +150,11 @@ export interface ProvenTransactionStatus {
  *
  * Returns wallet's current change balance in the `totalOutputs` result property.
  * The `outputs` result property will always be an empty array.
+ *
+ * @deprecated This special operation approach is deprecated in favor of the dedicated
+ * `WalletStorageProvider.getBalance()` method which provides a clearer, more explicit
+ * interface for remote storage clients. The constant is kept for backward compatibility
+ * with storage implementations that still handle this special operation internally.
  */
 export const specOpWalletBalance = '893b7646de0e1c9f741bd6e9169b76a8847ae34adef7bef1e6a285371206d2e8'
 
