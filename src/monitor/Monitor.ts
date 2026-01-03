@@ -20,7 +20,7 @@ import { Chain, ProvenTransactionStatus } from '../sdk/types'
 import { ReviewActionResult } from '../sdk/WalletStorage.interfaces'
 import { WERR_BAD_REQUEST, WERR_INVALID_PARAMETER } from '../sdk/WERR_errors'
 import { WalletError } from '../sdk/WalletError'
-import { BlockHeader } from '../sdk/WalletServices.interfaces'
+import { BlockHeader, WalletServices } from '../sdk/WalletServices.interfaces'
 import { Services } from '../services/Services'
 import { ChaintracksClientApi, ReorgListener } from '../services/chaintracker/chaintracks/Api/ChaintracksClientApi'
 import { Chaintracks } from '../services/chaintracker/chaintracks/Chaintracks'
@@ -30,7 +30,7 @@ export type MonitorStorage = WalletStorageManager
 export interface MonitorOptions {
   chain: Chain
 
-  services: Services
+  services: WalletServices
 
   storage: MonitorStorage
 
@@ -87,7 +87,7 @@ export class Monitor {
   }
 
   options: MonitorOptions
-  services: Services
+  services: WalletServices
   chain: Chain
   storage: MonitorStorage
   chaintracks: ChaintracksClientApi
