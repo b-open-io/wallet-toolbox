@@ -74,7 +74,11 @@ export class Monitor {
     if (!chaintracksWithoutEvents && services instanceof Services) {
       chaintracksWithoutEvents = services.options.chaintracks
     }
-    if (!chaintracksWithoutEvents) throw new WERR_INVALID_PARAMETER('services,chaintracks', 'either an instance of Services class or chaintracks must be valid.')
+    if (!chaintracksWithoutEvents)
+      throw new WERR_INVALID_PARAMETER(
+        'services,chaintracks',
+        'either an instance of Services class or chaintracks must be valid.'
+      )
     const o: MonitorOptions = {
       chain,
       services,

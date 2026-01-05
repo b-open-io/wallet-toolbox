@@ -4,6 +4,16 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## wallet-toolbox 1.7.19
+
+- Fix Monitor to accept WalletServices interface instead of concrete Services class
+- Fix StorageIdb filterProvenTxReqs to properly filter by `args.status` and `args.txids` arrays
+- Fix StorageIdb filterTxLabelMaps to filter by `args.labelIds` array
+- Fix StorageIdb filterOutputBaskets field name bug (`numberOfDesiredSatoshis` -> `minimumDesiredUTXOValue`)
+- Fix StorageIdb filterSyncStates field name bug (`errorLocale` -> `errorLocal`)
+- Add `orderDescending` support to all 15 StorageIdb filter methods
+- Update @bsv/sdk dependency to ^1.9.31
+
 ## wallet-toolbox 1.7.17
 
 - Fix push.yaml to sync versions, correct root package contents (no mobile), and publish client and mobile
