@@ -66,11 +66,15 @@ export class Monitor {
   static createDefaultWalletMonitorOptions(
     chain: Chain,
     storage: MonitorStorage,
-    services?: Services,
+    services?: WalletServices,
     chaintracks?: Chaintracks
   ): MonitorOptions {
     services ||= new Services(chain)
-    if (!services.options.chaintracks) throw new WERR_INVALID_PARAMETER('services.options.chaintracks', 'valid')
+    let chaintracksWithoutEvents: ChaintracksClientApi | undefined = chaintracks
+    if (!chaintracksWithoutEvents && services instanceof Services) {
+      chaintracksWithoutEvents = services.options.chaintracks
+    }
+    if (!chaintracksWithoutEvents) throw new WERR_INVALID_PARAMETER('services,chaintracks', 'either an instance of Services class or chaintracks must be valid.')
     const o: MonitorOptions = {
       chain,
       services,
@@ -80,7 +84,7 @@ export class Monitor {
       abandonedMsecs: 1000 * 60 * 5,
       unprovenAttemptsLimitTest: 10,
       unprovenAttemptsLimitMain: 144,
-      chaintracks: services.options.chaintracks,
+      chaintracks: chaintracksWithoutEvents,
       chaintracksWithEvents: chaintracks
     }
     return o
