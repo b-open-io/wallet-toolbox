@@ -229,25 +229,41 @@ async function createNewInputs(
     const o = i.output
     newInputs.push({ i, o })
     if (o) {
+      // IndexedDB transactions auto-commit when there are no pending IDB operations.
+      // Network calls (like getBeefForTransaction) create async gaps that cause the
+      // transaction to commit prematurely, making subsequent IDB operations fail.
+      // We do an initial read + potential network calls outside the transaction,
+      // then re-read inside the transaction to verify state hasn't changed.
+      const o2 = verifyOne(await storage.findOutputs({ partial: { outputId: o.outputId } }))
+      let competingBeef: number[] | undefined
+      if (o2.spentBy !== undefined) {
+        const spendingTx = await storage.findTransactionById(verifyId(o2.spentBy))
+        if (spendingTx && spendingTx.txid) {
+          // Fetch beef outside transaction (may involve network calls)
+          const beef = await storage.getBeefForTransaction(spendingTx.txid, {})
+          competingBeef = beef.toBinary()
+        }
+      }
+
+      // Transaction contains only IDB operations: re-read to verify state, then write
       await storage.transaction(async trx => {
-        const o2 = verifyOne(await storage.findOutputs({ partial: { outputId: o.outputId }, trx }))
-        if (o2.spentBy !== undefined) {
-          const spendingTx = await storage.findTransactionById(verifyId(o2.spentBy), trx)
+        const o3 = verifyOne(await storage.findOutputs({ partial: { outputId: o.outputId }, trx }))
+        if (o3.spentBy !== undefined) {
+          const spendingTx = await storage.findTransactionById(verifyId(o3.spentBy), trx)
           if (spendingTx && spendingTx.txid) {
-            const beef = await storage.getBeefForTransaction(spendingTx.txid, {})
             const rar: ReviewActionResult = {
               txid: '',
               status: 'doubleSpend',
               competingTxs: [spendingTx.txid!],
-              competingBeef: beef.toBinary()
+              competingBeef: competingBeef
             }
             throw new WERR_REVIEW_ACTIONS([rar], [])
           }
         }
-        if (o2.spendable != true) {
+        if (o3.spendable != true) {
           throw new WERR_INVALID_PARAMETER(
             `inputs[${i.vin}]`,
-            `spendable output. output ${o.txid}:${o.vout} appears to have been spent (spendable=${o2.spendable}).`
+            `spendable output. output ${o.txid}:${o.vout} appears to have been spent (spendable=${o3.spendable}).`
           )
         }
         await storage.updateOutput(

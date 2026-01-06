@@ -114,6 +114,15 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
   ): IDBPTransaction<StorageIdbSchema, string[], 'readwrite' | 'readonly'> {
     if (trx) {
       const t = trx as IDBPTransaction<StorageIdbSchema, string[], 'readwrite' | 'readonly'>
+      // Check if the transaction is still active by trying to access an object store
+      try {
+        const storeToCheck = stores[0] || this.allStores[0]
+        t.objectStore(storeToCheck)
+      } catch (e) {
+        console.error(`[StorageIdb.toDbTrx] Passed transaction already finished! stores=${stores.join(',')}, mode=${mode}`)
+        console.error('[StorageIdb.toDbTrx] Stack trace:', new Error().stack)
+        throw e
+      }
       return t
     } else {
       if (!this.db) throw new Error('not initialized')
@@ -357,7 +366,8 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     excludeSending: boolean,
     transactionId: number
   ): Promise<TableOutput | undefined> {
-    const dbTrx = this.toDbTrx(['outputs', 'transactions'], 'readwrite')
+    // Include proven_txs in store list since findOutputs -> validateOutputScript needs it
+    const dbTrx = this.toDbTrx(['outputs', 'transactions', 'proven_txs'], 'readwrite')
     try {
       const txStatus: TransactionStatus[] = ['completed', 'unproven']
       if (!excludeSending) txStatus.push('sending')
@@ -1014,7 +1024,13 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     }
     const u = this.validatePartialForUpdate(update)
     const dbTrx = this.toDbTrx([storeName], 'readwrite', trx)
-    const store = dbTrx.objectStore(storeName)
+    let store: any
+    try {
+      store = dbTrx.objectStore(storeName)
+    } catch (e) {
+      console.error(`[StorageIdb.updateIdb] objectStore('${storeName}') failed for id=${JSON.stringify(id)}, trx=${!!trx}:`, e)
+      throw e
+    }
     const ids = Array.isArray(id) ? id : [id]
     try {
       for (const i of ids) {
@@ -1189,7 +1205,13 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       await tx.done
       return r
     } catch (err) {
-      tx.abort()
+      // Log more detail about transaction errors to help debug IDB issues
+      console.error('[StorageIdb] Transaction error:', err instanceof Error ? err.message : err)
+      try {
+        tx.abort()
+      } catch (abortErr) {
+        console.error('[StorageIdb] Error aborting transaction:', abortErr)
+      }
       await tx.done
       throw err
     }
@@ -1649,7 +1671,9 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     )
     for (const o of results) {
       if (!args.noScript) {
-        await this.validateOutputScript(o)
+        // Pass the transaction to avoid creating separate IDB operations
+        // that would cause a passed transaction to auto-commit
+        await this.validateOutputScript(o, args.trx)
       } else {
         o.lockingScript = undefined
       }
