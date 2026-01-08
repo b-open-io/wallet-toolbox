@@ -1,5 +1,5 @@
 {
-  "name": "@bsv/wallet-toolbox",
+  "name": "@bopen-io/wallet-toolbox",
   "version": "1.7.18",
   "description": "BRC100 conforming wallet, wallet storage and wallet signer components",
   "main": "./out/src/index.js",
