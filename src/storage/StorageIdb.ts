@@ -656,9 +656,9 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       }
       if (args.status && args.status.length > 0 && !args.status.includes(r.status)) continue
       if (args.txids && args.txids.length > 0 && !args.txids.includes(r.txid)) continue
-      if (userId !== undefined && r.txid) {
-        const count = await this.countTransactions({ partial: { userId, txid: r.txid }, trx: dbTrx })
-        if (count === 0) continue
+      if (userId !== undefined) {
+        const txsForUser = await this.countTransactions({ partial: { userId, txid: r.txid }, trx: dbTrx })
+        if (txsForUser === 0) continue
       }
       if (skipped < offset) {
         skipped++
