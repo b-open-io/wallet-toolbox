@@ -364,6 +364,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       const args: FindOutputsArgs = {
         partial: { userId, basketId, spendable: true },
         txStatus,
+        // Skip per-output script hydration during the candidate scan — we only need
+        // the locking script for the one we actually pick below. Matches Knex's
+        // pattern: SELECT candidates cheaply, hydrate the chosen output explicitly.
+        noScript: true,
         trx: dbTrx
       }
       const outputs = await this.findOutputs(args)
@@ -396,6 +400,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (output) {
         // mark output as spent by transactionId
         await this.updateOutput(output.outputId, { spendable: false, spentBy: transactionId }, dbTrx)
+        // Hydrate the locking script for the chosen output. Identical to Knex canon at
+        // StorageKnex.allocateChangeInput: required when the script was offloaded into
+        // rawTx storage due to exceeding maxOutputScript.
+        await this.validateOutputScript(output, dbTrx)
       }
       return output
     } finally {
