@@ -1063,7 +1063,9 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     try {
       for (const i of ids) {
         const e = await store.get(i)
-        if (!e) throw new WERR_INVALID_PARAMETER('id', `an existing record to update ${keyProp} ${i} not found`)
+        // Match Knex/Bun semantics: missing rows produce a 0-row result, not an error.
+        // Caller receives the true updated count and can decide how to react.
+        if (!e) continue
         const v: T = {
           ...e,
           ...u
