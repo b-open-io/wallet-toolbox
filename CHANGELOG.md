@@ -4,6 +4,19 @@ This document captures the history of significant changes to the wallet-toolbox 
 The git commit history contains the details but is unable to draw
 attention to changes that materially alter behavior or extend functionality.
 
+## @bopen-io/wallet-toolbox 2.1.21-parity-fix.0
+
+StorageIdb aligned with StorageKnex canon. Six functional divergences fixed.
+
+- **CRIT** `filterOutputTagMaps` user-scope filter was dead code (`&& r.txid` on a table with no txid field). `getOutputTagMapsForUser` leaked rows across accounts. Fixes cross-account sync chunk contamination.
+- **HIGH** `filterOutputs` / `filterTransactions` no longer treat an empty `txStatus` / `status` array as a reject-all filter. Matches Knex.
+- **HIGH** `filterX` methods now throw `WERR_INVALID_PARAMETER` on undefined values in `partial`. Matches Knex's `Undefined binding(s) detected`. Surfaces mergeFind bugs that used to present as misleading "Result must be unique."
+- **MED** Truthiness guards on integer-ID / string partial fields swept to `!== undefined` across every filter method (~106 replacements). Fixes silent filter skip for `lockTime=0`, `version=0`, empty strings.
+- **MED** `updateIdb` returns actual affected-row count instead of always `1`.
+- **LOW** `filterProvenTxReqs` drops the `&& r.txid` user-scope bypass (same shape as CRIT finding; latent unless a row lacks a txid).
+
+Based on 2.1.21 content; published to `@bopen-io` npm scope pending canonical review (PR bsv-blockchain/wallet-toolbox#151).
+
 ## wallet-toolbox 2.1.21
 
 - Fix spending authorization bypass in querySpentSince, PR#150
