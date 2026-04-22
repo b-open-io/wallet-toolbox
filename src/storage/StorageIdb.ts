@@ -1991,12 +1991,11 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       isQueryModeAll
     )
     for (const t of results) {
-      if (!args.noRawTx) {
-        await this.validateRawTransaction(t, args.trx)
-      } else {
-        t.rawTx = undefined
-        t.inputBEEF = undefined
-      }
+      // noRawTx skips rawTx re-hydration but does not wipe inputBEEF — Knex's
+      // transactionColumnsWithoutRawTx only strips rawTx, and callers such as
+      // getReqsAndBeefToShareWithWorld legitimately need inputBEEF when noRawTx is set.
+      if (!args.noRawTx) await this.validateRawTransaction(t, args.trx)
+      else t.rawTx = undefined
     }
     return results
   }
