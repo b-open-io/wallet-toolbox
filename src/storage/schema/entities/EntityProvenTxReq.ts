@@ -545,16 +545,32 @@ export class EntityProvenTxReq extends EntityBase<TableProvenTxReq> {
     syncMap: SyncMap,
     trx?: TrxToken
   ): Promise<boolean> {
+    const batchBefore = this.batch
     if (!this.batch && ei.batch) this.batch = ei.batch
     else if (this.batch && ei.batch && this.batch !== ei.batch)
       throw new WERR_INTERNAL('ProvenTxReq merge batch not equal.')
 
+    // Snapshot history/notify state before merging so we can detect whether anything
+    // actually changed. `updates` counter was under-reporting because this method
+    // unconditionally wrote and returned false.
+    this.packApiHistory()
+    this.packApiNotify()
+    const historyBefore = this.api.history
+    const notifyBefore = this.api.notify
+
     this.mergeHistory(ei, syncMap, true)
     this.mergeNotifyTransactionIds(ei, syncMap)
 
+    this.packApiHistory()
+    this.packApiNotify()
+    const changed =
+      batchBefore !== this.batch || historyBefore !== this.api.history || notifyBefore !== this.api.notify
+
+    if (!changed) return false
+
     this.updated_at = new Date(Math.max(ei.updated_at.getTime(), this.updated_at.getTime()))
     await storage.updateProvenTxReq(this.id, this.toApi(), trx)
-    return false
+    return true
   }
 }
 
