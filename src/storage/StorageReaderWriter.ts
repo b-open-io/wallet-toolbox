@@ -161,16 +161,19 @@ export abstract class StorageReaderWriter extends StorageReader {
         user.userId = await this.insertUser(user, trx)
         isNew = true
         // Add default change basket for new user.
-        await this.insertOutputBasket({
-          created_at: now,
-          updated_at: new Date('1971-01-01'), // Default constructed basket, sync will override with any updated basket.
-          basketId: 0,
-          userId: user.userId,
-          name: 'default',
-          numberOfDesiredUTXOs: 144,
-          minimumDesiredUTXOValue: 32,
-          isDeleted: false
-        })
+        await this.insertOutputBasket(
+          {
+            created_at: now,
+            updated_at: new Date('1971-01-01'), // Default constructed basket, sync will override with any updated basket.
+            basketId: 0,
+            userId: user.userId,
+            name: 'default',
+            numberOfDesiredUTXOs: 144,
+            minimumDesiredUTXOValue: 32,
+            isDeleted: false
+          },
+          trx
+        )
         break
       } catch (eu: unknown) {
         console.log(`findOrInsertUser catch: ${JSON.stringify(eu).slice(0, 512)}`)
@@ -225,9 +228,11 @@ export abstract class StorageReaderWriter extends StorageReader {
           basket.basketId = await this.insertOutputBasket(basket, trx)
         }
         if (basket.isDeleted) {
-          await this.updateOutputBasket(verifyId(basket.basketId), {
-            isDeleted: false
-          })
+          await this.updateOutputBasket(
+            verifyId(basket.basketId),
+            { isDeleted: false },
+            trx
+          )
         }
         return basket
       } catch (eu: unknown) {
@@ -253,9 +258,11 @@ export abstract class StorageReaderWriter extends StorageReader {
           txLabel.txLabelId = await this.insertTxLabel(txLabel, trx)
         }
         if (txLabel.isDeleted) {
-          await this.updateTxLabel(verifyId(txLabel.txLabelId), {
-            isDeleted: false
-          })
+          await this.updateTxLabel(
+            verifyId(txLabel.txLabelId),
+            { isDeleted: false },
+            trx
+          )
         }
         return txLabel
       } catch (eu: unknown) {
@@ -280,9 +287,12 @@ export abstract class StorageReaderWriter extends StorageReader {
           await this.insertTxLabelMap(txLabelMap, trx)
         }
         if (txLabelMap.isDeleted) {
-          await this.updateTxLabelMap(transactionId, txLabelId, {
-            isDeleted: false
-          })
+          await this.updateTxLabelMap(
+            transactionId,
+            txLabelId,
+            { isDeleted: false },
+            trx
+          )
         }
         return txLabelMap
       } catch (eu: unknown) {
@@ -308,9 +318,11 @@ export abstract class StorageReaderWriter extends StorageReader {
           outputTag.outputTagId = await this.insertOutputTag(outputTag, trx)
         }
         if (outputTag.isDeleted) {
-          await this.updateOutputTag(verifyId(outputTag.outputTagId), {
-            isDeleted: false
-          })
+          await this.updateOutputTag(
+            verifyId(outputTag.outputTagId),
+            { isDeleted: false },
+            trx
+          )
         }
         return outputTag
       } catch (eu: unknown) {
@@ -335,9 +347,12 @@ export abstract class StorageReaderWriter extends StorageReader {
           await this.insertOutputTagMap(outputTagMap, trx)
         }
         if (outputTagMap.isDeleted) {
-          await this.updateOutputTagMap(outputId, outputTagId, {
-            isDeleted: false
-          })
+          await this.updateOutputTagMap(
+            outputId,
+            outputTagId,
+            { isDeleted: false },
+            trx
+          )
         }
         return outputTagMap
       } catch (eu: unknown) {
@@ -349,13 +364,14 @@ export abstract class StorageReaderWriter extends StorageReader {
   async findOrInsertSyncStateAuth(
     auth: AuthId,
     storageIdentityKey: string,
-    storageName: string
+    storageName: string,
+    trx?: TrxToken
   ): Promise<{ syncState: TableSyncState; isNew: boolean }> {
     const partial = { userId: auth.userId!, storageIdentityKey, storageName }
     for (let retry = 0; ; retry++) {
       try {
         const now = new Date()
-        let syncState = verifyOneOrNone(await this.findSyncStates({ partial }))
+        let syncState = verifyOneOrNone(await this.findSyncStates({ partial, trx }))
         if (!syncState) {
           syncState = {
             ...partial,
@@ -367,7 +383,7 @@ export abstract class StorageReaderWriter extends StorageReader {
             refNum: randomBytesBase64(12),
             syncMap: JSON.stringify(createSyncMap())
           }
-          await this.insertSyncState(syncState)
+          await this.insertSyncState(syncState, trx)
           return { syncState, isNew: true }
         }
         return { syncState, isNew: false }
