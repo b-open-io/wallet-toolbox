@@ -855,6 +855,8 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
 
   async insertCertificate(certificate: TableCertificateX, trx?: TrxToken): Promise<number> {
     const e = await this.validateEntityForInsert(certificate, trx, undefined, ['isDeleted'])
+    // Strip non-schema runtime fields before insert. Matches Knex canon.
+    if (e.logger) delete e.logger
     const fields = e.fields
     if (e.fields) delete e.fields
     if (e.certificateId === 0) delete e.certificateId
