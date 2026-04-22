@@ -91,7 +91,8 @@ export class EntityOutputBasket extends EntityBase<TableOutputBasket> {
     if (
       eo.name != ei.name ||
       eo.numberOfDesiredUTXOs != ei.numberOfDesiredUTXOs ||
-      eo.minimumDesiredUTXOValue != ei.minimumDesiredUTXOValue
+      eo.minimumDesiredUTXOValue != ei.minimumDesiredUTXOValue ||
+      eo.isDeleted != ei.isDeleted
     )
       return false
     if (syncMap) {
