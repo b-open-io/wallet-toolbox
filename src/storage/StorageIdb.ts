@@ -446,8 +446,12 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     const labelIds = maps.map(m => m.txLabelId)
     const labels: TableTxLabel[] = []
     for (const txLabelId of labelIds) {
-      const label = verifyOne(await this.findTxLabels({ partial: { txLabelId, isDeleted: false }, trx }))
-      labels.push(label)
+      // verifyOneOrNone: a map row may reference a label that was later soft-deleted.
+      // Knex/Bun drop it via JOIN; we must do the same silently or we'd break the whole
+      // listActions response. Skip + log so persistent orphans still produce a signal.
+      const label = verifyOneOrNone(await this.findTxLabels({ partial: { txLabelId, isDeleted: false }, trx }))
+      if (label) labels.push(label)
+      else console.debug(`[StorageIdb] orphan tx_labels_map row skipped: transactionId=${transactionId} txLabelId=${txLabelId}`)
     }
     return labels
   }
@@ -457,8 +461,9 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     const tagIds = maps.map(m => m.outputTagId)
     const tags: TableOutputTag[] = []
     for (const outputTagId of tagIds) {
-      const tag = verifyOne(await this.findOutputTags({ partial: { outputTagId, isDeleted: false }, trx }))
-      tags.push(tag)
+      const tag = verifyOneOrNone(await this.findOutputTags({ partial: { outputTagId, isDeleted: false }, trx }))
+      if (tag) tags.push(tag)
+      else console.debug(`[StorageIdb] orphan output_tags_map row skipped: outputId=${outputId} outputTagId=${outputTagId}`)
     }
     return tags
   }
