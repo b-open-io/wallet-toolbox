@@ -1712,11 +1712,9 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       isQueryModeAll
     )
     for (const o of results) {
-      if (!args.noScript) {
-        await this.validateOutputScript(o, args.trx)
-      } else {
-        o.lockingScript = undefined
-      }
+      // noScript skips the rawTx-slice re-hydration but does not wipe script already
+      // on the row — parity with Knex/Bun, which simply don't SELECT the column.
+      if (!args.noScript) await this.validateOutputScript(o, args.trx)
     }
     return results
   }

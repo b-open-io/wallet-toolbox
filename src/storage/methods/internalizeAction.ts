@@ -20,6 +20,7 @@ import { TransactionStatus } from '../../sdk/types'
 import { EntityProvenTxReq } from '../schema/entities/EntityProvenTxReq'
 import { blockHash } from '../../services/chaintracker/chaintracks/util/blockHeaderUtilities'
 import { TableProvenTx } from '../schema/tables/TableProvenTx'
+import { parseTxScriptOffsets, TxScriptOffsets } from '../../utility/parseTxScriptOffsets'
 
 /**
  * Internalize Action allows a wallet to take ownership of outputs in a pre-existing transaction.
@@ -102,6 +103,7 @@ class InternalizeActionContext {
   walletPayments: WalletPaymentX[]
   userId: number
   vargs: Validation.ValidInternalizeActionArgs
+  private _txScriptOffsets?: TxScriptOffsets
 
   constructor(
     public storage: StorageProvider,
@@ -142,6 +144,16 @@ class InternalizeActionContext {
   }
   set satoshis(v: number) {
     this.r.satoshis = v
+  }
+
+  /**
+   * Script offsets/lengths parsed from the incoming rawTx. Cached so repeated output writers
+   * share one parse. Enables `validateOutputScript`'s slice-from-rawTx fallback to work on
+   * internalized outputs — matches the contract already honored by `processAction`.
+   */
+  get txScriptOffsets(): TxScriptOffsets {
+    if (!this._txScriptOffsets) this._txScriptOffsets = parseTxScriptOffsets(this.tx.toBinary())
+    return this._txScriptOffsets
   }
 
   async getBasket(basketName: string): Promise<TableOutputBasket> {
@@ -462,6 +474,7 @@ class InternalizeActionContext {
 
   async storeNewWalletPaymentForOutput(transactionId: number, payment: WalletPaymentX): Promise<void> {
     const now = new Date()
+    const offset = this.txScriptOffsets.outputs[payment.vout]
     const txOut: TableOutput = {
       created_at: now,
       updated_at: now,
@@ -470,6 +483,8 @@ class InternalizeActionContext {
       userId: this.userId,
       spendable: true,
       lockingScript: payment.txo.lockingScript.toBinary(),
+      scriptOffset: offset.offset,
+      scriptLength: offset.length,
       vout: payment.vout,
       basketId: this.changeBasket.basketId!,
       satoshis: payment.txo.satoshis!,
@@ -493,6 +508,7 @@ class InternalizeActionContext {
 
   async mergeWalletPaymentForOutput(transactionId: number, payment: WalletPaymentX) {
     const outputId = payment.eo!.outputId!
+    const offset = this.txScriptOffsets.outputs[payment.vout]
     const update: Partial<TableOutput> = {
       basketId: this.changeBasket.basketId,
       type: 'P2PKH',
@@ -502,7 +518,9 @@ class InternalizeActionContext {
       purpose: 'change',
       senderIdentityKey: payment.senderIdentityKey,
       derivationPrefix: payment.derivationPrefix,
-      derivationSuffix: payment.derivationSuffix
+      derivationSuffix: payment.derivationSuffix,
+      scriptOffset: offset.offset,
+      scriptLength: offset.length
     }
     await this.storage.updateOutput(outputId, update)
     payment.eo = { ...payment.eo!, ...update }
@@ -510,6 +528,7 @@ class InternalizeActionContext {
 
   async mergeBasketInsertionForOutput(transactionId: number, basket: BasketInsertionX) {
     const outputId = basket.eo!.outputId!
+    const offset = this.txScriptOffsets.outputs[basket.vout]
     const update: Partial<TableOutput> = {
       basketId: (await this.getBasket(basket.basket)).basketId,
       type: 'custom',
@@ -519,7 +538,9 @@ class InternalizeActionContext {
       purpose: '',
       senderIdentityKey: undefined,
       derivationPrefix: undefined,
-      derivationSuffix: undefined
+      derivationSuffix: undefined,
+      scriptOffset: offset.offset,
+      scriptLength: offset.length
     }
     await this.storage.updateOutput(outputId, update)
     basket.eo = { ...basket.eo!, ...update }
@@ -527,6 +548,7 @@ class InternalizeActionContext {
 
   async storeNewBasketInsertionForOutput(transactionId: number, basket: BasketInsertionX): Promise<void> {
     const now = new Date()
+    const offset = this.txScriptOffsets.outputs[basket.vout]
     const txOut: TableOutput = {
       created_at: now,
       updated_at: now,
@@ -535,6 +557,8 @@ class InternalizeActionContext {
       userId: this.userId,
       spendable: true,
       lockingScript: basket.txo.lockingScript.toBinary(),
+      scriptOffset: offset.offset,
+      scriptLength: offset.length,
       vout: basket.vout,
       basketId: (await this.getBasket(basket.basket)).basketId,
       satoshis: basket.txo.satoshis!,
