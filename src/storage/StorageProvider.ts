@@ -491,21 +491,6 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
               // or by txid and vout.
               await this.updateOutput(verifyId(input.outputId), { spendable: true, spentBy: undefined }, trx)
             }
-            // Unspend the outputs created by this transaction. They never existed on-chain; leaving
-            // them `spendable=true` produces ghost rows in basket queries. Null out basketId so they
-            // drop out of basket filters entirely. The output rows themselves stay for audit trail.
-            const ownOutputs = await this.findOutputs({
-              partial: { userId: tx.userId, transactionId: tx.transactionId },
-              noScript: true,
-              trx
-            })
-            for (const o of ownOutputs) {
-              await this.updateOutput(
-                verifyId(o.outputId),
-                { spendable: false, basketId: undefined },
-                trx
-              )
-            }
           }
           break
         case 'nosend':
