@@ -98,7 +98,7 @@ export async function listOutputsIdb(
   const noTags = tagIds.length === 0
   const includeSpent = false
 
-  const stati: TransactionStatus[] = ['completed', 'unproven', 'nosend']
+  const stati: TransactionStatus[] = ['completed', 'unproven', 'nosend', 'sending']
 
   const args: FindOutputsArgs = {
     partial: {
