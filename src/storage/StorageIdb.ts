@@ -440,11 +440,27 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
     if (!this.isAvailable()) await this.makeAvailable()
 
     let rawTx: number[] | undefined = undefined
-    const r = await this.getProvenOrRawTx(txid, trx)
-    if (r.proven) rawTx = r.proven.rawTx
-    else rawTx = r.rawTx
-    if (rawTx && offset !== undefined && length !== undefined && Number.isInteger(offset) && Number.isInteger(length)) {
-      rawTx = rawTx.slice(offset, offset + length)
+    const sliceRequested = offset !== undefined && length !== undefined && Number.isInteger(offset) && Number.isInteger(length)
+    // Slice path uses an extended status set that includes 'unfail' — matches Knex
+    // canon at StorageKnex.ts:131. The non-slice path continues to delegate to
+    // getProvenOrRawTx which uses the narrower set.
+    if (sliceRequested) {
+      const proven = verifyOneOrNone(await this.findProvenTxs({ partial: { txid }, trx }))
+      if (proven) {
+        rawTx = proven.rawTx
+      } else {
+        const req = verifyOneOrNone(await this.findProvenTxReqs({ partial: { txid }, trx }))
+        if (req && ['unsent', 'nosend', 'sending', 'unmined', 'completed', 'unfail'].includes(req.status)) {
+          rawTx = req.rawTx
+        }
+      }
+    } else {
+      const r = await this.getProvenOrRawTx(txid, trx)
+      if (r.proven) rawTx = r.proven.rawTx
+      else rawTx = r.rawTx
+    }
+    if (rawTx && sliceRequested) {
+      rawTx = rawTx.slice(offset, offset! + length!)
     }
     return rawTx
   }
