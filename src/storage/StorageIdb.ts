@@ -566,8 +566,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.outputTagId !== undefined && r.outputTagId !== args.partial.outputTagId) continue
         if (args.partial.outputId !== undefined && r.outputId !== args.partial.outputId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.isDeleted !== undefined && r.isDeleted !== args.partial.isDeleted) continue
       }
       if (userId !== undefined) {
@@ -644,8 +646,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.provenTxReqId !== undefined && r.provenTxReqId !== args.partial.provenTxReqId) continue
         if (args.partial.provenTxId !== undefined && r.provenTxId !== args.partial.provenTxId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.status !== undefined && r.status !== args.partial.status) continue
         if (args.partial.attempts !== undefined && r.attempts !== args.partial.attempts) continue
         if (args.partial.notified !== undefined && r.notified !== args.partial.notified) continue
@@ -713,8 +717,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.since && args.since > r.updated_at) continue
       if (args.partial) {
         if (args.partial.provenTxId !== undefined && r.provenTxId !== args.partial.provenTxId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.txid !== undefined && r.txid !== args.partial.txid) continue
         if (args.partial.height !== undefined && r.height !== args.partial.height) continue
         if (args.partial.index !== undefined && r.index !== args.partial.index) continue
@@ -776,8 +782,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.txLabelId !== undefined && r.txLabelId !== args.partial.txLabelId) continue
         if (args.partial.transactionId !== undefined && r.transactionId !== args.partial.transactionId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.isDeleted !== undefined && r.isDeleted !== args.partial.isDeleted) continue
       }
       if (userId !== undefined) {
@@ -1261,8 +1269,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
         if (args.partial.certificateId !== undefined && r.certificateId !== args.partial.certificateId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.fieldName !== undefined && r.fieldName !== args.partial.fieldName) continue
         if (args.partial.fieldValue !== undefined && r.fieldValue !== args.partial.fieldValue) continue
         if (args.partial.masterKey !== undefined && r.masterKey !== args.partial.masterKey) continue
@@ -1329,14 +1339,17 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
         if (args.partial.certificateId !== undefined && r.certificateId !== args.partial.certificateId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.type !== undefined && r.type !== args.partial.type) continue
         if (args.partial.serialNumber !== undefined && r.serialNumber !== args.partial.serialNumber) continue
         if (args.partial.certifier !== undefined && r.certifier !== args.partial.certifier) continue
         if (args.partial.subject !== undefined && r.subject !== args.partial.subject) continue
         if (args.partial.verifier !== undefined && r.verifier !== args.partial.verifier) continue
-        if (args.partial.revocationOutpoint !== undefined && r.revocationOutpoint !== args.partial.revocationOutpoint) continue
+        if (args.partial.revocationOutpoint !== undefined && r.revocationOutpoint !== args.partial.revocationOutpoint)
+          continue
         if (args.partial.signature !== undefined && r.signature !== args.partial.signature) continue
         if (args.partial.isDeleted !== undefined && r.isDeleted !== args.partial.isDeleted) continue
       }
@@ -1401,8 +1414,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
         if (args.partial.commissionId !== undefined && r.commissionId !== args.partial.commissionId) continue
         if (args.partial.transactionId !== undefined && r.transactionId !== args.partial.transactionId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.satoshis !== undefined && r.satoshis !== args.partial.satoshis) continue
         if (args.partial.keyOffset !== undefined && r.keyOffset !== args.partial.keyOffset) continue
         if (args.partial.isRedeemed !== undefined && r.isRedeemed !== args.partial.isRedeemed) continue
@@ -1453,8 +1468,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.since && args.since > r.updated_at) continue
       if (args.partial) {
         if (args.partial.id !== undefined && r.id !== args.partial.id) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.event !== undefined && r.event !== args.partial.event) continue
         if (args.partial.details !== undefined && r.details !== args.partial.details) continue
       }
@@ -1512,8 +1529,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.basketId !== undefined && r.basketId !== args.partial.basketId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.name !== undefined && r.name !== args.partial.name) continue
         if (
           args.partial.numberOfDesiredUTXOs !== undefined &&
@@ -1617,21 +1636,28 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
         if (args.partial.transactionId !== undefined && r.transactionId !== args.partial.transactionId) continue
         if (args.partial.basketId !== undefined && r.basketId !== args.partial.basketId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.spendable !== undefined && r.spendable !== args.partial.spendable) continue
         if (args.partial.change !== undefined && r.change !== args.partial.change) continue
-        if (args.partial.outputDescription !== undefined && r.outputDescription !== args.partial.outputDescription) continue
+        if (args.partial.outputDescription !== undefined && r.outputDescription !== args.partial.outputDescription)
+          continue
         if (args.partial.vout !== undefined && r.vout !== args.partial.vout) continue
         if (args.partial.satoshis !== undefined && r.satoshis !== args.partial.satoshis) continue
         if (args.partial.providedBy !== undefined && r.providedBy !== args.partial.providedBy) continue
         if (args.partial.purpose !== undefined && r.purpose !== args.partial.purpose) continue
         if (args.partial.type !== undefined && r.type !== args.partial.type) continue
         if (args.partial.txid !== undefined && r.txid !== args.partial.txid) continue
-        if (args.partial.senderIdentityKey !== undefined && r.senderIdentityKey !== args.partial.senderIdentityKey) continue
-        if (args.partial.derivationPrefix !== undefined && r.derivationPrefix !== args.partial.derivationPrefix) continue
-        if (args.partial.derivationSuffix !== undefined && r.derivationSuffix !== args.partial.derivationSuffix) continue
-        if (args.partial.customInstructions !== undefined && r.customInstructions !== args.partial.customInstructions) continue
+        if (args.partial.senderIdentityKey !== undefined && r.senderIdentityKey !== args.partial.senderIdentityKey)
+          continue
+        if (args.partial.derivationPrefix !== undefined && r.derivationPrefix !== args.partial.derivationPrefix)
+          continue
+        if (args.partial.derivationSuffix !== undefined && r.derivationSuffix !== args.partial.derivationSuffix)
+          continue
+        if (args.partial.customInstructions !== undefined && r.customInstructions !== args.partial.customInstructions)
+          continue
         if (args.partial.spentBy !== undefined && r.spentBy !== args.partial.spentBy) continue
         if (args.partial.sequenceNumber !== undefined && r.sequenceNumber !== args.partial.sequenceNumber) continue
         if (args.partial.scriptLength !== undefined && r.scriptLength !== args.partial.scriptLength) continue
@@ -1730,8 +1756,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.outputTagId !== undefined && r.outputTagId !== args.partial.outputTagId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.tag !== undefined && r.tag !== args.partial.tag) continue
         if (args.partial.isDeleted !== undefined && r.isDeleted !== args.partial.isDeleted) continue
       }
@@ -1792,9 +1820,12 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.syncStateId !== undefined && r.syncStateId !== args.partial.syncStateId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
-        if (args.partial.storageIdentityKey !== undefined && r.storageIdentityKey !== args.partial.storageIdentityKey) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
+        if (args.partial.storageIdentityKey !== undefined && r.storageIdentityKey !== args.partial.storageIdentityKey)
+          continue
         if (args.partial.storageName !== undefined && r.storageName !== args.partial.storageName) continue
         if (args.partial.status !== undefined && r.status !== args.partial.status) continue
         if (args.partial.init !== undefined && r.init !== args.partial.init) continue
@@ -1890,8 +1921,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.transactionId !== undefined && r.transactionId !== args.partial.transactionId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.provenTxId !== undefined && r.provenTxId !== args.partial.provenTxId) continue
         if (args.partial.status !== undefined && r.status !== args.partial.status) continue
         if (args.partial.reference !== undefined && r.reference !== args.partial.reference) continue
@@ -1989,8 +2022,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.partial) {
         if (args.partial.txLabelId !== undefined && r.txLabelId !== args.partial.txLabelId) continue
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.label !== undefined && r.label !== args.partial.label) continue
         if (args.partial.isDeleted !== undefined && r.isDeleted !== args.partial.isDeleted) continue
       }
@@ -2029,8 +2064,10 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       if (args.since && args.since > r.updated_at) continue
       if (args.partial) {
         if (args.partial.userId !== undefined && r.userId !== args.partial.userId) continue
-        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime()) continue
-        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime()) continue
+        if (args.partial.created_at !== undefined && r.created_at.getTime() !== args.partial.created_at.getTime())
+          continue
+        if (args.partial.updated_at !== undefined && r.updated_at.getTime() !== args.partial.updated_at.getTime())
+          continue
         if (args.partial.identityKey !== undefined && r.identityKey !== args.partial.identityKey) continue
         if (args.partial.activeStorage !== undefined && r.activeStorage !== args.partial.activeStorage) continue
       }
