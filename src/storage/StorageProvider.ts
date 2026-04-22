@@ -835,16 +835,7 @@ export abstract class StorageProvider extends StorageReaderWriter implements Wal
 
   async validateOutputScript(o: TableOutput, trx?: TrxToken): Promise<void> {
     // without offset and length values return what we have (make no changes)
-    if (!o.scriptLength || !o.scriptOffset || !o.txid) {
-      // Debug surface for the CRIT-1 family of failure modes: an output row with no
-      // lockingScript, no offsets, and/or no txid cannot be hydrated. Silent bail made
-      // Dan's "empty lockingScript in listOutputs" bug hard to track.
-      if (!o.lockingScript)
-        console.debug(
-          `[validateOutputScript] output cannot be hydrated: outputId=${o.outputId} txid=${o.txid} scriptLength=${o.scriptLength} scriptOffset=${o.scriptOffset}`
-        )
-      return
-    }
+    if (!o.scriptLength || !o.scriptOffset || !o.txid) return
     // if there is an outputScript and its length is the expected length return what we have.
     if (o.lockingScript && o.lockingScript.length === o.scriptLength) return
 
