@@ -1605,6 +1605,7 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       stores.push('transactions')
     }
     const dbTrx = this.toDbTrx(stores, 'readonly', args.trx)
+    const direction: IDBCursorDirection = args.orderDescending ? 'prev' : 'next'
     let cursor:
       | IDBPCursorWithValue<StorageIdbSchema, string[], 'outputs', unknown, 'readwrite' | 'readonly'>
       | IDBPCursorWithValue<StorageIdbSchema, string[], 'outputs', 'userId', 'readwrite' | 'readonly'>
@@ -1620,24 +1621,24 @@ export class StorageIdb extends StorageProvider implements WalletStorageProvider
       | IDBPCursorWithValue<StorageIdbSchema, string[], 'outputs', 'spentBy', 'readwrite' | 'readonly'>
       | null
     if (args.partial?.outputId) {
-      cursor = await dbTrx.objectStore('outputs').openCursor(args.partial.outputId)
+      cursor = await dbTrx.objectStore('outputs').openCursor(args.partial.outputId, direction)
     } else if (args.partial?.userId !== undefined) {
       if (args.partial?.transactionId && args.partial?.vout !== undefined) {
         cursor = await dbTrx
           .objectStore('outputs')
           .index('transactionId_vout_userId')
-          .openCursor([args.partial.transactionId, args.partial.vout, args.partial.userId])
+          .openCursor([args.partial.transactionId, args.partial.vout, args.partial.userId], direction)
       } else {
-        cursor = await dbTrx.objectStore('outputs').index('userId').openCursor(args.partial.userId)
+        cursor = await dbTrx.objectStore('outputs').index('userId').openCursor(args.partial.userId, direction)
       }
     } else if (args.partial?.transactionId !== undefined) {
-      cursor = await dbTrx.objectStore('outputs').index('transactionId').openCursor(args.partial.transactionId)
+      cursor = await dbTrx.objectStore('outputs').index('transactionId').openCursor(args.partial.transactionId, direction)
     } else if (args.partial?.basketId !== undefined) {
-      cursor = await dbTrx.objectStore('outputs').index('basketId').openCursor(args.partial.basketId)
+      cursor = await dbTrx.objectStore('outputs').index('basketId').openCursor(args.partial.basketId, direction)
     } else if (args.partial?.spentBy !== undefined) {
-      cursor = await dbTrx.objectStore('outputs').index('spentBy').openCursor(args.partial.spentBy)
+      cursor = await dbTrx.objectStore('outputs').index('spentBy').openCursor(args.partial.spentBy, direction)
     } else {
-      cursor = await dbTrx.objectStore('outputs').openCursor()
+      cursor = await dbTrx.objectStore('outputs').openCursor(null, direction)
     }
     let firstTime = true
     while (cursor) {
