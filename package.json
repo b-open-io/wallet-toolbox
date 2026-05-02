@@ -1,6 +1,6 @@
 {
-  "name": "@bsv/wallet-toolbox",
-  "version": "2.1.22",
+  "name": "@bopen-io/wallet-toolbox",
+  "version": "2.1.22-parity-fix.0",
   "description": "BRC100 conforming wallet, wallet storage and wallet signer components",
   "main": "./out/src/index.js",
   "types": "./out/src/index.d.ts",
@@ -41,13 +41,23 @@
     "@bsv/auth-express-middleware": "^2.0.5",
     "@bsv/payment-express-middleware": "^2.0.2",
     "@bsv/sdk": "^2.0.13",
-    "better-sqlite3": "^12.6.2",
     "express": "^4.21.2",
     "hash-wasm": "^4.12.0",
     "idb": "^8.0.2",
     "knex": "^3.1.0",
-    "mysql2": "^3.12.0",
     "ws": "^8.18.3"
+  },
+  "peerDependencies": {
+    "better-sqlite3": "^12.6.2",
+    "mysql2": "^3.12.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",
